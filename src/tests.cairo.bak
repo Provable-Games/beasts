@@ -1,0 +1,133 @@
+#[cfg(test)]
+mod tests {
+    use crate::beast_svg::BeastSvgTrait;
+    use crate::pack::PackableBeast;
+    use crate::beast_definitions;
+
+    #[test]
+    fn test_dragon_svg_generation() {
+        let dragon = PackableBeast {
+            id: beast_definitions::DRAGON,
+            prefix: 0,
+            suffix: 0,
+            level: 10,
+            health: 100
+        };
+        let svg = BeastSvgTrait::generate_beast_svg(dragon);
+        let _svg_str = svg; // Ensure it compiles
+    }
+
+    #[test]
+    fn test_griffin_svg_generation() {
+        let griffin = PackableBeast {
+            id: beast_definitions::GRIFFIN,
+            prefix: beast_definitions::PREFIX_DOOM,
+            suffix: beast_definitions::SUFFIX_BANE,
+            level: 15,
+            health: 150
+        };
+        let svg = BeastSvgTrait::generate_beast_svg(griffin);
+        let _svg_str = svg; // Ensure it compiles
+    }
+
+    #[test]
+    fn test_kraken_svg_generation() {
+        let kraken = PackableBeast {
+            id: beast_definitions::KRAKEN,
+            prefix: beast_definitions::PREFIX_STORM,
+            suffix: beast_definitions::SUFFIX_ROAR,
+            level: 25,
+            health: 300
+        };
+        let svg = BeastSvgTrait::generate_beast_svg(kraken);
+        let _svg_str = svg; // Ensure it compiles
+    }
+
+    #[test]
+    fn test_svg_data_uri_generation() {
+        let beast = PackableBeast {
+            id: beast_definitions::VAMPIRE,
+            prefix: beast_definitions::PREFIX_BLOOD,
+            suffix: beast_definitions::SUFFIX_SHADOW,
+            level: 20,
+            health: 200
+        };
+        let data_uri = BeastSvgTrait::generate_svg_data_uri(beast);
+        let _uri_str = data_uri; // Ensure it compiles
+    }
+
+    #[test]
+    fn test_pack_unpack() {
+        use crate::pack::PackableBeastStorePacking;
+        
+        let original = PackableBeast {
+            id: 42,
+            prefix: 10,
+            suffix: 5,
+            level: 99,
+            health: 999
+        };
+        
+        let packed = PackableBeastStorePacking::pack(original);
+        let unpacked = PackableBeastStorePacking::unpack(packed);
+        
+        assert(unpacked.id == original.id, 'ID mismatch');
+        assert(unpacked.prefix == original.prefix, 'Prefix mismatch');
+        assert(unpacked.suffix == original.suffix, 'Suffix mismatch');
+        assert(unpacked.level == original.level, 'Level mismatch');
+        assert(unpacked.health == original.health, 'Health mismatch');
+    }
+
+    #[test]
+    fn test_get_hash() {
+        use crate::pack::get_hash;
+        
+        let hash1 = get_hash(1, 2, 3);
+        let hash2 = get_hash(1, 2, 3);
+        let hash3 = get_hash(1, 2, 4);
+        
+        assert(hash1 == hash2, 'Same inputs should match');
+        assert(hash1 != hash3, 'Different inputs should differ');
+    }
+
+    #[test]
+    fn test_beast_names() {
+        // Test that beast ID 1 is Warlock
+        let warlock_name = beast_definitions::get_beast_name(1);
+        assert(warlock_name == 'Warlock', 'Beast 1 should be Warlock');
+        
+        // Test that beast ID 68 is Yeti
+        let yeti_name = beast_definitions::get_beast_name(68);
+        assert(yeti_name == 'Yeti', 'Beast 68 should be Yeti');
+        
+        // Test that beast ID 75 is Skeleton
+        let skeleton_name = beast_definitions::get_beast_name(75);
+        assert(skeleton_name == 'Skeleton', 'Beast 75 should be Skeleton');
+    }
+
+    #[test]
+    fn test_beast_types() {
+        // Test beast types
+        let warlock_type = beast_definitions::get_type(1);
+        assert(warlock_type == beast_definitions::TYPE_MAGICAL, 'Warlock should be Magical');
+        
+        let yeti_type = beast_definitions::get_type(68);
+        assert(yeti_type == beast_definitions::TYPE_BRUTE, 'Yeti should be Brute');
+        
+        let skeleton_type = beast_definitions::get_type(75);
+        assert(skeleton_type == beast_definitions::TYPE_BRUTE, 'Skeleton should be Brute');
+    }
+
+    #[test]
+    fn test_beast_tiers() {
+        // Test beast tiers
+        let warlock_tier = beast_definitions::get_tier(1);
+        assert(warlock_tier == beast_definitions::TIER_1, 'Warlock should be Tier 1');
+        
+        let yeti_tier = beast_definitions::get_tier(68);
+        assert(yeti_tier == beast_definitions::TIER_4, 'Yeti should be Tier 4');
+        
+        let skeleton_tier = beast_definitions::get_tier(75);
+        assert(skeleton_tier == beast_definitions::TIER_5, 'Skeleton should be Tier 5');
+    }
+}
