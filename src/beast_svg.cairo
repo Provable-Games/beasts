@@ -75,18 +75,11 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         
         svg.append(@"</text>");
         
-        // Beast image placeholder - for now just a colored rectangle
-        // In production, you'd embed actual beast artwork
-        svg.append(@"<rect x='85' y='60' width='80' height='120' fill='");
-        svg.append(@border_color);
-        svg.append(@"' fill-opacity='0.3' rx='5'/>");
-        
-        // Beast ID text in the center
-        svg.append(@"<text x='125' y='130' font-family='Arial' font-size='48' font-weight='bold' text-anchor='middle' fill='");
-        svg.append(@border_color);
-        svg.append(@"' opacity='0.6'>");
-        svg.append(@format!("{}", beast.id));
-        svg.append(@"</text>");
+        // Beast image - using warlock for all beasts for now
+        svg.append(@"<image x='65' y='50' width='120' height='120' href='");
+        let warlock_image = get_warlock_svg();
+        svg.append(@warlock_image);
+        svg.append(@"' preserveAspectRatio='xMidYMid meet'/>");
         
         // Stats section
         svg.append(@"<g transform='translate(30, 200)'>");
