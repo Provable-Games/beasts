@@ -55,14 +55,31 @@ mod tests {
         // Declare and deploy contract
         let contract = declare("beasts_nft").unwrap().contract_class();
         
-        // Setup calldata for deployment
+        // Setup calldata for deployment with proper ByteArray serialization
         let mut calldata = array![];
-        calldata.append('Beasts');
-        calldata.append('BEAST');
-        calldata.append(''); // Empty base URI for testing
+        
+        // Name: "Beasts" as ByteArray
+        calldata.append(0); // no full 31-byte chunks
+        calldata.append('Beasts'); // pending word
+        calldata.append(6); // pending word length (6 bytes)
+        
+        // Symbol: "BEAST" as ByteArray
+        calldata.append(0); // no full 31-byte chunks
+        calldata.append('BEAST'); // pending word
+        calldata.append(5); // pending word length (5 bytes)
+        
+        // Base URI: empty ByteArray
+        calldata.append(0); // no full 31-byte chunks
+        calldata.append(0); // no pending word
+        calldata.append(0); // pending word length (0 bytes)
+        
         calldata.append(recipient.into());
-        calldata.append(1); // token_ids array length
-        calldata.append(3); // token_id for Jiangshi
+        
+        // Token IDs array as Span<u256>
+        calldata.append(1); // array length
+        calldata.append(3); // token_id for Jiangshi (u256 low)
+        calldata.append(0); // token_id for Jiangshi (u256 high)
+        
         calldata.append(owner.into());
         
         let (contract_address, _) = contract.deploy(@calldata).unwrap();
@@ -89,7 +106,7 @@ mod tests {
         assert(magical_position.is_some(), 'Should contain Magical type');
         
         // Verify SVG data URI
-        let svg_position = find_substring(@token_uri, @"data:image/svg+xml;base64,");
+        let svg_position = find_substring(@token_uri, @"data:image/svg+xml,");
         assert(svg_position.is_some(), 'Should have SVG data URI');
     }
 

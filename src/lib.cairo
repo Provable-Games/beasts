@@ -2,12 +2,19 @@ pub mod beast_svg;
 pub mod beast_definitions;
 pub mod pack;
 pub mod utils;
+pub mod interfaces;
 
 #[cfg(test)]
 mod tests;
 
 #[cfg(test)]
 mod test_felt252_conversion;
+
+#[cfg(test)]
+mod mint_tests;
+
+#[cfg(test)]
+mod integration_test;
 
 #[starknet::contract]
 pub mod beasts_nft {
@@ -20,6 +27,7 @@ pub mod beasts_nft {
     use super::pack::{PackableBeast, get_hash};
     use super::beast_definitions;
     use super::utils::felt252_to_byte_array;
+    use super::interfaces::IBeasts;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -108,6 +116,99 @@ pub mod beasts_nft {
                 self.beasts.entry(id).write(beast);
                 self.erc721.mint(recipient, id);
             }
+        }
+    }
+
+    // IBeasts Implementation
+    #[abi(embed_v0)]
+    impl BeastsImpl of IBeasts<ContractState> {
+        fn set_minter(ref self: ContractState, minter: ContractAddress) {
+            self.ownable.assert_only_owner();
+            self.minter.write(minter);
+        }
+
+        fn get_minter(self: @ContractState) -> ContractAddress {
+            self.minter.read()
+        }
+
+        fn mint(
+            ref self: ContractState,
+            to: ContractAddress,
+            beast_id: u8,
+            prefix: u8,
+            suffix: u8,
+            level: u16,
+            health: u16
+        ) {
+            // Check minter authorization
+            let caller = starknet::get_caller_address();
+            assert(caller == self.minter.read(), 'Not authorized to mint');
+            
+            // Check beast validity
+            assert(beast_id >= 1 && beast_id <= 75, 'Invalid beast ID');
+            
+            // Check for duplicates
+            let hash = get_hash(beast_id, prefix, suffix);
+            assert(!self.minted.entry(hash).read(), 'Beast already minted');
+            
+            // Mark as minted
+            self.minted.entry(hash).write(true);
+            
+            // Get next token ID
+            let token_id = self.token_counter.read() + 1;
+            self.token_counter.write(token_id);
+            
+            // Create beast
+            let beast = PackableBeast { id: beast_id, prefix, suffix, level, health };
+            self.beasts.entry(token_id).write(beast);
+            
+            // Mint NFT
+            self.erc721.mint(to, token_id);
+        }
+
+        fn mint_genesis_beasts(ref self: ContractState, to: ContractAddress) {
+            self.ownable.assert_only_owner();
+            
+            // Mint all 75 genesis beasts
+            let mut beast_id: u8 = 1;
+            loop {
+                if beast_id > 75 {
+                    break;
+                }
+                
+                // Get next token ID
+                let token_id = self.token_counter.read() + 1;
+                self.token_counter.write(token_id);
+                
+                // Create genesis beast with no prefix/suffix
+                let beast = PackableBeast { 
+                    id: beast_id, 
+                    prefix: 0, 
+                    suffix: 0, 
+                    level: 1, 
+                    health: 100 
+                };
+                self.beasts.entry(token_id).write(beast);
+                
+                // Mint NFT
+                self.erc721.mint(to, token_id);
+                
+                beast_id += 1;
+            };
+        }
+
+        fn get_beast(self: @ContractState, token_id: u256) -> PackableBeast {
+            self.erc721._require_owned(token_id);
+            self.beasts.entry(token_id).read()
+        }
+
+        fn is_minted(self: @ContractState, beast_id: u8, prefix: u8, suffix: u8) -> bool {
+            let hash = get_hash(beast_id, prefix, suffix);
+            self.minted.entry(hash).read()
+        }
+
+        fn total_supply(self: @ContractState) -> u256 {
+            self.token_counter.read()
         }
     }
 
@@ -206,102 +307,5 @@ pub mod beasts_nft {
             
             metadata
         }
-    }
-
-    // External functions for beast management
-    #[external(v0)]
-    fn set_minter(ref self: ContractState, minter: ContractAddress) {
-        self.ownable.assert_only_owner();
-        self.minter.write(minter);
-    }
-
-    #[external(v0)]
-    fn get_minter(self: @ContractState) -> ContractAddress {
-        self.minter.read()
-    }
-
-    #[external(v0)]
-    fn mint(
-        ref self: ContractState,
-        to: ContractAddress,
-        beast_id: u8,
-        prefix: u8,
-        suffix: u8,
-        level: u16,
-        health: u16
-    ) {
-        // Check minter authorization
-        let caller = starknet::get_caller_address();
-        assert(caller == self.minter.read(), 'Not authorized to mint');
-        
-        // Check beast validity
-        assert(beast_id >= 1 && beast_id <= 75, 'Invalid beast ID');
-        
-        // Check for duplicates
-        let hash = get_hash(beast_id, prefix, suffix);
-        assert(!self.minted.entry(hash).read(), 'Beast already minted');
-        
-        // Mark as minted
-        self.minted.entry(hash).write(true);
-        
-        // Get next token ID
-        let token_id = self.token_counter.read() + 1;
-        self.token_counter.write(token_id);
-        
-        // Create beast
-        let beast = PackableBeast { id: beast_id, prefix, suffix, level, health };
-        self.beasts.entry(token_id).write(beast);
-        
-        // Mint NFT
-        self.erc721.mint(to, token_id);
-    }
-
-    #[external(v0)]
-    fn mint_genesis_beasts(ref self: ContractState, to: ContractAddress) {
-        self.ownable.assert_only_owner();
-        
-        // Mint all 75 genesis beasts
-        let mut beast_id: u8 = 1;
-        loop {
-            if beast_id > 75 {
-                break;
-            }
-            
-            // Get next token ID
-            let token_id = self.token_counter.read() + 1;
-            self.token_counter.write(token_id);
-            
-            // Create genesis beast with no prefix/suffix
-            let beast = PackableBeast { 
-                id: beast_id, 
-                prefix: 0, 
-                suffix: 0, 
-                level: 1, 
-                health: 100 
-            };
-            self.beasts.entry(token_id).write(beast);
-            
-            // Mint NFT
-            self.erc721.mint(to, token_id);
-            
-            beast_id += 1;
-        };
-    }
-
-    #[external(v0)]
-    fn get_beast(self: @ContractState, token_id: u256) -> PackableBeast {
-        self.erc721._require_owned(token_id);
-        self.beasts.entry(token_id).read()
-    }
-
-    #[external(v0)]
-    fn is_minted(self: @ContractState, beast_id: u8, prefix: u8, suffix: u8) -> bool {
-        let hash = get_hash(beast_id, prefix, suffix);
-        self.minted.entry(hash).read()
-    }
-
-    #[external(v0)]
-    fn total_supply(self: @ContractState) -> u256 {
-        self.token_counter.read()
     }
 }
