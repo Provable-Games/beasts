@@ -3,6 +3,9 @@ pub mod beast_definitions;
 pub mod pack;
 pub mod utils;
 pub mod interfaces;
+pub mod beast_manager;
+pub mod metadata_generator;
+pub mod minting_coordinator;
 
 #[cfg(test)]
 mod tests;
@@ -23,11 +26,11 @@ pub mod beasts_nft {
     use openzeppelin_token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
     use openzeppelin_token::erc721::interface::{IERC721Metadata};
     use starknet::{ContractAddress, storage::{Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess}};
-    use super::beast_svg::BeastSvgTrait;
-    use super::pack::{PackableBeast, get_hash};
-    use super::beast_definitions;
-    use super::utils::felt252_to_byte_array;
+    use super::pack::PackableBeast;
     use super::interfaces::IBeasts;
+    use super::beast_manager::{BeastManagerTrait, BeastResult};
+    use super::metadata_generator::MetadataGeneratorTrait;
+    use super::minting_coordinator::{MintingCoordinatorTrait, MintRequest};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -105,16 +108,18 @@ pub mod beasts_nft {
                     break;
                 }
                 let id = *token_ids.pop_front().unwrap();
-                // Initialize beast with default attributes
-                let beast = PackableBeast { 
-                    id: id.try_into().unwrap(), 
-                    prefix: 0, 
-                    suffix: 0, 
-                    level: 1, 
-                    health: 100 
-                };
-                self.beasts.entry(id).write(beast);
-                self.erc721.mint(recipient, id);
+                let beast_id: u8 = id.try_into().unwrap();
+                
+                // Create genesis beast using pure Cairo library
+                match BeastManagerTrait::create_genesis_beast(beast_id) {
+                    BeastResult::Ok(beast) => {
+                        self.beasts.entry(id).write(beast);
+                        self.erc721.mint(recipient, id);
+                    },
+                    BeastResult::Err(e) => {
+                        core::panic_with_felt252(e);
+                    }
+                }
             }
         }
     }
@@ -144,57 +149,71 @@ pub mod beasts_nft {
             let caller = starknet::get_caller_address();
             assert(caller == self.minter.read(), 'Not authorized to mint');
             
-            // Check beast validity
-            assert(beast_id >= 1 && beast_id <= 75, 'Invalid beast ID');
+            // Prepare mint request
+            let request = MintRequest { beast_id, prefix, suffix, level, health };
+            let next_token_id = self.token_counter.read() + 1;
             
-            // Check for duplicates
-            let hash = get_hash(beast_id, prefix, suffix);
-            assert(!self.minted.entry(hash).read(), 'Beast already minted');
-            
-            // Mark as minted
-            self.minted.entry(hash).write(true);
-            
-            // Get next token ID
-            let token_id = self.token_counter.read() + 1;
-            self.token_counter.write(token_id);
-            
-            // Create beast
-            let beast = PackableBeast { id: beast_id, prefix, suffix, level, health };
-            self.beasts.entry(token_id).write(beast);
-            
-            // Mint NFT
-            self.erc721.mint(to, token_id);
+            // Validate and prepare mint data
+            match MintingCoordinatorTrait::prepare_mint(request, next_token_id) {
+                BeastResult::Ok(mint_data) => {
+                    // Check for duplicates
+                    assert(!self.minted.entry(mint_data.hash).read(), 'Beast already minted');
+                    
+                    // Mark as minted
+                    self.minted.entry(mint_data.hash).write(true);
+                    
+                    // Update token counter
+                    self.token_counter.write(mint_data.token_id);
+                    
+                    // Store beast
+                    self.beasts.entry(mint_data.token_id).write(mint_data.beast);
+                    
+                    // Mint NFT
+                    self.erc721.mint(to, mint_data.token_id);
+                },
+                BeastResult::Err(e) => {
+                    core::panic_with_felt252(e);
+                }
+            }
         }
 
         fn mint_genesis_beasts(ref self: ContractState, to: ContractAddress) {
             self.ownable.assert_only_owner();
             
-            // Mint all 75 genesis beasts
-            let mut beast_id: u8 = 1;
+            // Prepare genesis batch
+            let starting_token_id = self.token_counter.read() + 1;
+            let batch = MintingCoordinatorTrait::prepare_genesis_batch(starting_token_id);
+            
+            // Process each beast in the batch
+            let mut i = 0;
+            let batch_len = batch.len();
             loop {
-                if beast_id > 75 {
+                if i >= batch_len {
                     break;
                 }
                 
-                // Get next token ID
-                let token_id = self.token_counter.read() + 1;
-                self.token_counter.write(token_id);
+                match batch.at(i) {
+                    BeastResult::Ok(mint_data) => {
+                        // Store beast
+                        self.beasts.entry(*mint_data.token_id).write(*mint_data.beast);
+                        
+                        // Mint NFT
+                        self.erc721.mint(to, *mint_data.token_id);
+                    },
+                    BeastResult::Err(e) => {
+                        core::panic_with_felt252(*e);
+                    }
+                }
                 
-                // Create genesis beast with no prefix/suffix
-                let beast = PackableBeast { 
-                    id: beast_id, 
-                    prefix: 0, 
-                    suffix: 0, 
-                    level: 1, 
-                    health: 100 
-                };
-                self.beasts.entry(token_id).write(beast);
-                
-                // Mint NFT
-                self.erc721.mint(to, token_id);
-                
-                beast_id += 1;
+                i += 1;
             };
+            
+            // Update token counter
+            let new_supply = MintingCoordinatorTrait::calculate_new_supply(
+                self.token_counter.read(), 
+                75
+            );
+            self.token_counter.write(new_supply);
         }
 
         fn get_beast(self: @ContractState, token_id: u256) -> PackableBeast {
@@ -203,7 +222,7 @@ pub mod beasts_nft {
         }
 
         fn is_minted(self: @ContractState, beast_id: u8, prefix: u8, suffix: u8) -> bool {
-            let hash = get_hash(beast_id, prefix, suffix);
+            let hash = BeastManagerTrait::get_beast_hash(beast_id, prefix, suffix);
             self.minted.entry(hash).read()
         }
 
@@ -229,83 +248,9 @@ pub mod beasts_nft {
             // Get beast data
             let beast = self.beasts.entry(token_id).read();
             
-            // Generate metadata with SVG image
-            self.create_metadata(token_id, beast)
+            // Generate metadata using pure Cairo library
+            MetadataGeneratorTrait::generate_metadata(token_id, beast)
         }
     }
 
-    #[generate_trait]
-    impl MetadataImpl of MetadataTrait {
-        /// Creates metadata JSON string for a beast
-        fn create_metadata(
-            self: @ContractState,
-            token_id: u256,
-            beast: PackableBeast
-        ) -> ByteArray {
-            let mut metadata: ByteArray = "{\"name\":\"Beast #";
-            metadata.append(@format!("{}", token_id));
-            metadata.append(@"\",\"description\":\"A fearsome beast from the Loot Survivor universe\",");
-            
-            // Add SVG image as data URI
-            metadata.append(@"\"image\":\"");
-            let svg_data_uri = BeastSvgTrait::generate_svg_data_uri(beast);
-            metadata.append(@svg_data_uri);
-            metadata.append(@"\",");
-            
-            metadata.append(@"\"attributes\":[");
-            
-            // Beast ID attribute
-            metadata.append(@"{\"trait_type\":\"Beast\",\"value\":\"");
-            let beast_name = beast_definitions::get_beast_name(beast.id);
-            let beast_name_str = felt252_to_byte_array(beast_name);
-            metadata.append(@beast_name_str);
-            metadata.append(@"\"},");
-            
-            // Type attribute
-            metadata.append(@"{\"trait_type\":\"Type\",\"value\":\"");
-            let beast_type = beast_definitions::get_type(beast.id);
-            let beast_type_str = felt252_to_byte_array(beast_type);
-            metadata.append(@beast_type_str);
-            metadata.append(@"\"},");
-            
-            // Tier attribute
-            metadata.append(@"{\"trait_type\":\"Tier\",\"value\":\"");
-            let tier = beast_definitions::get_tier(beast.id);
-            let tier_str = felt252_to_byte_array(tier);
-            metadata.append(@tier_str);
-            metadata.append(@"\"},");
-            
-            // Prefix attribute
-            if beast.prefix > 0 {
-                metadata.append(@"{\"trait_type\":\"Prefix\",\"value\":\"");
-                let prefix = beast_definitions::get_prefix(beast.prefix);
-                let prefix_str = felt252_to_byte_array(prefix);
-                metadata.append(@prefix_str);
-                metadata.append(@"\"},");
-            }
-            
-            // Suffix attribute
-            if beast.suffix > 0 {
-                metadata.append(@"{\"trait_type\":\"Suffix\",\"value\":\"");
-                let suffix = beast_definitions::get_suffix(beast.suffix);
-                let suffix_str = felt252_to_byte_array(suffix);
-                metadata.append(@suffix_str);
-                metadata.append(@"\"},");
-            }
-            
-            // Level attribute
-            metadata.append(@"{\"trait_type\":\"Level\",\"value\":");
-            metadata.append(@format!("{}", beast.level));
-            metadata.append(@"},");
-            
-            // Health attribute
-            metadata.append(@"{\"trait_type\":\"Health\",\"value\":");
-            metadata.append(@format!("{}", beast.health));
-            metadata.append(@"}");
-            
-            metadata.append(@"]}");
-            
-            metadata
-        }
-    }
 }

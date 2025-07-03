@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod mint_tests {
     use beasts_nft::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait};
-    use beasts_nft::pack::PackableBeast;
     use starknet::{ContractAddress, contract_address_const};
     use openzeppelin_token::erc721::interface::{IERC721Dispatcher, IERC721DispatcherTrait, IERC721MetadataDispatcher, IERC721MetadataDispatcherTrait};
     use openzeppelin_access::ownable::interface::IOwnableDispatcher;
