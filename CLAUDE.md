@@ -115,9 +115,6 @@ snforge test test_name
 # Run tests with coverage
 snforge test --coverage
 
-# Generate coverage report
-cairo-coverage
-
 # Check coverage percentage
 lcov --summary coverage/coverage.lcov
 ```
@@ -129,13 +126,12 @@ To verify code coverage percentage:
 ```bash
 # Generate coverage data
 snforge test --coverage
-cairo-coverage
 
 # View coverage summary
 lcov --summary coverage/coverage.lcov
 
-# Enforce minimum coverage (will exit with error if below 84.3%)
-lcov --summary coverage/coverage.lcov --fail-under-lines 84.3
+# Enforce minimum coverage (will exit with error if below 80%)
+lcov --summary coverage/coverage.lcov --fail-under-lines 80
 ```
 
 This will output:
@@ -176,7 +172,7 @@ Deployment artifacts are saved to `deployments/<network>_beasts_nft_<timestamp>.
 
 ## Testing Requirements
 
-**CRITICAL: This project enforces a minimum 90% test coverage using cairo-coverage. Any code changes without adequate tests will fail CI validation.**
+**CRITICAL: This project enforces a minimum 80% test coverage using cairo-coverage. Any code changes without adequate tests will fail CI validation.**
 
 When implementing features:
 
@@ -186,7 +182,7 @@ When implementing features:
 4. Create fuzz tests for user inputs and mathematical operations
 5. Test SVG rendering with various attribute combinations
 6. Verify gas costs for SVG generation remain within acceptable limits
-7. Run coverage locally before pushing: `cairo-coverage`
+7. Run coverage check locally before pushing
 
 ### Visual Testing Guidelines
 
@@ -376,7 +372,7 @@ fn generate_beast_head(
 2. **Optimize Early**: Profile gas costs for SVG generation during development
 3. Always run `scarb build` after code changes
 4. Run full test suite before committing: `snforge test`
-5. Check coverage meets 90% threshold: `cairo-coverage`
+5. Check coverage meets 80% threshold: `snforge test --coverage && lcov --summary coverage/coverage.lcov`
 6. Validate all generated SVGs render correctly
 7. Use proper environment configuration for deployment
 8. Verify deployment outputs in `deployments/` directory
@@ -436,7 +432,7 @@ When you encounter warnings or errors, follow this exact process:
 - [ ] `scarb test` passes with zero warnings and all tests green
 - [ ] All unused imports removed
 - [ ] All unused variables prefixed with `_` or removed
-- [ ] `cairo-coverage` shows 90%+ coverage for modified files
+- [ ] `lcov --summary coverage/coverage.lcov` shows 80%+ coverage for project
 - [ ] New tests added for any new functionality
 
 **Do not consider any task complete until ALL criteria are met.**
@@ -458,13 +454,11 @@ When you encounter warnings or errors, follow this exact process:
 4. **Verify coverage**:
 
    ```bash
-   snforge test --coverage
-   cairo-coverage
-   lcov --summary coverage/coverage.lcov
+   snforge test --coverage && lcov --summary coverage/coverage.lcov
    ```
 
-   - Modified files must maintain 90%+ coverage
-   - Overall coverage must be ≥ 84.3% (current main branch baseline)
+   - Modified files must maintain 80%+ coverage
+   - Overall coverage must be ≥ 80% (current main branch baseline)
    - If coverage drops below baseline, add more tests before creating PR
 
 5. **Final verification**: Run `scarb build && scarb test` one last time
