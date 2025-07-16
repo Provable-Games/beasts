@@ -7,7 +7,7 @@ use super::utils::felt252_to_byte_array;
 #[generate_trait]
 pub impl BeastSvgImpl of BeastSvgTrait {
     /// Generates an SVG image for a beast based on its properties
-    fn generate_beast_svg(beast: PackableBeast) -> ByteArray {
+    fn generate_beast_svg(beast: PackableBeast, king_beast_power: u16) -> ByteArray {
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
         let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
 
@@ -29,6 +29,13 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"</linearGradient>");
         svg.append(@"<path d='M13 11c0-6 9-6 9 0s-9 10.5-9 10.5S4 17 4 11s9-6 9 0Z' stroke-width='3' id='heart' stroke='#ff6b6b' fill='none'/>");
         svg.append(@"<path transform='scale(1.5)' id='bolt' stroke='#ffd166' stroke-width='2' stroke-linejoin='round' d='M6 2 2 9h5l-4 7'/>");
+        svg.append(@"<g id='crown' fill='#e6c56e' stroke='#af8a3c' stroke-width='1'>");
+        svg.append(@"<path d='M2 14h16l-1.5 4h-13z'/>");
+        svg.append(@"<path d='m3 14 2-9 3 5 4-5 3 5 2-5 2 9Z' stroke-linejoin='round' stroke-linecap='round'/>");
+        svg.append(@"<circle cx='5' cy='5' r='1.2' fill='#fff3c4'/>");
+        svg.append(@"<circle cx='12' cy='5' r='1.2' fill='#fff3c4'/>");
+        svg.append(@"<circle cx='17' cy='5' r='1.2' fill='#fff3c4'/>");
+        svg.append(@"</g>");
         svg.append(@"<pattern id='pin' width='12' height='12' patternUnits='userSpaceOnUse' patternTransform='rotate(12)'>");
         svg.append(@"<path fill='#1b1b1f' d='M0 0h12v12H0z'/>");
         svg.append(@"<path fill='#242428' opacity='.3' d='M0 0h12v6H0z'/>");
@@ -42,6 +49,11 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"<rect width='250' height='350' rx='12' fill='url(#pin)'/>");
         svg.append(@"<rect x='4.5' y='4.5' width='241' height='341' rx='9' fill='none' stroke='url(#gold)' stroke-width='3'/>");
         svg.append(@"<rect x='9' y='9' width='232' height='332' rx='7' fill='none' stroke='#fff' stroke-opacity='.05'/>");
+        
+        // Crown
+        if king_beast_power == beast_attrs.power {
+            svg.append(@"<use href='#crown' x='12' y='12' width='20' height='20'/>");
+        }
         
         // Title and name
         svg.append(@"<text x='125' y='35' text-anchor='middle' style='fill:#b0b0b6;font-size:13px;font-style:italic'>");
@@ -128,12 +140,12 @@ pub impl BeastSvgImpl of BeastSvgTrait {
     }
     
     /// Generates a complete data URI for the SVG
-    fn generate_svg_data_uri(beast: PackableBeast) -> ByteArray {
+    fn generate_svg_data_uri(beast: PackableBeast, king_beast_power: u16) -> ByteArray {
         let mut data_uri: ByteArray = "";
         data_uri.append(@"data:image/svg+xml,");
         
         // Get the SVG content
-        let svg_content = Self::generate_beast_svg(beast);
+        let svg_content = Self::generate_beast_svg(beast, king_beast_power);
         
         // Append the SVG content directly
         data_uri.append(@svg_content);

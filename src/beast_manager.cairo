@@ -116,6 +116,10 @@ pub impl BeastManagerImpl of BeastManagerTrait {
             power: beast.level * (6 - tier.into())
         }
     }
+
+    fn get_beast_power(beast: PackableBeast) -> u16 {
+        beast.level * (6 - beast_definitions::get_tier(beast.id).into())
+    }
 }
 
 /// Beast attributes for metadata

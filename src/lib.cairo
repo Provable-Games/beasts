@@ -62,6 +62,7 @@ pub mod beasts_nft {
         pub src5: SRC5Component::Storage,
         // Beast-specific storage
         pub beasts: Map<u256, PackableBeast>,
+        pub king_beasts: Map<u8, u16>,
         pub minted: Map<felt252, bool>,
         pub minter: ContractAddress,
         pub token_counter: u256,
@@ -167,6 +168,14 @@ pub mod beasts_nft {
                     
                     // Store beast
                     self.beasts.entry(mint_data.token_id).write(mint_data.beast);
+
+                    // Check king beast
+                    let king_beast_power = self.king_beasts.entry(mint_data.beast.id).read();
+                    let power = BeastManagerTrait::get_beast_power(mint_data.beast);
+
+                    if king_beast_power == 0 || power > king_beast_power {
+                        self.king_beasts.entry(mint_data.beast.id).write(power);
+                    }
                     
                     // Mint NFT
                     self.erc721.mint(to, mint_data.token_id);
@@ -229,6 +238,10 @@ pub mod beasts_nft {
         fn total_supply(self: @ContractState) -> u256 {
             self.token_counter.read()
         }
+
+        fn get_king_beast_power(self: @ContractState, beast_id: u8) -> u16 {
+            self.king_beasts.entry(beast_id).read()
+        }
     }
 
     // Custom ERC721Metadata Implementation
@@ -247,9 +260,11 @@ pub mod beasts_nft {
             
             // Get beast data
             let beast = self.beasts.entry(token_id).read();
+
+            let king_beast_power = self.king_beasts.entry(beast.id).read();
             
             // Generate metadata using pure Cairo library
-            MetadataGeneratorTrait::generate_metadata(token_id, beast)
+            MetadataGeneratorTrait::generate_metadata(token_id, beast, king_beast_power)
         }
     }
 

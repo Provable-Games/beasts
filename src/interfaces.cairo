@@ -24,4 +24,5 @@ pub trait IBeasts<TContractState> {
     fn get_beast(self: @TContractState, token_id: u256) -> PackableBeast;
     fn is_minted(self: @TContractState, beast_id: u8, prefix: u8, suffix: u8) -> bool;
     fn total_supply(self: @TContractState) -> u256;
+    fn get_king_beast_power(self: @TContractState, beast_id: u8) -> u16;
 }

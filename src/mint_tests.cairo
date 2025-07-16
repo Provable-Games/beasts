@@ -349,4 +349,187 @@ mod mint_tests {
             i += 1;
         }
     }
+
+    // ===== KING BEAST TESTS =====
+
+    #[test]
+    fn test_king_beast_basic_functionality() {
+        let (beasts, _, _, owner) = deploy_contract();
+        let minter = contract_address_const::<'minter'>();
+        let recipient = contract_address_const::<'recipient'>();
+        
+        // Set minter
+        start_cheat_caller_address(beasts.contract_address, owner);
+        beasts.set_minter(minter);
+        stop_cheat_caller_address(beasts.contract_address);
+        
+        // Initially, no king beast should exist
+        let initial_king_power = beasts.get_king_beast_power(1);
+        assert(initial_king_power == 0, 'Initial king power should be 0');
+        
+        // Test minting a beast with level 10 (first beast of this type)
+        start_cheat_caller_address(beasts.contract_address, minter);
+        beasts.mint(recipient, 1, 0, 0, 10, 100); // Beast ID 1 (Warlock), level 10
+        stop_cheat_caller_address(beasts.contract_address);
+        
+        // Calculate expected power: level * (6 - tier)
+        // Warlock is tier 1, so power = 10 * (6 - 1) = 50
+        // Verify this beast is now the king
+        let king_power = beasts.get_king_beast_power(1);
+        assert(king_power == 50, 'King power should be 50');
+    }
+
+    #[test]
+    fn test_king_beast_higher_power_replaces_king() {
+        let (beasts, _, _, owner) = deploy_contract();
+        let minter = contract_address_const::<'minter'>();
+        let recipient = contract_address_const::<'recipient'>();
+        let recipient2 = contract_address_const::<'recipient2'>();
+        
+        // Set minter
+        start_cheat_caller_address(beasts.contract_address, owner);
+        beasts.set_minter(minter);
+        stop_cheat_caller_address(beasts.contract_address);
+        
+        start_cheat_caller_address(beasts.contract_address, minter);
+        
+        // Mint first beast of type 1 (Warlock) with level 10
+        // Power = 10 * (6 - 1) = 50
+        beasts.mint(recipient, 1, 0, 0, 10, 100);
+        let king_power_after_first = beasts.get_king_beast_power(1);
+        assert(king_power_after_first == 50, 'First king should be 50');
+        
+        // Mint second beast of same type with higher level 15
+        // Power = 15 * (6 - 1) = 75
+        beasts.mint(recipient2, 1, 1, 1, 15, 150);
+        let king_power_after_second = beasts.get_king_beast_power(1);
+        assert(king_power_after_second == 75, 'King power should be 75');
+        
+        stop_cheat_caller_address(beasts.contract_address);
+    }
+
+    #[test]
+    fn test_king_beast_lower_power_does_not_replace() {
+        let (beasts, _, _, owner) = deploy_contract();
+        let minter = contract_address_const::<'minter'>();
+        let recipient = contract_address_const::<'recipient'>();
+        let recipient2 = contract_address_const::<'recipient2'>();
+        
+        // Set minter
+        start_cheat_caller_address(beasts.contract_address, owner);
+        beasts.set_minter(minter);
+        stop_cheat_caller_address(beasts.contract_address);
+        
+        start_cheat_caller_address(beasts.contract_address, minter);
+        
+        // Mint first beast of type 1 (Warlock) with level 20
+        // Power = 20 * (6 - 1) = 100
+        beasts.mint(recipient, 1, 0, 0, 20, 200);
+        let king_power_after_first = beasts.get_king_beast_power(1);
+        assert(king_power_after_first == 100, 'First king should be 100');
+        
+        // Mint second beast of same type with lower level 10
+        // Power = 10 * (6 - 1) = 50
+        beasts.mint(recipient2, 1, 1, 1, 10, 100);
+        let king_power_after_second = beasts.get_king_beast_power(1);
+        assert(king_power_after_second == 100, 'King should remain 100');
+        
+        stop_cheat_caller_address(beasts.contract_address);
+    }
+
+    #[test]
+    fn test_king_beast_different_tiers() {
+        let (beasts, _, _, owner) = deploy_contract();
+        let minter = contract_address_const::<'minter'>();
+        let recipient = contract_address_const::<'recipient'>();
+        
+        // Set minter
+        start_cheat_caller_address(beasts.contract_address, owner);
+        beasts.set_minter(minter);
+        stop_cheat_caller_address(beasts.contract_address);
+        
+        start_cheat_caller_address(beasts.contract_address, minter);
+        
+        // Mint Warlock (ID 1, Tier 1) with level 10
+        // Power = 10 * (6 - 1) = 50
+        beasts.mint(recipient, 1, 0, 0, 10, 100);
+        let warlock_king_power = beasts.get_king_beast_power(1);
+        assert(warlock_king_power == 50, 'Warlock king should be 50');
+        
+        // Mint Yeti (ID 68, Tier 4) with level 15
+        // Power = 15 * (6 - 4) = 30
+        beasts.mint(recipient, 68, 0, 0, 15, 150);
+        let yeti_king_power = beasts.get_king_beast_power(68);
+        assert(yeti_king_power == 30, 'Yeti king should be 30');
+        
+        // Mint Skeleton (ID 75, Tier 5) with level 20
+        // Power = 20 * (6 - 5) = 20
+        beasts.mint(recipient, 75, 0, 0, 20, 200);
+        let skeleton_king_power = beasts.get_king_beast_power(75);
+        assert(skeleton_king_power == 20, 'Skeleton king should be 20');
+        
+        stop_cheat_caller_address(beasts.contract_address);
+        
+        // Verify each beast type has its own king
+        assert(beasts.get_king_beast_power(1) == 50, 'Warlock king should be 50');
+        assert(beasts.get_king_beast_power(68) == 30, 'Yeti king should be 30');
+        assert(beasts.get_king_beast_power(75) == 20, 'Skeleton king should be 20');
+    }
+
+    #[test]
+    fn test_king_beast_same_power_keeps_existing() {
+        let (beasts, _, _, owner) = deploy_contract();
+        let minter = contract_address_const::<'minter'>();
+        let recipient = contract_address_const::<'recipient'>();
+        let recipient2 = contract_address_const::<'recipient2'>();
+        
+        // Set minter
+        start_cheat_caller_address(beasts.contract_address, owner);
+        beasts.set_minter(minter);
+        stop_cheat_caller_address(beasts.contract_address);
+        
+        start_cheat_caller_address(beasts.contract_address, minter);
+        
+        // Mint first beast of type 1 (Warlock) with level 10
+        // Power = 10 * (6 - 1) = 50
+        beasts.mint(recipient, 1, 0, 0, 10, 100);
+        let king_power_after_first = beasts.get_king_beast_power(1);
+        assert(king_power_after_first == 50, 'First king should be 50');
+        
+        // Mint second beast of same type with same level
+        // Power = 10 * (6 - 1) = 50
+        beasts.mint(recipient2, 1, 1, 1, 10, 100);
+        let king_power_after_second = beasts.get_king_beast_power(1);
+        assert(king_power_after_second == 50, 'King should remain 50');
+        
+        stop_cheat_caller_address(beasts.contract_address);
+    }
+
+    #[test]
+    fn test_king_beast_edge_cases() {
+        let (beasts, _, _, owner) = deploy_contract();
+        let minter = contract_address_const::<'minter'>();
+        let recipient = contract_address_const::<'recipient'>();
+        
+        // Set minter
+        start_cheat_caller_address(beasts.contract_address, owner);
+        beasts.set_minter(minter);
+        stop_cheat_caller_address(beasts.contract_address);
+        
+        start_cheat_caller_address(beasts.contract_address, minter);
+        
+        // Test with minimum level
+        beasts.mint(recipient, 1, 0, 0, 1, 10);
+        let min_king_power = beasts.get_king_beast_power(1);
+        // Warlock (Tier 1): 1 * (6 - 1) = 5
+        assert(min_king_power == 5, 'Min king should be 5');
+        
+        // Test with maximum valid beast ID and high level
+        beasts.mint(recipient, 75, 0, 0, 1000, 10000);
+        let max_king_power = beasts.get_king_beast_power(75);
+        // Skeleton (Tier 5): 1000 * (6 - 5) = 1000
+        assert(max_king_power == 1000, 'Max king should be 1000');
+        
+        stop_cheat_caller_address(beasts.contract_address);
+    }
 }

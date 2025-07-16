@@ -26,13 +26,13 @@ pub struct Attribute {
 #[generate_trait]
 pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
     /// Generates complete metadata JSON for a beast
-    fn generate_metadata(token_id: u256, beast: PackableBeast) -> ByteArray {
-        let components = Self::build_metadata_components(token_id, beast);
+    fn generate_metadata(token_id: u256, beast: PackableBeast, king_beast_power: u16) -> ByteArray {
+        let components = Self::build_metadata_components(token_id, beast, king_beast_power);
         Self::components_to_json(components)
     }
 
     /// Builds metadata components from beast data
-    fn build_metadata_components(token_id: u256, beast: PackableBeast) -> MetadataComponents {
+    fn build_metadata_components(token_id: u256, beast: PackableBeast, king_beast_power: u16) -> MetadataComponents {
         // Build name
         let mut name: ByteArray = "";
         name.append(@"Beast #");
@@ -42,7 +42,7 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         let description = "A fearsome beast from the Loot Survivor universe";
 
         // Image
-        let image = BeastSvgTrait::generate_svg_data_uri(beast);
+        let image = BeastSvgTrait::generate_svg_data_uri(beast, king_beast_power);
 
         // Build attributes
         let mut attributes = array![];
@@ -58,7 +58,7 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 
         // Get other attributes
         let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
-        
+   
         // Type attribute
         attributes.append(Attribute {
             trait_type: "Type",
@@ -111,6 +111,20 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         attributes.append(Attribute {
             trait_type: "Power",
             value: power_value
+        });
+
+        // King beast attribute
+        let is_king_beast: ByteArray = if king_beast_power == BeastManagerTrait::get_beast_power(beast) {
+            "Yes"
+        } else {
+            "No"
+        };
+
+        let mut king_beast_value: ByteArray = "";
+        king_beast_value.append(@format!("{}", is_king_beast));
+        attributes.append(Attribute {
+            trait_type: "King Beast",
+            value: king_beast_value
         });
 
         MetadataComponents {
@@ -219,7 +233,7 @@ mod tests {
     #[test]
     fn test_generate_metadata() {
         let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337 };
-        let metadata = MetadataGeneratorTrait::generate_metadata(123, beast);
+        let metadata = MetadataGeneratorTrait::generate_metadata(123, beast, 0);
         
         // Check JSON structure
         assert(find_substring(@metadata, @"{\"name\":\"Beast #123\""), 'Should have name');
@@ -240,7 +254,7 @@ mod tests {
     #[test]
     fn test_generate_metadata_no_prefix_suffix() {
         let beast = PackableBeast { id: 1, prefix: 0, suffix: 0, level: 1, health: 100 };
-        let metadata = MetadataGeneratorTrait::generate_metadata(1, beast);
+        let metadata = MetadataGeneratorTrait::generate_metadata(1, beast, 0);
         
         // Should not have prefix/suffix attributes
         assert(!find_substring(@metadata, @"\"Prefix\""), 'Should not have prefix');
@@ -254,11 +268,11 @@ mod tests {
     #[test]
     fn test_build_metadata_components() {
         let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337 };
-        let components = MetadataGeneratorTrait::build_metadata_components(123, beast);
+        let components = MetadataGeneratorTrait::build_metadata_components(123, beast, 0);
         
         assert(components.name == "Beast #123", 'Name mismatch');
         assert(components.description == "A fearsome beast from the Loot Survivor universe", 'Description mismatch');
-        assert(components.attributes.len() == 8, 'Should have 7 attributes');
+        assert(components.attributes.len() == 9, 'Should have 9 attributes');
     }
 
     #[test]
