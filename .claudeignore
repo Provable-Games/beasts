@@ -10,7 +10,6 @@ Scarb.lock
 
 # Test artifacts
 snfoundry_trace/
-coverage/
 *.coverage
 *.profraw
 *.profdata
