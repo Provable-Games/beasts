@@ -1,36 +1,39 @@
-pub mod beast_svg;
 pub mod beast_definitions;
-pub mod pack;
-pub mod utils;
-pub mod interfaces;
 pub mod beast_manager;
-pub mod metadata_generator;
-pub mod minting_coordinator;
+pub mod beast_svg;
 
 #[cfg(test)]
-mod tests;
+mod integration_test;
+pub mod interfaces;
+pub mod metadata_generator;
+
+#[cfg(test)]
+mod mint_tests;
+pub mod minting_coordinator;
+pub mod pack;
 
 #[cfg(test)]
 mod test_felt252_conversion;
 
 #[cfg(test)]
-mod mint_tests;
-
-#[cfg(test)]
-mod integration_test;
+mod tests;
+pub mod utils;
 
 #[starknet::contract]
 pub mod beasts_nft {
     use openzeppelin_access::ownable::OwnableComponent;
     use openzeppelin_introspection::src5::SRC5Component;
+    use openzeppelin_token::erc721::interface::IERC721Metadata;
     use openzeppelin_token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
-    use openzeppelin_token::erc721::interface::{IERC721Metadata};
-    use starknet::{ContractAddress, storage::{Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess}};
-    use super::pack::PackableBeast;
-    use super::interfaces::IBeasts;
+    use starknet::ContractAddress;
+    use starknet::storage::{
+        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+    };
     use super::beast_manager::{BeastManagerTrait, BeastResult};
+    use super::interfaces::IBeasts;
     use super::metadata_generator::MetadataGeneratorTrait;
-    use super::minting_coordinator::{MintingCoordinatorTrait, MintRequest};
+    use super::minting_coordinator::{MintRequest, MintingCoordinatorTrait};
+    use super::pack::PackableBeast;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -109,16 +112,14 @@ pub mod beasts_nft {
                 }
                 let id = *token_ids.pop_front().unwrap();
                 let beast_id: u8 = id.try_into().unwrap();
-                
+
                 // Create genesis beast using pure Cairo library
                 match BeastManagerTrait::create_genesis_beast(beast_id) {
                     BeastResult::Ok(beast) => {
                         self.beasts.entry(id).write(beast);
                         self.erc721.mint(recipient, id);
                     },
-                    BeastResult::Err(e) => {
-                        core::panic_with_felt252(e);
-                    }
+                    BeastResult::Err(e) => { core::panic_with_felt252(e); },
                 }
             }
         }
@@ -143,47 +144,45 @@ pub mod beasts_nft {
             prefix: u8,
             suffix: u8,
             level: u16,
-            health: u16
+            health: u16,
         ) {
             // Check minter authorization
             let caller = starknet::get_caller_address();
             assert(caller == self.minter.read(), 'Not authorized to mint');
-            
+
             // Prepare mint request
             let request = MintRequest { beast_id, prefix, suffix, level, health };
             let next_token_id = self.token_counter.read() + 1;
-            
+
             // Validate and prepare mint data
             match MintingCoordinatorTrait::prepare_mint(request, next_token_id) {
                 BeastResult::Ok(mint_data) => {
                     // Check for duplicates
                     assert(!self.minted.entry(mint_data.hash).read(), 'Beast already minted');
-                    
+
                     // Mark as minted
                     self.minted.entry(mint_data.hash).write(true);
-                    
+
                     // Update token counter
                     self.token_counter.write(mint_data.token_id);
-                    
+
                     // Store beast
                     self.beasts.entry(mint_data.token_id).write(mint_data.beast);
-                    
+
                     // Mint NFT
                     self.erc721.mint(to, mint_data.token_id);
                 },
-                BeastResult::Err(e) => {
-                    core::panic_with_felt252(e);
-                }
+                BeastResult::Err(e) => { core::panic_with_felt252(e); },
             }
         }
 
         fn mint_genesis_beasts(ref self: ContractState, to: ContractAddress) {
             self.ownable.assert_only_owner();
-            
+
             // Prepare genesis batch
             let starting_token_id = self.token_counter.read() + 1;
             let batch = MintingCoordinatorTrait::prepare_genesis_batch(starting_token_id);
-            
+
             // Process each beast in the batch
             let mut i = 0;
             let batch_len = batch.len();
@@ -191,27 +190,24 @@ pub mod beasts_nft {
                 if i >= batch_len {
                     break;
                 }
-                
+
                 match batch.at(i) {
                     BeastResult::Ok(mint_data) => {
                         // Store beast
                         self.beasts.entry(*mint_data.token_id).write(*mint_data.beast);
-                        
+
                         // Mint NFT
                         self.erc721.mint(to, *mint_data.token_id);
                     },
-                    BeastResult::Err(e) => {
-                        core::panic_with_felt252(*e);
-                    }
+                    BeastResult::Err(e) => { core::panic_with_felt252(*e); },
                 }
-                
+
                 i += 1;
-            };
-            
+            }
+
             // Update token counter
             let new_supply = MintingCoordinatorTrait::calculate_new_supply(
-                self.token_counter.read(), 
-                75
+                self.token_counter.read(), 75,
             );
             self.token_counter.write(new_supply);
         }
@@ -244,13 +240,12 @@ pub mod beasts_nft {
 
         fn token_uri(self: @ContractState, token_id: u256) -> ByteArray {
             self.erc721._require_owned(token_id);
-            
+
             // Get beast data
             let beast = self.beasts.entry(token_id).read();
-            
+
             // Generate metadata using pure Cairo library
             MetadataGeneratorTrait::generate_metadata(token_id, beast)
         }
     }
-
 }

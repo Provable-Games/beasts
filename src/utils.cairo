@@ -4,16 +4,16 @@ use core::byte_array::ByteArrayTrait;
 /// This handles Cairo's short string encoding
 pub fn felt252_to_byte_array(value: felt252) -> ByteArray {
     let mut result = "";
-    
+
     // Handle empty/zero case
     if value == 0 {
         return result;
     }
-    
+
     // Convert felt252 to u256 for integer operations
     let mut data: u256 = value.into();
     let mut chars = array![];
-    
+
     // Extract bytes from felt252 (up to 31 bytes for short strings)
     loop {
         if data == 0 {
@@ -22,8 +22,8 @@ pub fn felt252_to_byte_array(value: felt252) -> ByteArray {
         let byte = data % 256;
         chars.append(byte.try_into().unwrap());
         data = data / 256;
-    };
-    
+    }
+
     // Reverse the array since we extracted bytes in reverse order
     let mut i = chars.len();
     loop {
@@ -35,7 +35,7 @@ pub fn felt252_to_byte_array(value: felt252) -> ByteArray {
         if char != 0 {
             result.append_byte(char);
         }
-    };
-    
+    }
+
     result
 }
