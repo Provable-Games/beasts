@@ -174,45 +174,6 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         
         json
     }
-
-    /// Generates a simple text description of a beast
-    fn generate_description(beast: PackableBeast) -> ByteArray {
-        let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
-        let attrs = BeastManagerTrait::get_beast_attributes(beast);
-        
-        let mut description: ByteArray = "";
-        
-        // Add prefix if exists
-        if beast.prefix > 0 {
-            description.append(@felt252_to_byte_array(prefix_name));
-            description.append(@" ");
-        }
-        
-        // Add beast name
-        description.append(@felt252_to_byte_array(beast_name));
-        
-        // Add suffix if exists
-        if beast.suffix > 0 {
-            description.append(@" ");
-            description.append(@felt252_to_byte_array(suffix_name));
-        }
-        
-        // Add type and tier
-        description.append(@" - ");
-        description.append(@felt252_to_byte_array(attrs.beast_type));
-        description.append(@" Tier ");
-        let tier_str = felt252_to_byte_array(attrs.tier.into());
-        description.append(@tier_str);
-        
-        // Add level and health
-        description.append(@" (Level ");
-        description.append(@format!("{}", attrs.level));
-        description.append(@", HP ");
-        description.append(@format!("{}", attrs.health));
-        description.append(@")");
-        
-        description
-    }
 }
 
 #[cfg(test)]
@@ -297,23 +258,7 @@ mod tests {
         
         assert(components.name == "Beast #123", 'Name mismatch');
         assert(components.description == "A fearsome beast from the Loot Survivor universe", 'Description mismatch');
-        assert(components.attributes.len() == 7, 'Should have 7 attributes');
-    }
-
-    #[test]
-    fn test_generate_description() {
-        let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337 };
-        let description = MetadataGeneratorTrait::generate_description(beast);
-        
-        assert(description == "Agony Jiangshi Root - Magical Tier 1 (Level 42, HP 1337)", 'Description mismatch');
-    }
-
-    #[test]
-    fn test_generate_description_no_prefix_suffix() {
-        let beast = PackableBeast { id: 1, prefix: 0, suffix: 0, level: 10, health: 500 };
-        let description = MetadataGeneratorTrait::generate_description(beast);
-        
-        assert(description == "Warlock - Magical Tier 1 (Level 10, HP 500)", 'Description mismatch');
+        assert(components.attributes.len() == 8, 'Should have 7 attributes');
     }
 
     #[test]
