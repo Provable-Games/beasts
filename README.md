@@ -19,78 +19,20 @@
 <tr>
 <td align="center">
 
-### Magical Beast
-```svg
-<svg xmlns='http://www.w3.org/2000/svg' width='250' height='350' viewBox='0 0 250 350'>
-  <defs>
-    <linearGradient id='bg1' x1='0%' y1='0%' x2='0%' y2='100%'>
-      <stop offset='0%' style='stop-color:#2d1b69;stop-opacity:1' />
-      <stop offset='100%' style='stop-color:#0f0c29;stop-opacity:1' />
-    </linearGradient>
-  </defs>
-  <rect width='250' height='350' fill='url(#bg1)'/>
-  <rect x='10' y='10' width='230' height='330' fill='none' stroke='#FFD700' stroke-width='3' rx='10'/>
-  <text x='125' y='35' font-family='Arial' font-size='18' font-weight='bold' text-anchor='middle' fill='#FFD700'>Doom Shadow Warlock</text>
-  <circle cx='125' cy='150' r='60' fill='#4B0082' opacity='0.8'/>
-  <path d='M 125 90 L 105 130 L 145 130 Z' fill='#8B008B'/>
-  <circle cx='110' cy='140' r='8' fill='#FF00FF'/>
-  <circle cx='140' cy='140' r='8' fill='#FF00FF'/>
-  <path d='M 115 160 Q 125 170 135 160' stroke='#DDA0DD' stroke-width='2' fill='none'/>
-  <text x='125' y='240' font-family='Arial' font-size='14' text-anchor='middle' fill='#ffffff'>🔮 Magical • Tier 5</text>
-  <text x='125' y='260' font-family='Arial' font-size='12' text-anchor='middle' fill='#ffffff'>Level: 99 | Health: 512</text>
-</svg>
-```
+### Warlock (Magical)
+<img src="assets/examples/warlock-magical.svg" width="250" height="350" alt="Doom Shadow Warlock - Magical Tier 1 Beast">
 
 </td>
 <td align="center">
 
-### Hunter Beast
-```svg
-<svg xmlns='http://www.w3.org/2000/svg' width='250' height='350' viewBox='0 0 250 350'>
-  <defs>
-    <linearGradient id='bg2' x1='0%' y1='0%' x2='0%' y2='100%'>
-      <stop offset='0%' style='stop-color:#1e3c26;stop-opacity:1' />
-      <stop offset='100%' style='stop-color:#0a1f10;stop-opacity:1' />
-    </linearGradient>
-  </defs>
-  <rect width='250' height='350' fill='url(#bg2)'/>
-  <rect x='10' y='10' width='230' height='330' fill='none' stroke='#C0C0C0' stroke-width='3' rx='10'/>
-  <text x='125' y='35' font-family='Arial' font-size='18' font-weight='bold' text-anchor='middle' fill='#C0C0C0'>Rage Claw Griffin</text>
-  <ellipse cx='125' cy='150' rx='70' ry='50' fill='#228B22' opacity='0.8'/>
-  <path d='M 85 150 L 65 130 M 85 150 L 65 170' stroke='#32CD32' stroke-width='4' stroke-linecap='round'/>
-  <path d='M 165 150 L 185 130 M 165 150 L 185 170' stroke='#32CD32' stroke-width='4' stroke-linecap='round'/>
-  <circle cx='105' cy='140' r='6' fill='#00FF00'/>
-  <circle cx='145' cy='140' r='6' fill='#00FF00'/>
-  <path d='M 125 160 L 115 170 L 135 170 Z' fill='#006400'/>
-  <text x='125' y='240' font-family='Arial' font-size='14' text-anchor='middle' fill='#ffffff'>🏹 Hunter • Tier 3</text>
-  <text x='125' y='260' font-family='Arial' font-size='12' text-anchor='middle' fill='#ffffff'>Level: 45 | Health: 256</text>
-</svg>
-```
+### Dragon (Hunter)
+<img src="assets/examples/dragon-hunter.svg" width="250" height="350" alt="Rage Flame Dragon - Hunter Tier 1 Beast">
 
 </td>
 <td align="center">
 
-### Brute Beast
-```svg
-<svg xmlns='http://www.w3.org/2000/svg' width='250' height='350' viewBox='0 0 250 350'>
-  <defs>
-    <linearGradient id='bg3' x1='0%' y1='0%' x2='0%' y2='100%'>
-      <stop offset='0%' style='stop-color:#4a0e0e;stop-opacity:1' />
-      <stop offset='100%' style='stop-color:#1a0505;stop-opacity:1' />
-    </linearGradient>
-  </defs>
-  <rect width='250' height='350' fill='url(#bg3)'/>
-  <rect x='10' y='10' width='230' height='330' fill='none' stroke='#CD853F' stroke-width='3' rx='10'/>
-  <text x='125' y='35' font-family='Arial' font-size='18' font-weight='bold' text-anchor='middle' fill='#CD853F'>Blood Iron Minotaur</text>
-  <rect x='75' y='100' width='100' height='100' rx='20' fill='#8B0000' opacity='0.8'/>
-  <path d='M 95 120 L 85 90 M 155 120 L 165 90' stroke='#DC143C' stroke-width='6' stroke-linecap='round'/>
-  <circle cx='105' cy='140' r='10' fill='#FF0000'/>
-  <circle cx='145' cy='140' r='10' fill='#FF0000'/>
-  <rect x='115' y='165' width='20' height='15' fill='#8B0000'/>
-  <text x='125' y='240' font-family='Arial' font-size='14' text-anchor='middle' fill='#ffffff'>⚔️ Brute • Tier 1</text>
-  <text x='125' y='260' font-family='Arial' font-size='12' text-anchor='middle' fill='#ffffff'>Level: 12 | Health: 128</text>
-</svg>
-```
+### Balrog (Brute)
+<img src="assets/examples/balrog-brute.svg" width="250" height="350" alt="Blood Iron Balrog - Brute Tier 1 Beast">
 
 </td>
 </tr>

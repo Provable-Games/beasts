@@ -215,66 +215,62 @@ Beasts NFT cards follow the classic trading card game aesthetic inspired by Poke
 
 ### Card Layout Blueprint
 
-**Card Dimensions**: Standard trading card ratio (2.5:3.5)
+**Card Dimensions**: 250x350 pixels (Standard trading card ratio)
 
-- Portrait orientation
-- Clean borders with subtle gradients based on tier
-- Background patterns that complement but don't overpower the beast
+- Portrait orientation with black background
+- Ornate orange borders with gradient depth effect for Tier 1 beasts
+- Multi-layered frame creating illusion of depth/room perspective
 
 **Visual Hierarchy** (top to bottom):
 
 1. **Header Zone**:
+   - Level indicator ("LVL XX") - top left corner in monospace font
+   - Health display ("XXX❤") - top right corner with red heart icon
+   - All text in white (#FFFFFF) for contrast
 
-   - Beast name (e.g., "Blood Shadow" Warlock) - bold, fantasy font
-   - Health indicator (1-1024) - top right corner
-   - Level badge (1-999) - near health indicator
-
-2. **Type Symbol**:
-
-   - Magic (🔮), Brute (⚔️), or Hunter (🏹) - use iconic symbols
-   - Position prominently below the name
+2. **Beast Names**:
+   - Special name (e.g., "Doom Shadow") - centered, italic, monospace
+   - Beast species name (e.g., "Warlock") - centered below image, larger size
 
 3. **Art Window**:
+   - Central 150x150 pixel beast image from beast_images.cairo
+   - Positioned to allow room for ornate border effects
+   - Preserves aspect ratio of original beast artwork
 
-   - Central focal point showcasing the beast
-   - Dynamic poses suggesting movement and personality
-   - Environmental elements hinting at the beast's nature
-
-4. **Tier Indicator**:
-
-   - Visual treatment through border color/pattern:
-     - Tier 1: Bronze/copper tones
-     - Tier 2: Silver/steel tones
-     - Tier 3: Gold/amber tones
-     - Tier 4: Platinum/crystal tones
-     - Tier 5: Prismatic/legendary treatment
+4. **Border Design**:
+   - Main border with gradient effect (30% to 100% opacity)
+   - 4 inner frame layers for depth (decreasing opacity)
+   - Corner ornaments with curved path decorations
+   - Ceiling beam and floor effects for 3D illusion
+   - Side wall perspective effects
 
 5. **Footer**:
-   - Beast ID number
-   - Set symbol
-   - Minimalist design to not distract from the card
+   - Card number format "X/1242" - bottom right
+   - First number in dynamic tspan for onchain updates
+   - Semi-transparent (70% opacity) for subtlety
 
 ### Visual Language Guidelines
 
 **Beast Stats Display**:
 
-- **Name**: Two-part structure with prefix + base (e.g., "Hate Song" Typhon)
-- **Health**: Clear numerical display with heart/health icon
-- **Level**: Prominent level indicator with growth symbolism
-- **Type**: Visual symbol that instantly communicates Magic/Brute/Hunter
-- **Tier**: Shown through border treatment and overall card prestige
+- **Name**: Two-part structure - special name (prefix + suffix) above beast species name
+- **Health**: Numeric value followed by red heart emoji (❤) in top-right
+- **Level**: "LVL XX" format in top-left corner
+- **Card Number**: "X/1242" format with dynamic first number for onchain rendering
 
 **Color Philosophy**:
 
-- Type-based accent colors (Magic=purple, Brute=red, Hunter=green)
-- Tier affects border complexity and shimmer effects
-- Maintain high contrast for stat readability
+- Orange (#FF8C00) borders for all Tier 1 beasts
+- Gradient effects using opacity variations (30%-100%)
+- Pure white (#FFFFFF) text on black background for maximum contrast
+- Red (#FF0000) exclusively for heart icon
 
 **Typography**:
 
-- Beast names in bold fantasy fonts
-- Stats in clear, readable numbers
-- Consistent sizing for easy comparison between cards
+- Monospace font family throughout entire card
+- Font sizes: 14px (level), 18px (health/special name), 26px (beast name), 12px (card number)
+- Italic style for special names only
+- All text uses standard weight (no bold)
 
 ### Creative Freedom
 
@@ -293,15 +289,19 @@ Remember: The goal is to create cards that feel collectible and showcase each be
 **Component Library**:
 
 ```svg
-<!-- Define reusable components in defs -->
+<!-- Define reusable gradient in defs for all cards -->
 <defs>
-  <g id="eye-angry">...</g>
-  <g id="horn-curved">...</g>
-  <linearGradient id="rarity-gold">...</linearGradient>
+  <linearGradient id='depthGradient' x1='0%' y1='0%' x2='100%' y2='100%'>
+    <stop offset='0%' style='stop-color:#FF8C00;stop-opacity:0.3' />
+    <stop offset='50%' style='stop-color:#FF8C00;stop-opacity:0.6' />
+    <stop offset='100%' style='stop-color:#FF8C00;stop-opacity:1' />
+  </linearGradient>
 </defs>
 
-<!-- Reference components efficiently -->
-<use href="#eye-angry" transform="translate(100,50)"/>
+<!-- Ornate border with multiple depth layers -->
+<rect x='10' y='10' width='230' height='330' rx='10' ry='10' fill='none' stroke='url(#depthGradient)' stroke-width='3'/>
+<!-- 4 inner frames with decreasing opacity for depth -->
+<rect x='15' y='15' width='220' height='320' rx='8' ry='8' fill='none' stroke='#FF8C00' stroke-width='1' opacity='0.5'/>
 ```
 
 **Color Palette Management**:

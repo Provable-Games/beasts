@@ -1,0 +1,69 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='250' height='350' viewBox='0 0 250 350'>
+  <rect width='250' height='350' fill='#000000'/>
+  <!-- Fancy border with depth -->
+  <defs>
+    <!-- Animated gradient for magical border effect -->
+    <linearGradient id='depthGradient' x1='0%' y1='0%' x2='100%' y2='100%'>
+      <stop offset='0%' style='stop-color:#FF8C00;stop-opacity:0.3'>
+        <animate attributeName='stop-opacity' values='0.3;0.7;0.3' dur='3s' repeatCount='indefinite' />
+      </stop>
+      <stop offset='50%' style='stop-color:#FFFFFF;stop-opacity:0.6'>
+        <animate attributeName='stop-opacity' values='0.6;1;0.6' dur='3s' repeatCount='indefinite' />
+      </stop>
+      <stop offset='100%' style='stop-color:#FF8C00;stop-opacity:1'>
+        <animate attributeName='stop-opacity' values='1;0.5;1' dur='3s' repeatCount='indefinite' />
+      </stop>
+      <animateTransform attributeName='gradientTransform' type='rotate' from='0 0.5 0.5' to='360 0.5 0.5' dur='8s' repeatCount='indefinite' />
+    </linearGradient>
+  </defs>
+  
+  <g>
+    <!-- Main border -->
+    <rect x='10' y='10' width='230' height='330' rx='10' ry='10' fill='none' stroke='url(#depthGradient)' stroke-width='3'/>
+    
+    <!-- Inner frame for depth -->
+    <rect x='15' y='15' width='220' height='320' rx='8' ry='8' fill='none' stroke='#FFFFFF' stroke-width='1' opacity='0.5'>
+      <animate attributeName='opacity' values='0.5;0.8;0.5' dur='4s' repeatCount='indefinite' />
+    </rect>
+    <rect x='18' y='18' width='214' height='314' rx='6' ry='6' fill='none' stroke='#FFFFFF' stroke-width='0.5' opacity='0.3'>
+      <animate attributeName='opacity' values='0.3;0.5;0.3' dur='4s' repeatCount='indefinite' begin='0.5s' />
+    </rect>
+  </g>
+  
+  <!-- Level (top-left) -->
+  <text x='30' y='40' class='VT323' font-size='13' fill='#FFFFFF'>LVL 92</text>
+  
+  <!-- Health (top-right) with heart icon -->
+  <text x='222' y='40' class='VT323' font-size='13' text-anchor='end' fill='#FFFFFF'>512</text>
+  <text x='187' y='40' font-family='VT323' font-size='13' fill='#FF0000'>❤</text>
+  
+  <!-- Special name (centered) -->
+  <text x='125' y='75' class='VT323' font-size='15' text-anchor='middle' fill='#FFFFFF'>"Rage Flame"</text>
+  
+  <!-- Dragon beast image -->
+  <image x='50' y='95' width='150' height='150' image-rendering='pixelated' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAAXNSR0IArs4c6QAAAAlQTFRFAAAAAAAA/4AABnhFZgAAAAN0Uk5TAP//RFDWIQAAAN9JREFUOI2FUwESwzAIUv7/6F0iIOtuW3ttUkVUYqv/XPX4xm8APhGVzvMCvgCg5YEgAGPGWYEMqbHrOX6XAQJuxDUrHK2wA2AQ/YvgtjDREIBkNpa2KsMpia8GkgEuj6lLjaFNIUnvXfCeFMtxYSqSWd2khKMObo0cijop7GcjyqCNAOxkGHQuV0n5VfUe5jCXjodiB8WYar3RyIo9gJQvGJpS64PXgmdgNh39TkEl1UFIZBgHRv6Ogdy6Stk7ETHbBZshZGqugUEciXXcoY2koQKlzqAcnu3iTaKPn7tf1nUFaqrjsNoAAAAASUVORK5CYII=' preserveAspectRatio='xMidYMid meet'/>
+  
+  <!-- Beast name (centered below image) -->
+  <text x='125' y='280' class='VT323' font-size='17' text-anchor='middle' fill='#FFFFFF'>DRAGON</text>
+  
+  <!-- Type icon (bottom-left) - Hunter -->
+  <g transform='translate(25, 305)'>
+    <!-- Hunter crosshair icon -->
+    <circle cx='10' cy='10' r='8' fill='none' stroke='#FFFFFF' stroke-width='1.5' opacity='0.8'>
+      <animate attributeName='r' values='8;10;8' dur='2s' repeatCount='indefinite' />
+    </circle>
+    <line x1='10' y1='0' x2='10' y2='4' stroke='#FFFFFF' stroke-width='1.5' opacity='0.9'/>
+    <line x1='10' y1='16' x2='10' y2='20' stroke='#FFFFFF' stroke-width='1.5' opacity='0.9'/>
+    <line x1='0' y1='10' x2='4' y2='10' stroke='#FFFFFF' stroke-width='1.5' opacity='0.9'/>
+    <line x1='16' y1='10' x2='20' y2='10' stroke='#FFFFFF' stroke-width='1.5' opacity='0.9'/>
+    <!-- Center dot -->
+    <circle cx='10' cy='10' r='1.5' fill='#FFFFFF' opacity='1'>
+      <animate attributeName='opacity' values='1;0.6;1' dur='1.5s' repeatCount='indefinite' />
+    </circle>
+  </g>
+  
+  <!-- Card number (bottom-right) -->
+  <text x='225' y='325' class='VT323' font-size='10' text-anchor='end' fill='#FFFFFF' opacity='0.7'>
+    <tspan>29</tspan><tspan>/1242</tspan>
+  </text>
+</svg>
