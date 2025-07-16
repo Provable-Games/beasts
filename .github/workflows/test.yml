@@ -75,6 +75,10 @@ jobs:
           # Wait for all background jobs to complete
           wait
 
+      # Install lcov for coverage reporting
+      - name: Install lcov
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
       - name: Cairo lint
         run: scarb fmt --check --workspace
 
