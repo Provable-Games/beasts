@@ -55,21 +55,17 @@ pub impl BeastSvgImpl of BeastSvgTrait {
             svg.append(@"<use href='#crown' x='12' y='12' width='20' height='20'/>");
         }
         
-        // Title and name
+        // Specials and name
         svg.append(@"<text x='125' y='35' text-anchor='middle' style='fill:#b0b0b6;font-size:13px;font-style:italic'>");
-        svg.append(@"\"");
         if prefix_name != 0 {
+            svg.append(@"\"");
             let prefix_str = felt252_to_byte_array(prefix_name);
             svg.append(@prefix_str);
-        }
-        if suffix_name != 0 {
-            if prefix_name != 0 {
-                svg.append(@" ");
-            }
+            svg.append(@" ");
             let suffix_str = felt252_to_byte_array(suffix_name);
             svg.append(@suffix_str);
+            svg.append(@"\"");
         }
-        svg.append(@"\"");
         svg.append(@"</text>");
         
         svg.append(@"<text x='125' y='57' text-anchor='middle' style='fill:#fff;font-size:18px;font-weight:700;letter-spacing:.7px'>");
