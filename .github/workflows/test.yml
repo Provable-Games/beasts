@@ -93,4 +93,4 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: Provable-Games/github-goblin
+          slug: Provable-Games/beasts
