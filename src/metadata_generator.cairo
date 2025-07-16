@@ -66,9 +66,11 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         });
 
         // Tier attribute
+        let mut tier_value: ByteArray = "";
+        tier_value.append(@format!("{}", beast_attrs.tier));
         attributes.append(Attribute {
             trait_type: "Tier",
-            value: felt252_to_byte_array(beast_attrs.tier)
+            value: tier_value
         });
 
         // Prefix attribute (if exists)
@@ -101,6 +103,14 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         attributes.append(Attribute {
             trait_type: "Health",
             value: health_value
+        });
+
+        // Power attribute
+        let mut power_value: ByteArray = "";
+        power_value.append(@format!("{}", beast_attrs.level * (6 - beast_attrs.tier.into())));
+        attributes.append(Attribute {
+            trait_type: "Power",
+            value: power_value
         });
 
         MetadataComponents {
@@ -191,7 +201,8 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         description.append(@" - ");
         description.append(@felt252_to_byte_array(attrs.beast_type));
         description.append(@" Tier ");
-        description.append(@felt252_to_byte_array(attrs.tier));
+        let tier_str = felt252_to_byte_array(attrs.tier.into());
+        description.append(@tier_str);
         
         // Add level and health
         description.append(@" (Level ");

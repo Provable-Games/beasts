@@ -44,11 +44,10 @@ mod integration_test {
         assert(type_str == "Magical", 'Beast type');
         
         let tier = beast_definitions::get_tier(beast.id);
-        let tier_str = felt252_to_byte_array(tier);
-        assert(tier_str == "1", 'Beast tier');
+        assert(tier == 1, 'Beast tier');
         
         println!("Beast: {} {} {}", prefix_str, beast_name_str, suffix_str);
-        println!("Type: {}, Tier: {}", type_str, tier_str);
+        println!("Type: {}, Tier: {}", type_str, tier);
         println!("Level: {}, Health: {}", beast.level, beast.health);
     }
     

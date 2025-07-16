@@ -29,7 +29,7 @@ mod test_felt252_conversion {
         
         // Test tiers
         let tier1 = beast_definitions::TIER_1;
-        let tier1_str = felt252_to_byte_array(tier1);
+        let tier1_str = felt252_to_byte_array(tier1.into());
         println!("Tier 1 as ByteArray: {}", tier1_str);
         assert(tier1_str == "1", 'Should convert to 1');
     }

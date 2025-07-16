@@ -1,5 +1,5 @@
 use core::byte_array::ByteArrayTrait;
-use super::beast_definitions::{get_beast_name, get_tier, get_type, get_prefix, get_suffix};
+use super::beast_manager::BeastManagerTrait;
 use super::beast_definitions;
 use super::pack::PackableBeast;
 use super::utils::felt252_to_byte_array;
@@ -8,101 +8,117 @@ use super::utils::felt252_to_byte_array;
 pub impl BeastSvgImpl of BeastSvgTrait {
     /// Generates an SVG image for a beast based on its properties
     fn generate_beast_svg(beast: PackableBeast) -> ByteArray {
+        let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
+        let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
+
         let mut svg: ByteArray = "";
         
         // SVG header
         svg.append(@"<svg xmlns='http://www.w3.org/2000/svg' width='250' height='350' viewBox='0 0 250 350'>");
         
-        // Background gradient based on beast type
-        let beast_type = get_type(beast.id);
+        // Definitions
         svg.append(@"<defs>");
-        
-        if beast_type == beast_definitions::TYPE_MAGICAL {
-            // Purple gradient for magical beasts
-            svg.append(@"<linearGradient id='bg' x1='0%' y1='0%' x2='0%' y2='100%'>");
-            svg.append(@"<stop offset='0%' style='stop-color:#2d1b69;stop-opacity:1' />");
-            svg.append(@"<stop offset='100%' style='stop-color:#0f0c29;stop-opacity:1' />");
-            svg.append(@"</linearGradient>");
-        } else if beast_type == beast_definitions::TYPE_HUNTER {
-            // Green gradient for hunter beasts
-            svg.append(@"<linearGradient id='bg' x1='0%' y1='0%' x2='0%' y2='100%'>");
-            svg.append(@"<stop offset='0%' style='stop-color:#1e3c26;stop-opacity:1' />");
-            svg.append(@"<stop offset='100%' style='stop-color:#0a1f10;stop-opacity:1' />");
-            svg.append(@"</linearGradient>");
-        } else {
-            // Red gradient for brute beasts
-            svg.append(@"<linearGradient id='bg' x1='0%' y1='0%' x2='0%' y2='100%'>");
-            svg.append(@"<stop offset='0%' style='stop-color:#4a0e0e;stop-opacity:1' />");
-            svg.append(@"<stop offset='100%' style='stop-color:#1a0505;stop-opacity:1' />");
-            svg.append(@"</linearGradient>");
-        }
-        
+        svg.append(@"<linearGradient id='gold' x1='0%' y1='0%' x2='100%' y2='100%'>");
+        svg.append(@"<stop offset='0%' stop-color='#e5d8b2'/>");
+        svg.append(@"<stop offset='60%' stop-color='#b79a5e'/>");
+        svg.append(@"<stop offset='100%' stop-color='#8a6d3b'/>");
+        svg.append(@"</linearGradient>");
+        svg.append(@"<linearGradient id='panel' x1='0%' y1='0%' x2='0%' y2='100%'>");
+        svg.append(@"<stop offset='0%' stop-color='#2d2d32'/>");
+        svg.append(@"<stop offset='100%' stop-color='#1e1e22'/>");
+        svg.append(@"</linearGradient>");
+        svg.append(@"<path d='M13 11c0-6 9-6 9 0s-9 10.5-9 10.5S4 17 4 11s9-6 9 0Z' stroke-width='3' id='heart' stroke='#ff6b6b' fill='none'/>");
+        svg.append(@"<path transform='scale(1.5)' id='bolt' stroke='#ffd166' stroke-width='2' stroke-linejoin='round' d='M6 2 2 9h5l-4 7'/>");
+        svg.append(@"<pattern id='pin' width='12' height='12' patternUnits='userSpaceOnUse' patternTransform='rotate(12)'>");
+        svg.append(@"<path fill='#1b1b1f' d='M0 0h12v12H0z'/>");
+        svg.append(@"<path fill='#242428' opacity='.3' d='M0 0h12v6H0z'/>");
+        svg.append(@"</pattern>");
+        svg.append(@"<style>");
+        svg.append(@".label{fill:#c9c9d1;font-size:9px;letter-spacing:.4px}.valL{fill:#fff;font-size:16px;font-weight:700}");
+        svg.append(@"</style>");
         svg.append(@"</defs>");
-        svg.append(@"<rect width='250' height='350' fill='url(#bg)'/>");
         
-        // Card border based on tier
-        let tier = get_tier(beast.id);
-        let border_color = get_tier_color(tier);
-        svg.append(@"<rect x='10' y='10' width='230' height='330' fill='none' stroke='");
-        svg.append(@border_color);
-        svg.append(@"' stroke-width='3' rx='10'/>");
+        // Background
+        svg.append(@"<rect width='250' height='350' rx='12' fill='url(#pin)'/>");
+        svg.append(@"<rect x='4.5' y='4.5' width='241' height='341' rx='9' fill='none' stroke='url(#gold)' stroke-width='3'/>");
+        svg.append(@"<rect x='9' y='9' width='232' height='332' rx='7' fill='none' stroke='#fff' stroke-opacity='.05'/>");
         
-        // Beast name section with prefix and suffix
-        svg.append(@"<text x='125' y='35' font-family='Arial' font-size='18' font-weight='bold' text-anchor='middle' fill='");
-        svg.append(@border_color);
-        svg.append(@"'>");
-        
-        // Add prefix if exists
-        if beast.prefix > 0 {
-            let prefix = get_prefix(beast.prefix);
-            let prefix_str = felt252_to_byte_array(prefix);
+        // Title and name
+        svg.append(@"<text x='125' y='35' text-anchor='middle' style='fill:#b0b0b6;font-size:13px;font-style:italic'>");
+        svg.append(@"\"");
+        if prefix_name != 0 {
+            let prefix_str = felt252_to_byte_array(prefix_name);
             svg.append(@prefix_str);
-            svg.append(@" ");
         }
-        
-        // Add beast name
-        let beast_name = get_beast_name(beast.id);
-        let beast_name_str = felt252_to_byte_array(beast_name);
-        svg.append(@beast_name_str);
-        
-        // Add suffix if exists
-        if beast.suffix > 0 {
-            svg.append(@" ");
-            let suffix = get_suffix(beast.suffix);
-            let suffix_str = felt252_to_byte_array(suffix);
+        if suffix_name != 0 {
+            if prefix_name != 0 {
+                svg.append(@" ");
+            }
+            let suffix_str = felt252_to_byte_array(suffix_name);
             svg.append(@suffix_str);
         }
-        
+        svg.append(@"\"");
         svg.append(@"</text>");
         
-        // Beast image - using warlock for all beasts for now
-        svg.append(@"<image x='65' y='50' width='120' height='120' href='");
-        let warlock_image = get_warlock_svg();
-        svg.append(@warlock_image);
-        svg.append(@"' preserveAspectRatio='xMidYMid meet'/>");
+        svg.append(@"<text x='125' y='57' text-anchor='middle' style='fill:#fff;font-size:18px;font-weight:700;letter-spacing:.7px'>");
+        let beast_name_str = felt252_to_byte_array(beast_name);
+        svg.append(@beast_name_str);
+        svg.append(@"</text>");
         
-        // Stats section
-        svg.append(@"<g transform='translate(30, 200)'>");
-        svg.append(@"<rect x='0' y='0' width='190' height='120' fill='#000000' fill-opacity='0.6' rx='5'/>");
+        // Beast image with clip path
+        svg.append(@"<clipPath id='artClip'>");
+        svg.append(@"<rect x='65' y='72' width='120' height='120' rx='8'/>");
+        svg.append(@"</clipPath>");
+        svg.append(@"<rect x='65' y='72' width='120' height='120' rx='8' fill='#141418'/>");
+        svg.append(@"<image x='65' y='72' width='120' height='120' href='");
+        let beast_image = get_beast_png(beast.id);
+        svg.append(@beast_image);
+        svg.append(@"' clip-path='url(#artClip)'/>");
+        svg.append(@"<rect x='65' y='72' width='120' height='120' rx='8' fill='none' stroke='#fff' stroke-opacity='.08' stroke-width='2'/>");
         
-        // Type and Tier
-        svg.append(@"<text x='95' y='20' font-family='Arial' font-size='12' text-anchor='middle' fill='#ffffff'>");
-        let beast_type_str = felt252_to_byte_array(beast_type);
+        // Stats panels
+        svg.append(@"<g transform='translate(18 208)'>");
+        svg.append(@"<rect width='65' height='50' rx='5' fill='url(#panel)'/>");
+        svg.append(@"<text x='32.5' y='18' text-anchor='middle' class='label'>TIER</text>");
+        svg.append(@"<text x='32.5' y='38' text-anchor='middle' class='valL'>");
+        svg.append(@format!("{}", beast_attrs.tier));
+        svg.append(@"</text>");
+        
+        svg.append(@"<g transform='translate(75)'>");
+        svg.append(@"<rect width='65' height='50' rx='5' fill='url(#panel)'/>");
+        svg.append(@"<text x='32.5' y='18' text-anchor='middle' class='label'>LEVEL</text>");
+        svg.append(@"<text x='32.5' y='38' text-anchor='middle' class='valL'>");
+        svg.append(@format!("{}", beast_attrs.level));
+        svg.append(@"</text>");
+        svg.append(@"</g>");
+        
+        svg.append(@"<g transform='translate(150)'>");
+        svg.append(@"<rect width='65' height='50' rx='5' fill='url(#panel)'/>");
+        svg.append(@"<text x='32.5' y='18' text-anchor='middle' class='label'>TYPE</text>");
+        svg.append(@"<text x='32.5' y='38' text-anchor='middle' style='fill:#fff;font-size:14px;font-weight:700'>");
+        let beast_type_str = felt252_to_byte_array(beast_attrs.beast_type);
         svg.append(@beast_type_str);
-        svg.append(@" - Tier ");
-        let tier_str = felt252_to_byte_array(tier);
-        svg.append(@tier_str);
         svg.append(@"</text>");
+        svg.append(@"</g>");
+        svg.append(@"</g>");
         
-        // Level and Health
-        svg.append(@"<text x='50' y='40' font-family='Arial' font-size='12' fill='#ffffff'>Lvl: ");
-        svg.append(@format!("{}", beast.level));
+        // Power and Health panels
+        svg.append(@"<g transform='translate(21.5 265)'>");
+        svg.append(@"<rect width='100' height='60' rx='5' fill='url(#panel)'/>");
+        svg.append(@"<use href='#bolt' x='75' y='20'/>");
+        svg.append(@"<text x='18' y='22' class='label'>POWER</text>");
+        svg.append(@"<text x='18' y='46' class='valL'>");
+        svg.append(@format!("{}", beast_attrs.power));
         svg.append(@"</text>");
+        svg.append(@"</g>");
         
-        svg.append(@"<text x='130' y='40' font-family='Arial' font-size='12' fill='#ffffff'>HP: ");
-        svg.append(@format!("{}", beast.health));
+        svg.append(@"<g transform='translate(131.5 265)'>");
+        svg.append(@"<rect width='100' height='60' rx='5' fill='url(#panel)'/>");
+        svg.append(@"<use href='#heart' x='68' y='20'/>");
+        svg.append(@"<text x='18' y='22' class='label'>HEALTH</text>");
+        svg.append(@"<text x='18' y='46' class='valL'>");
+        svg.append(@format!("{}", beast_attrs.health));
         svg.append(@"</text>");
-        
         svg.append(@"</g>");
         
         // Close SVG
@@ -126,7 +142,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
     }
 }
 
-fn get_tier_color(tier: felt252) -> ByteArray {
+fn get_tier_color(tier: u8) -> ByteArray {
     if tier == beast_definitions::TIER_1 {
         "#ff6b6b" // Red for Tier 1 (strongest)
     } else if tier == beast_definitions::TIER_2 {

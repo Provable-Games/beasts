@@ -106,11 +106,14 @@ pub impl BeastManagerImpl of BeastManagerTrait {
 
     /// Gets beast metadata attributes
     fn get_beast_attributes(beast: PackableBeast) -> BeastAttributes {
+        let tier = beast_definitions::get_tier(beast.id);
+
         BeastAttributes {
             beast_type: beast_definitions::get_type(beast.id),
-            tier: beast_definitions::get_tier(beast.id),
+            tier: tier,
             level: beast.level,
-            health: beast.health
+            health: beast.health,
+            power: beast.level * (6 - tier.into())
         }
     }
 }
@@ -119,9 +122,10 @@ pub impl BeastManagerImpl of BeastManagerTrait {
 #[derive(Drop, Copy, Serde)]
 pub struct BeastAttributes {
     pub beast_type: felt252,
-    pub tier: felt252,
+    pub tier: u8,
     pub level: u16,
-    pub health: u16
+    pub health: u16,
+    pub power: u16,
 }
 
 #[cfg(test)]
@@ -236,8 +240,9 @@ mod tests {
         let attrs = BeastManagerTrait::get_beast_attributes(beast);
         
         assert(attrs.beast_type == 'Magical', 'Type mismatch');
-        assert(attrs.tier == '1', 'Tier mismatch');
+        assert(attrs.tier == 1, 'Tier mismatch');
         assert(attrs.level == 42, 'Level mismatch');
         assert(attrs.health == 1337, 'Health mismatch');
+        assert(attrs.power == 42 * 5, 'Power mismatch');
     }
 }
