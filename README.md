@@ -112,11 +112,11 @@ PackableBeast {
 - **⚔️ Brute**: Raw strength and physical dominance
 
 ### Tier System
-- **Tier 1**: Bronze borders (Common)
-- **Tier 2**: Silver borders (Uncommon)
-- **Tier 3**: Gold borders (Rare)
-- **Tier 4**: Platinum borders (Epic)
-- **Tier 5**: Prismatic borders (Legendary)
+- **Tier 1**: Orange borders (Legendary) - Most powerful beasts
+- **Tier 2**: Purple borders (Epic)
+- **Tier 3**: Blue borders (Rare)
+- **Tier 4**: Green borders (Uncommon)
+- **Tier 5**: White borders (Common) - Entry level beasts
 
 ## 🧪 Testing
 
