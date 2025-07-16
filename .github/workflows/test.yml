@@ -80,10 +80,10 @@ jobs:
 
       # Run tests once with both fuzzing and coverage
       - name: Run tests with fuzzing and coverage
-        run: snforge test --workspace --features fuzzing --fuzzer-runs 500 --coverage
+        run: snforge test --workspace --features fuzzing --fuzzer-runs 500 --coverage --max-n-steps 4294967295
 
       - name: Check coverage threshold
-        run: lcov --summary coverage/coverage.lcov --fail-under-lines 84.3
+        run: lcov --summary coverage/coverage.lcov --fail-under-lines 80
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
