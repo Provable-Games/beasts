@@ -31,20 +31,20 @@
   </g>
   
   <!-- Level (top-left) -->
-  <text x='30' y='40' class='VT323' font-size='13' fill='#FFFFFF'>LVL 85</text>
+  <text x='30' y='40' font-family='monospace' font-size='13' fill='#FFFFFF'>LVL 85</text>
   
   <!-- Health (top-right) with heart icon -->
-  <text x='222' y='40' class='VT323' font-size='13' text-anchor='end' fill='#FFFFFF'>420</text>
-  <text x='187' y='40' font-family='VT323' font-size='13' fill='#FF0000'>❤</text>
+  <text x='222' y='40' font-family='monospace' font-size='13' text-anchor='end' fill='#FFFFFF'>420</text>
+  <text x='187' y='40' font-family='monospace' font-size='13' fill='#FF0000'>❤</text>
   
   <!-- Special name (centered) -->
-  <text x='125' y='75' class='VT323' font-size='15' text-anchor='middle' fill='#FFFFFF'>"Doom Shadow"</text>
+  <text x='125' y='75' font-family='monospace' font-size='15' text-anchor='middle' fill='#FFFFFF'>"Doom Shadow"</text>
   
   <!-- Warlock beast image -->
   <image x='50' y='95' width='150' height='150' image-rendering='pixelated' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAASFJREFUSIm1VW2uxCAIVE/dI+yt3/vBBu0wfLVZstlQhAFGxTF+IH+frc+HYVc1aj1Al0+wgKeuVjugcGkfXhGJX1r+KT2K0oqkp6KzW1cjst5BXdrlQ6TV35ZDsYJ9BiEUaXAKUTlL01rn9dVVGfcjD7hwGyBkqVX9VKekx23ZkHVmO3PQYDqOaEO6OsHppMV+gsiq/ivUaVlevaM8MhURsoosMckvQN8tM7vNsR28isAyzOmie+CluWE9uKUSRW9P6T0ABnawuRy26sa4tuxXHtG8A0rxqcRSpYiia9ZXCbwNuKH4OUp78Gb6NyhyIUKK8g7s+QH0OH2VIjoqFD0aiCk0iXGqpo327kEXfaQUwQa4I/Nyh1iDIvumDsYhtPIPgYPBCOPyCoAAAAAASUVORK5CYII=' preserveAspectRatio='xMidYMid meet'/>
   
   <!-- Beast name (centered below image) -->
-  <text x='125' y='280' class='VT323' font-size='17' text-anchor='middle' fill='#FFFFFF'>WARLOCK</text>
+  <text x='125' y='280' font-family='monospace' font-size='17' text-anchor='middle' fill='#FFFFFF'>WARLOCK</text>
   
   <!-- Type icon (bottom-left) - Magic -->
   <g transform='translate(25, 305)'>
@@ -62,7 +62,7 @@
   </g>
   
   <!-- Card number (bottom-right) -->
-  <text x='225' y='325' class='VT323' font-size='10' text-anchor='end' fill='#FFFFFF' opacity='0.7'>
+  <text x='225' y='325' font-family='monospace' font-size='10' text-anchor='end' fill='#FFFFFF' opacity='0.7'>
     <tspan>1</tspan><tspan>/1242</tspan>
   </text>
 </svg>

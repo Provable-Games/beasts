@@ -31,20 +31,20 @@
   </g>
   
   <!-- Level (top-left) -->
-  <text x='30' y='40' class='VT323' font-size='13' fill='#FFFFFF'>LVL 92</text>
+  <text x='30' y='40' font-family='monospace' font-size='13' fill='#FFFFFF'>LVL 92</text>
   
   <!-- Health (top-right) with heart icon -->
-  <text x='222' y='40' class='VT323' font-size='13' text-anchor='end' fill='#FFFFFF'>512</text>
-  <text x='187' y='40' font-family='VT323' font-size='13' fill='#FF0000'>❤</text>
+  <text x='222' y='40' font-family='monospace' font-size='13' text-anchor='end' fill='#FFFFFF'>512</text>
+  <text x='187' y='40' font-family='monospace' font-size='13' fill='#FF0000'>❤</text>
   
   <!-- Special name (centered) -->
-  <text x='125' y='75' class='VT323' font-size='15' text-anchor='middle' fill='#FFFFFF'>"Rage Flame"</text>
+  <text x='125' y='75' font-family='monospace' font-size='15' text-anchor='middle' fill='#FFFFFF'>"Rage Flame"</text>
   
   <!-- Dragon beast image -->
   <image x='50' y='95' width='150' height='150' image-rendering='pixelated' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAAXNSR0IArs4c6QAAAAlQTFRFAAAAAAAA/4AABnhFZgAAAAN0Uk5TAP//RFDWIQAAAN9JREFUOI2FUwESwzAIUv7/6F0iIOtuW3ttUkVUYqv/XPX4xm8APhGVzvMCvgCg5YEgAGPGWYEMqbHrOX6XAQJuxDUrHK2wA2AQ/YvgtjDREIBkNpa2KsMpia8GkgEuj6lLjaFNIUnvXfCeFMtxYSqSWd2khKMObo0cijop7GcjyqCNAOxkGHQuV0n5VfUe5jCXjodiB8WYar3RyIo9gJQvGJpS64PXgmdgNh39TkEl1UFIZBgHRv6Ogdy6Stk7ETHbBZshZGqugUEciXXcoY2koQKlzqAcnu3iTaKPn7tf1nUFaqrjsNoAAAAASUVORK5CYII=' preserveAspectRatio='xMidYMid meet'/>
   
   <!-- Beast name (centered below image) -->
-  <text x='125' y='280' class='VT323' font-size='17' text-anchor='middle' fill='#FFFFFF'>DRAGON</text>
+  <text x='125' y='280' font-family='monospace' font-size='17' text-anchor='middle' fill='#FFFFFF'>DRAGON</text>
   
   <!-- Type icon (bottom-left) - Hunter -->
   <g transform='translate(25, 305)'>
@@ -63,7 +63,7 @@
   </g>
   
   <!-- Card number (bottom-right) -->
-  <text x='225' y='325' class='VT323' font-size='10' text-anchor='end' fill='#FFFFFF' opacity='0.7'>
+  <text x='225' y='325' font-family='monospace' font-size='10' text-anchor='end' fill='#FFFFFF' opacity='0.7'>
     <tspan>29</tspan><tspan>/1242</tspan>
   </text>
 </svg>
