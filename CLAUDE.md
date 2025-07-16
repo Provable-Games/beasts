@@ -139,6 +139,7 @@ lcov --summary coverage/coverage.lcov --fail-under-lines 84.3
 ```
 
 This will output:
+
 - Line coverage percentage
 - Function coverage percentage
 
@@ -224,20 +225,24 @@ Beasts NFT cards follow the classic trading card game aesthetic inspired by Poke
 **Visual Hierarchy** (top to bottom):
 
 1. **Header Zone**:
+
    - Level indicator ("LVL XX") - top left corner in monospace font
    - Health display ("XXX❤") - top right corner with red heart icon
    - All text in white (#FFFFFF) for contrast
 
 2. **Beast Names**:
+
    - Special name (e.g., "Doom Shadow") - centered, italic, monospace
    - Beast species name (e.g., "Warlock") - centered below image, larger size
 
 3. **Art Window**:
+
    - Central 150x150 pixel beast image from beast_images.cairo
    - Positioned to allow room for ornate border effects
    - Preserves aspect ratio of original beast artwork
 
 4. **Border Design**:
+
    - Main border with gradient effect (30% to 100% opacity)
    - 4 inner frame layers for depth (decreasing opacity)
    - Corner ornaments with curved path decorations
@@ -399,26 +404,6 @@ fn generate_beast_head(
 - Plan for future beast types and attributes
 - Design for composability with other protocols
 
-## Known Design Constraints
-
-### SVG Size Limitations
-
-- Target maximum 10KB per beast SVG
-- Optimize for common rendering sizes (64x64, 256x256, 512x512)
-- Balance visual quality with gas costs
-
-### Color Palette Constraints
-
-- Limited to 16 base colors for gas efficiency
-- Use gradients and opacity for visual variety
-- Consider accessibility (colorblind-friendly palettes)
-
-### Animation Considerations
-
-- Static SVGs only for initial release
-- Design with future animation potential
-- Use transform-friendly component positioning
-
 ## Completion Criteria
 
 **Definition of complete**: A task is ONLY complete when `scarb build && scarb test` runs with zero warnings and zero errors.
@@ -467,14 +452,17 @@ When you encounter warnings or errors, follow this exact process:
    - Fix ALL warnings (except known contract size warnings)
    - Zero tolerance for new warnings
 3. **Format code**: `scarb fmt -w`
+
    - Must be run before final commit
 
-4. **Verify coverage**: 
+4. **Verify coverage**:
+
    ```bash
    snforge test --coverage
    cairo-coverage
    lcov --summary coverage/coverage.lcov
    ```
+
    - Modified files must maintain 90%+ coverage
    - Overall coverage must be ≥ 84.3% (current main branch baseline)
    - If coverage drops below baseline, add more tests before creating PR
