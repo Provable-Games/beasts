@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
+    use starknet::ContractAddress;
     use beasts_nft::beast_definitions;
-    use starknet::contract_address_const;
     use openzeppelin_token::erc721::interface::{IERC721MetadataDispatcher, IERC721MetadataDispatcherTrait};
     use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
     
@@ -49,8 +49,8 @@ mod tests {
     #[test]
     fn test_token_uri_returns_proper_strings() {
         // Deploy contract
-        let owner = contract_address_const::<'owner'>();
-        let recipient = contract_address_const::<'recipient'>();
+        let owner: ContractAddress = 'owner'.try_into().unwrap();
+        let recipient: ContractAddress = 'recipient'.try_into().unwrap();
         
         // Declare and deploy contract
         let contract = declare("beasts_nft").unwrap().contract_class();
