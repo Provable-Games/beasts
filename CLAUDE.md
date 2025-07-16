@@ -117,7 +117,32 @@ snforge test --coverage
 
 # Generate coverage report
 cairo-coverage
+
+# Check coverage percentage
+lcov --summary coverage/coverage.lcov
 ```
+
+### Check Code Coverage
+
+To verify code coverage percentage:
+
+```bash
+# Generate coverage data
+snforge test --coverage
+cairo-coverage
+
+# View coverage summary
+lcov --summary coverage/coverage.lcov
+
+# Enforce minimum coverage (will exit with error if below 84.3%)
+lcov --summary coverage/coverage.lcov --fail-under-lines 84.3
+```
+
+This will output:
+- Line coverage percentage
+- Function coverage percentage
+
+**IMPORTANT**: Before submitting a PR, ensure your code coverage is at least equal to or higher than the main branch coverage. Current baseline: 84.3% line coverage.
 
 ### Format
 
@@ -442,12 +467,17 @@ When you encounter warnings or errors, follow this exact process:
    - Fix ALL warnings (except known contract size warnings)
    - Zero tolerance for new warnings
 3. **Format code**: `scarb fmt -w`
-
    - Must be run before final commit
 
-4. **Verify coverage**: `cairo-coverage`
-
+4. **Verify coverage**: 
+   ```bash
+   snforge test --coverage
+   cairo-coverage
+   lcov --summary coverage/coverage.lcov
+   ```
    - Modified files must maintain 90%+ coverage
+   - Overall coverage must be ≥ 84.3% (current main branch baseline)
+   - If coverage drops below baseline, add more tests before creating PR
 
 5. **Final verification**: Run `scarb build && scarb test` one last time
    - This MUST complete with zero errors and zero new warnings

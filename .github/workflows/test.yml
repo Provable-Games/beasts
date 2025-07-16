@@ -26,7 +26,7 @@ jobs:
 
       - name: Extract scarb version
         run: |
-          SCARB_VERSION=$(grep 'scarb-version = ' Scarb.toml | sed 's/scarb-version = "\(.*\)"/\1/')
+          SCARB_VERSION=$(grep '^scarb' .tool-versions | awk '{print $2}')
           echo "SCARB_VERSION=$SCARB_VERSION" >> "$GITHUB_ENV"
 
       - uses: software-mansion/setup-scarb@v1
@@ -35,7 +35,7 @@ jobs:
 
       - name: Extract foundry version
         run: |
-          FOUNDRY_VERSION=$(grep 'snforge_std = ' Scarb.toml | sed 's/snforge_std = "\(.*\)"/\1/')
+          FOUNDRY_VERSION=$(grep '^starknet-foundry' .tool-versions | awk '{print $2}')
           echo "FOUNDRY_VERSION=$FOUNDRY_VERSION" >> "$GITHUB_ENV"
 
       - uses: foundry-rs/setup-snfoundry@v4
@@ -82,8 +82,11 @@ jobs:
       - name: Run tests with fuzzing and coverage
         run: snforge test --workspace --features fuzzing --fuzzer-runs 500 --coverage
 
+      - name: Check coverage threshold
+        run: lcov --summary coverage/coverage.lcov --fail-under-lines 84.3
+
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
-          file: ./coverage.lcov
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: Provable-Games/github-goblin

@@ -21,3 +21,11 @@ snforge_std = "0.46.0"
 allowed-libfuncs-list.name = "experimental"
 sierra = true
 casm = false
+
+[profile.dev.cairo]
+unstable-add-statements-functions-debug-info = true
+unstable-add-statements-code-locations-debug-info = true
+inlining-strategy = "avoid"
+
+[features]
+fuzzing = []
