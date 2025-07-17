@@ -34,6 +34,28 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"<stop offset='0%' stop-color='#2d2d32'/>");
         svg.append(@"<stop offset='100%' stop-color='#1e1e22'/>");
         svg.append(@"</linearGradient>");
+        svg.append(@"<linearGradient id='shiny' x1='0%' y1='0%' x2='100%' y2='100%'>");
+        svg.append(@"<stop offset='0%' stop-color='#ff6b9d' stop-opacity='0.3'>");
+        svg.append(@"<animate attributeName='stop-opacity' values='0.3;0.8;0.3' dur='2s' repeatCount='indefinite'/>");
+        svg.append(@"</stop>");
+        svg.append(@"<stop offset='25%' stop-color='#c44569' stop-opacity='0.4'>");
+        svg.append(@"<animate attributeName='stop-opacity' values='0.4;0.9;0.4' dur='2s' repeatCount='indefinite'/>");
+        svg.append(@"</stop>");
+        svg.append(@"<stop offset='50%' stop-color='#f8b500' stop-opacity='0.3'>");
+        svg.append(@"<animate attributeName='stop-opacity' values='0.3;0.8;0.3' dur='2s' repeatCount='indefinite'/>");
+        svg.append(@"</stop>");
+        svg.append(@"<stop offset='75%' stop-color='#00d4ff' stop-opacity='0.4'>");
+        svg.append(@"<animate attributeName='stop-opacity' values='0.4;0.9;0.4' dur='2s' repeatCount='indefinite'/>");
+        svg.append(@"</stop>");
+        svg.append(@"<stop offset='100%' stop-color='#ff6b9d' stop-opacity='0.3'>");
+        svg.append(@"<animate attributeName='stop-opacity' values='0.3;0.8;0.3' dur='2s' repeatCount='indefinite'/>");
+        svg.append(@"</stop>");
+        svg.append(@"</linearGradient>");
+        svg.append(@"<radialGradient id='sparkle' cx='50%' cy='50%' r='50%'>");
+        svg.append(@"<stop offset='0%' stop-color='#ffffff' stop-opacity='0.8'/>");
+        svg.append(@"<stop offset='70%' stop-color='#ffffff' stop-opacity='0.3'/>");
+        svg.append(@"<stop offset='100%' stop-color='#ffffff' stop-opacity='0'/>");
+        svg.append(@"</radialGradient>");
         svg
             .append(
                 @"<path d='M13 11c0-6 9-6 9 0s-9 10.5-9 10.5S4 17 4 11s9-6 9 0Z' stroke-width='3' id='heart' stroke='#ff6b6b' fill='none'/>",
@@ -51,6 +73,12 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"<circle cx='5' cy='5' r='1.2' fill='#fff3c4'/>");
         svg.append(@"<circle cx='12' cy='5' r='1.2' fill='#fff3c4'/>");
         svg.append(@"<circle cx='17' cy='5' r='1.2' fill='#fff3c4'/>");
+        svg.append(@"</g>");
+        svg.append(@"<g id='trophy' fill='#c0c0c0' stroke='#8a8a8a' stroke-width='1'>");
+        svg.append(@"<rect x='5' y='4' width='10' height='8' rx='1'/>");
+        svg.append(@"<rect x='3' y='6' width='2' height='3'/>");
+        svg.append(@"<rect x='15' y='6' width='2' height='3'/>");
+        svg.append(@"<rect x='7' y='12' width='6' height='4'/>");
         svg.append(@"</g>");
         svg
             .append(
@@ -78,9 +106,15 @@ pub impl BeastSvgImpl of BeastSvgTrait {
                 @"<rect x='9' y='9' width='232' height='332' rx='7' fill='none' stroke='#fff' stroke-opacity='.05'/>",
             );
 
-        // Crown (show if rank 1)
+        // Crown for rank 1, trophy for other ranks
         if rank == 1 {
-            svg.append(@"<use href='#crown' x='12' y='12' width='20' height='20'/>");
+            svg.append(@"<use href='#crown' x='13' y='12' width='20' height='20'/>");
+            svg.append(@"<text x='23' y='42' text-anchor='middle' style='fill:#e6c56e;font-size:11px;font-weight:700'>1</text>");
+        } else if rank > 1 {
+            svg.append(@"<use href='#trophy' x='13' y='12' width='20' height='20'/>");
+            svg.append(@"<text x='23' y='42' text-anchor='middle' style='fill:#fff;font-size:11px;font-weight:700'>");
+            svg.append(@format!("{}", rank));
+            svg.append(@"</text>");
         }
 
         // Specials and name
@@ -109,19 +143,19 @@ pub impl BeastSvgImpl of BeastSvgTrait {
 
         // Beast image with clip path
         svg.append(@"<clipPath id='artClip'>");
-        svg.append(@"<rect x='60' y='67' width='130' height='130' rx='8'/>");
+        svg.append(@"<rect x='60' y='65' width='130' height='130' rx='8'/>");
         svg.append(@"</clipPath>");
-        svg.append(@"<rect x='60' y='67' width='130' height='130' rx='8' fill='#141418'/>");
+        svg.append(@"<rect x='60' y='65' width='130' height='130' rx='8' fill='#141418'/>");
         svg
             .append(
-                @"<image x='60' y='67' width='130' height='130' image-rendering='pixelated' href='",
+                @"<image x='60' y='65' width='130' height='130' image-rendering='pixelated' href='",
             );
         let beast_image = get_beast_png(beast_id);
         svg.append(@beast_image);
         svg.append(@"' clip-path='url(#artClip)'/>");
         svg
             .append(
-                @"<rect x='60' y='67' width='130' height='130' rx='8' fill='none' stroke='#fff' stroke-opacity='.08' stroke-width='2'/>",
+                @"<rect x='60' y='65' width='130' height='130' rx='8' fill='none' stroke='#fff' stroke-opacity='.08' stroke-width='2'/>",
             );
 
         // Stats panels
@@ -171,6 +205,24 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@format!("{}", beast_attrs.health));
         svg.append(@"</text>");
         svg.append(@"</g>");
+        
+        // Add shiny border glow effect if beast is shiny
+        if beast_attrs.shiny {
+            svg.append(@"<rect x='4.5' y='4.5' width='241' height='341' rx='9' fill='none' stroke='url(#shiny)' stroke-width='6'/>");
+            svg.append(@"<circle cx='80' cy='100' r='8' fill='url(#sparkle)' opacity='0.6'>");
+            svg.append(@"<animate attributeName='opacity' values='0.6;0.9;0.6' dur='1.5s' repeatCount='indefinite'/>");
+            svg.append(@"<animateTransform attributeName='transform' type='translate' values='0,0; 50,30; 100,0; 150,50; 200,20; 0,0' dur='8s' repeatCount='indefinite'/>");
+            svg.append(@"</circle>");
+            svg.append(@"<circle cx='170' cy='200' r='6' fill='url(#sparkle)' opacity='0.7'>");
+            svg.append(@"<animate attributeName='opacity' values='0.7;1.0;0.7' dur='1.2s' repeatCount='indefinite'/>");
+            svg.append(@"<animateTransform attributeName='transform' type='translate' values='0,0; -30,40; -60,0; -90,30; -120,60; 0,0' dur='6s' repeatCount='indefinite'/>");
+            svg.append(@"</circle>");
+            svg.append(@"<circle cx='125' cy='300' r='5' fill='url(#sparkle)' opacity='0.8'>");
+            svg.append(@"<animate attributeName='opacity' values='0.8;1.0;0.8' dur='1.8s' repeatCount='indefinite'/>");
+            svg.append(@"<animateTransform attributeName='transform' type='translate' values='0,0; 40,-20; 80,10; 120,-30; 160,0; 0,0' dur='10s' repeatCount='indefinite'/>");
+            svg.append(@"</circle>");
+        }
+        
         svg.append(@"</svg>");
         data_uri.append(@svg);
 

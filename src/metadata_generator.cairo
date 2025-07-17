@@ -214,9 +214,10 @@ mod tests {
     #[test]
     fn test_generate_metadata() {
         let beast = PackableBeast {
-            id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: false,
+            id: 75, prefix: 4, suffix: 4, level: 142, health: 123, shiny: true,
         };
-        let metadata = MetadataGeneratorTrait::generate_metadata(123, beast, 0);
+        let metadata = MetadataGeneratorTrait::generate_metadata(123, beast, 1);
+        println!("{}", @metadata);
 
         // Check JSON structure
         assert(find_substring(@metadata, @"{\"name\":\"Beast #123\""), 'Should have name');
@@ -263,14 +264,14 @@ mod tests {
         let beast = PackableBeast {
             id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: false,
         };
-        let components = MetadataGeneratorTrait::build_metadata_components(123, beast, 0);
+        let components = MetadataGeneratorTrait::build_metadata_components(123, beast, 1);
 
         assert(components.name == "Beast #123", 'Name mismatch');
         assert(
             components.description == "A fearsome beast from the Loot Survivor universe",
             'Description mismatch',
         );
-        assert(components.attributes.len() == 9, 'Should have 9 attributes');
+        assert(components.attributes.len() == 10, 'Should have 10 attributes');
     }
 
     #[test]
