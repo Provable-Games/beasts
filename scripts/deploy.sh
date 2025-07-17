@@ -27,8 +27,6 @@ NETWORK="${STARKNET_NETWORK:-sepolia}"
 NAME="${BEASTS_NAME:-Beasts}"
 SYMBOL="${BEASTS_SYMBOL:-BEAST}"
 BASE_URI="${BEASTS_BASE_URI:-https://api.beasts.game/metadata/}"
-RECIPIENT="${BEASTS_RECIPIENT}"
-TOKEN_IDS="${BEASTS_TOKEN_IDS:-1,2,3,4,5}"  # Default: mint 5 tokens
 OWNER="${BEASTS_OWNER}"
 
 # Function to display usage
@@ -41,8 +39,6 @@ usage() {
     echo "  --name NAME             NFT collection name [default: Beasts]"
     echo "  --symbol SYMBOL         NFT collection symbol [default: BEAST]"
     echo "  --base-uri URI          Base URI for token metadata [default: https://api.beasts.game/metadata/]"
-    echo "  --recipient ADDRESS     Address to receive initial NFTs (required)"
-    echo "  --token-ids IDS         Comma-separated token IDs to mint [default: 1,2,3,4,5]"
     echo "  --owner ADDRESS         Contract owner address (required)"
     echo ""
     echo "Environment variables (can be set in .env file):"
@@ -55,8 +51,6 @@ usage() {
     echo "  BEASTS_NAME             NFT collection name"
     echo "  BEASTS_SYMBOL           NFT collection symbol"
     echo "  BEASTS_BASE_URI         Base URI for token metadata"
-    echo "  BEASTS_RECIPIENT        Address to receive initial NFTs"
-    echo "  BEASTS_TOKEN_IDS        Comma-separated token IDs to mint"
     echo "  BEASTS_OWNER            Contract owner address"
     exit 1
 }
@@ -83,14 +77,6 @@ while [[ $# -gt 0 ]]; do
             BASE_URI="$2"
             shift 2
             ;;
-        --recipient)
-            RECIPIENT="$2"
-            shift 2
-            ;;
-        --token-ids)
-            TOKEN_IDS="$2"
-            shift 2
-            ;;
         --owner)
             OWNER="$2"
             shift 2
@@ -103,12 +89,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate required arguments
-if [ -z "$RECIPIENT" ]; then
-    echo -e "${RED}Error: Recipient address is required${NC}"
-    echo "Set BEASTS_RECIPIENT in your .env file or use --recipient flag"
-    usage
-fi
-
 if [ -z "$OWNER" ]; then
     echo -e "${RED}Error: Owner address is required${NC}"
     echo "Set BEASTS_OWNER in your .env file or use --owner flag"
@@ -165,8 +145,6 @@ echo -e "${YELLOW}Contract Parameters:${NC}"
 echo -e "Name:             $NAME"
 echo -e "Symbol:           $SYMBOL"
 echo -e "Base URI:         $BASE_URI"
-echo -e "Recipient:        $RECIPIENT"
-echo -e "Token IDs:        $TOKEN_IDS"
 echo -e "Owner:            $OWNER"
 echo ""
 
@@ -188,30 +166,14 @@ scarb build
 # Prepare constructor arguments
 echo -e "\n${YELLOW}Preparing constructor arguments...${NC}"
 
-# Convert token IDs array to Cairo format for starkli
-convert_token_ids() {
-    local ids="$1"
-    IFS=',' read -ra ID_ARRAY <<< "$ids"
-    local result="${#ID_ARRAY[@]}"  # Array length first
-    for id in "${ID_ARRAY[@]}"; do
-        # For u256, we need two values (low, high)
-        result="$result $id 0"
-    done
-    echo "$result"
-}
-
-TOKEN_IDS_ARRAY=$(convert_token_ids "$TOKEN_IDS")
-
 echo "Name:            $NAME"
 echo "Symbol:          $SYMBOL"
 echo "Base URI:        $BASE_URI"
-echo "Recipient:       $RECIPIENT"
-echo "Token IDs:       $TOKEN_IDS_ARRAY"
 echo "Owner:           $OWNER"
 
 # Declare the contract
 echo -e "\n${YELLOW}Declaring contract...${NC}"
-DECLARE_OUTPUT=$(starkli declare target/dev/${CONTRACT_NAME}_${CONTRACT_NAME}.contract_class.json $AUTH_METHOD 2>&1)
+DECLARE_OUTPUT=$(starkli declare --account "$STARKNET_ACCOUNT" $AUTH_METHOD target/dev/${CONTRACT_NAME}_${CONTRACT_NAME}.contract_class.json 2>&1)
 
 # Extract class hash from output
 CLASS_HASH=$(echo "$DECLARE_OUTPUT" | grep -oE "0x[0-9a-fA-F]+" | tail -1)
@@ -230,18 +192,13 @@ echo "Constructor arguments:"
 echo "  name:       $NAME"
 echo "  symbol:     $SYMBOL"
 echo "  base_uri:   $BASE_URI"
-echo "  recipient:  $RECIPIENT"
-echo "  token_ids:  $TOKEN_IDS_ARRAY"
 echo "  owner:      $OWNER"
 
-DEPLOY_OUTPUT=$(starkli deploy $CLASS_HASH \
+DEPLOY_OUTPUT=$(starkli deploy --account "$STARKNET_ACCOUNT" $AUTH_METHOD $CLASS_HASH \
     bytearray:str:"$NAME" \
     bytearray:str:"$SYMBOL" \
     bytearray:str:"$BASE_URI" \
-    $RECIPIENT \
-    $TOKEN_IDS_ARRAY \
-    $OWNER \
-    $AUTH_METHOD 2>&1)
+    $OWNER 2>&1)
 
 # Extract deployed address from output
 DEPLOYED_ADDRESS=$(echo "$DEPLOY_OUTPUT" | grep -oE "0x[0-9a-fA-F]+" | tail -1)
@@ -270,8 +227,6 @@ cat > "$DEPLOYMENT_FILE" << EOF
     "name": "$NAME",
     "symbol": "$SYMBOL",
     "base_uri": "$BASE_URI",
-    "recipient": "$RECIPIENT",
-    "token_ids": "$TOKEN_IDS",
     "owner": "$OWNER"
   },
   "deployed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"

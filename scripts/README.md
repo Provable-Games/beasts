@@ -65,8 +65,6 @@ export INFURA_API_KEY=your_api_key_here
 - `--name`: NFT collection name (default: "Beasts")
 - `--symbol`: NFT collection symbol (default: "BEAST")
 - `--base-uri`: Base URI for token metadata (default: "https://api.beasts.game/metadata/")
-- `--recipient`: Address to receive initial NFTs (required)
-- `--token-ids`: Comma-separated list of token IDs to mint (default: "1,2,3,4,5")
 - `--owner`: Contract owner address (required)
 
 ## Deployment Output
