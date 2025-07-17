@@ -36,19 +36,34 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"</linearGradient>");
         svg.append(@"<linearGradient id='shiny' x1='0%' y1='0%' x2='100%' y2='100%'>");
         svg.append(@"<stop offset='0%' stop-color='#ff6b9d' stop-opacity='0.3'>");
-        svg.append(@"<animate attributeName='stop-opacity' values='0.3;0.8;0.3' dur='2s' repeatCount='indefinite'/>");
+        svg
+            .append(
+                @"<animate attributeName='stop-opacity' values='0.3;0.8;0.3' dur='2s' repeatCount='indefinite'/>",
+            );
         svg.append(@"</stop>");
         svg.append(@"<stop offset='25%' stop-color='#c44569' stop-opacity='0.4'>");
-        svg.append(@"<animate attributeName='stop-opacity' values='0.4;0.9;0.4' dur='2s' repeatCount='indefinite'/>");
+        svg
+            .append(
+                @"<animate attributeName='stop-opacity' values='0.4;0.9;0.4' dur='2s' repeatCount='indefinite'/>",
+            );
         svg.append(@"</stop>");
         svg.append(@"<stop offset='50%' stop-color='#f8b500' stop-opacity='0.3'>");
-        svg.append(@"<animate attributeName='stop-opacity' values='0.3;0.8;0.3' dur='2s' repeatCount='indefinite'/>");
+        svg
+            .append(
+                @"<animate attributeName='stop-opacity' values='0.3;0.8;0.3' dur='2s' repeatCount='indefinite'/>",
+            );
         svg.append(@"</stop>");
         svg.append(@"<stop offset='75%' stop-color='#00d4ff' stop-opacity='0.4'>");
-        svg.append(@"<animate attributeName='stop-opacity' values='0.4;0.9;0.4' dur='2s' repeatCount='indefinite'/>");
+        svg
+            .append(
+                @"<animate attributeName='stop-opacity' values='0.4;0.9;0.4' dur='2s' repeatCount='indefinite'/>",
+            );
         svg.append(@"</stop>");
         svg.append(@"<stop offset='100%' stop-color='#ff6b9d' stop-opacity='0.3'>");
-        svg.append(@"<animate attributeName='stop-opacity' values='0.3;0.8;0.3' dur='2s' repeatCount='indefinite'/>");
+        svg
+            .append(
+                @"<animate attributeName='stop-opacity' values='0.3;0.8;0.3' dur='2s' repeatCount='indefinite'/>",
+            );
         svg.append(@"</stop>");
         svg.append(@"</linearGradient>");
         svg.append(@"<radialGradient id='sparkle' cx='50%' cy='50%' r='50%'>");
@@ -109,10 +124,16 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         // Crown for rank 1, trophy for other ranks
         if rank == 1 {
             svg.append(@"<use href='#crown' x='13' y='12' width='20' height='20'/>");
-            svg.append(@"<text x='23' y='42' text-anchor='middle' style='fill:#e6c56e;font-size:11px;font-weight:700'>1</text>");
+            svg
+                .append(
+                    @"<text x='23' y='42' text-anchor='middle' style='fill:#e6c56e;font-size:11px;font-weight:700'>1</text>",
+                );
         } else if rank > 1 {
             svg.append(@"<use href='#trophy' x='13' y='12' width='20' height='20'/>");
-            svg.append(@"<text x='23' y='42' text-anchor='middle' style='fill:#fff;font-size:11px;font-weight:700'>");
+            svg
+                .append(
+                    @"<text x='23' y='42' text-anchor='middle' style='fill:#fff;font-size:11px;font-weight:700'>",
+                );
             svg.append(@format!("{}", rank));
             svg.append(@"</text>");
         }
@@ -205,29 +226,95 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@format!("{}", beast_attrs.health));
         svg.append(@"</text>");
         svg.append(@"</g>");
-        
+
         // Add shiny border glow effect if beast is shiny
         if beast_attrs.shiny {
-            svg.append(@"<rect x='4.5' y='4.5' width='241' height='341' rx='9' fill='none' stroke='url(#shiny)' stroke-width='6'/>");
+            svg
+                .append(
+                    @"<rect x='4.5' y='4.5' width='241' height='341' rx='9' fill='none' stroke='url(#shiny)' stroke-width='6'/>",
+                );
             svg.append(@"<circle cx='80' cy='100' r='8' fill='url(#sparkle)' opacity='0.6'>");
-            svg.append(@"<animate attributeName='opacity' values='0.6;0.9;0.6' dur='1.5s' repeatCount='indefinite'/>");
-            svg.append(@"<animateTransform attributeName='transform' type='translate' values='0,0; 50,30; 100,0; 150,50; 200,20; 0,0' dur='8s' repeatCount='indefinite'/>");
+            svg
+                .append(
+                    @"<animate attributeName='opacity' values='0.6;0.9;0.6' dur='1.5s' repeatCount='indefinite'/>",
+                );
+            svg
+                .append(
+                    @"<animateTransform attributeName='transform' type='translate' values='0,0; 50,30; 100,0; 150,50; 200,20; 0,0' dur='8s' repeatCount='indefinite'/>",
+                );
             svg.append(@"</circle>");
             svg.append(@"<circle cx='170' cy='200' r='6' fill='url(#sparkle)' opacity='0.7'>");
-            svg.append(@"<animate attributeName='opacity' values='0.7;1.0;0.7' dur='1.2s' repeatCount='indefinite'/>");
-            svg.append(@"<animateTransform attributeName='transform' type='translate' values='0,0; -30,40; -60,0; -90,30; -120,60; 0,0' dur='6s' repeatCount='indefinite'/>");
+            svg
+                .append(
+                    @"<animate attributeName='opacity' values='0.7;1.0;0.7' dur='1.2s' repeatCount='indefinite'/>",
+                );
+            svg
+                .append(
+                    @"<animateTransform attributeName='transform' type='translate' values='0,0; -30,40; -60,0; -90,30; -120,60; 0,0' dur='6s' repeatCount='indefinite'/>",
+                );
             svg.append(@"</circle>");
             svg.append(@"<circle cx='125' cy='300' r='5' fill='url(#sparkle)' opacity='0.8'>");
-            svg.append(@"<animate attributeName='opacity' values='0.8;1.0;0.8' dur='1.8s' repeatCount='indefinite'/>");
-            svg.append(@"<animateTransform attributeName='transform' type='translate' values='0,0; 40,-20; 80,10; 120,-30; 160,0; 0,0' dur='10s' repeatCount='indefinite'/>");
+            svg
+                .append(
+                    @"<animate attributeName='opacity' values='0.8;1.0;0.8' dur='1.8s' repeatCount='indefinite'/>",
+                );
+            svg
+                .append(
+                    @"<animateTransform attributeName='transform' type='translate' values='0,0; 40,-20; 80,10; 120,-30; 160,0; 0,0' dur='10s' repeatCount='indefinite'/>",
+                );
             svg.append(@"</circle>");
         }
-        
+
         svg.append(@"</svg>");
-        data_uri.append(@svg);
+        data_uri.append(@uri_encode(svg));
 
         data_uri
     }
+}
+
+fn to_hex_digit(n: u8) -> u8 {
+    if n < 10_u8 {
+        48_u8 + n
+    } else {
+        55_u8 + n
+    }
+}
+
+/// RFC 3986 un‑reserved characters that may stay as‑is in a URL
+fn is_unreserved(b: u8) -> bool {
+    (65_u8 <= b && b <= 90_u8)
+        || // A-Z
+         (97_u8 <= b && b <= 122_u8)
+        || // a-z
+         (48_u8 <= b && b <= 57_u8)
+        || // 0-9
+        b == 45_u8
+        || b == 95_u8
+        || b == 46_u8
+        || b == 126_u8 // - _ . ~
+}
+
+/// `uri_encode(svg) -> encoded_svg`
+pub fn uri_encode(mut svg: ByteArray) -> ByteArray {
+    let mut out: ByteArray = "";
+    let mut iter = svg.into_iter();
+
+    loop {
+        match iter.next() {
+            Option::Some(byte) => {
+                if is_unreserved(byte) {
+                    out.append_byte(byte);
+                } else {
+                    // '%' + two upper‑case hex digits
+                    out.append_byte(37_u8); // %
+                    out.append_byte(to_hex_digit(byte / 16_u8));
+                    out.append_byte(to_hex_digit(byte & 0x0f_u8));
+                }
+            },
+            Option::None(_) => { break; },
+        }
+    }
+    out
 }
 
 fn get_beast_png(beast_id: u8) -> ByteArray {

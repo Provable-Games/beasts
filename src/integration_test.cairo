@@ -47,10 +47,7 @@ mod integration_test {
 
         let tier = beast_definitions::get_tier(beast.id);
         assert(tier == 1, 'Beast tier');
-
-        println!("Beast: {} {} {}", prefix_str, beast_name_str, suffix_str);
-        println!("Type: {}, Tier: {}", type_str, tier);
-        println!("Level: {}, Health: {}", beast.level, beast.health);
+        // Beast information validated
     }
 
     /// Test that each beast can be properly stored and retrieved
@@ -77,7 +74,7 @@ mod integration_test {
             let unpacked = PackableBeastStorePacking::unpack(packed);
 
             if unpacked.id != beast.id {
-                println!("Failed on beast {}", beast_id);
+                // Failed on beast
                 failed = true;
             }
 

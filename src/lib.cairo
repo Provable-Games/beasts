@@ -79,46 +79,17 @@ pub mod beasts_nft {
 
     /// Assigns `owner` as the contract owner.
     /// Sets the token `name` and `symbol`.
-    /// Mints the `token_ids` tokens to `recipient` and sets
-    /// the base URI.
+    /// Sets the base URI.
     #[constructor]
     fn constructor(
         ref self: ContractState,
         name: ByteArray,
         symbol: ByteArray,
         base_uri: ByteArray,
-        recipient: ContractAddress,
-        token_ids: Span<u256>,
         owner: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self.erc721.initializer(name, symbol, base_uri);
-        self.mint_assets(recipient, token_ids);
-    }
-
-    #[generate_trait]
-    pub(crate) impl InternalImpl of InternalTrait {
-        /// Mints `token_ids` to `recipient`.
-        fn mint_assets(
-            ref self: ContractState, recipient: ContractAddress, mut token_ids: Span<u256>,
-        ) {
-            loop {
-                if token_ids.len() == 0 {
-                    break;
-                }
-                let id = *token_ids.pop_front().unwrap();
-                let beast_id: u8 = id.try_into().unwrap();
-
-                // Create genesis beast using pure Cairo library
-                match BeastManagerTrait::create_genesis_beast(beast_id) {
-                    BeastResult::Ok(beast) => {
-                        self.beasts.entry(id).write(beast);
-                        self.erc721.mint(recipient, id);
-                    },
-                    BeastResult::Err(e) => { core::panic_with_felt252(e); },
-                }
-            }
-        }
     }
 
     // IBeasts Implementation
