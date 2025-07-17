@@ -8,7 +8,8 @@ pub struct MintRequest {
     pub prefix: u8,
     pub suffix: u8,
     pub level: u16,
-    pub health: u16
+    pub health: u16,
+    pub shiny: bool
 }
 
 /// Result of a mint operation
@@ -36,7 +37,8 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
             request.prefix,
             request.suffix,
             request.level,
-            request.health
+            request.health,
+            request.shiny
         ) {
             BeastResult::Ok(beast) => {
                 // Generate hash for uniqueness checking
@@ -142,7 +144,8 @@ mod tests {
             prefix: 1,
             suffix: 2,
             level: 100,
-            health: 1000
+            health: 1000,
+            shiny: false
         };
         
         match MintingCoordinatorTrait::prepare_mint(request, 42) {
@@ -166,7 +169,8 @@ mod tests {
             prefix: 1,
             suffix: 2,
             level: 100,
-            health: 1000
+            health: 1000,
+            shiny: false
         };
         
         match MintingCoordinatorTrait::prepare_mint(request, 42) {
@@ -233,7 +237,8 @@ mod tests {
             prefix: 2,
             suffix: 3,
             level: 100,
-            health: 1000
+            health: 1000,
+            shiny: false
         };
         
         let hash = match MintingCoordinatorTrait::prepare_mint(request, 1) {

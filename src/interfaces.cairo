@@ -16,7 +16,8 @@ pub trait IBeasts<TContractState> {
         prefix: u8,
         suffix: u8,
         level: u16,
-        health: u16
+        health: u16,
+        shiny: bool
     );
     fn mint_genesis_beasts(ref self: TContractState, to: ContractAddress);
     
@@ -24,5 +25,7 @@ pub trait IBeasts<TContractState> {
     fn get_beast(self: @TContractState, token_id: u256) -> PackableBeast;
     fn is_minted(self: @TContractState, beast_id: u8, prefix: u8, suffix: u8) -> bool;
     fn total_supply(self: @TContractState) -> u256;
-    fn get_king_beast_power(self: @TContractState, beast_id: u8) -> u16;
+    
+    // Beast ranking queries
+    fn get_beast_rank(self: @TContractState, token_id: u256) -> u16;
 }

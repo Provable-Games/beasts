@@ -7,7 +7,7 @@ use super::utils::felt252_to_byte_array;
 #[generate_trait]
 pub impl BeastSvgImpl of BeastSvgTrait {
     /// Generates an SVG image for a beast based on its properties
-    fn generate_beast_svg(beast: PackableBeast, king_beast_power: u16) -> ByteArray {
+    fn generate_beast_svg(beast: PackableBeast, rank: u16) -> ByteArray {
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
         let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
 
@@ -50,13 +50,13 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"<rect x='4.5' y='4.5' width='241' height='341' rx='9' fill='none' stroke='url(#gold)' stroke-width='3'/>");
         svg.append(@"<rect x='9' y='9' width='232' height='332' rx='7' fill='none' stroke='#fff' stroke-opacity='.05'/>");
         
-        // Crown
-        if king_beast_power == beast_attrs.power {
+        // Crown (show if rank 1)
+        if rank == 1 {
             svg.append(@"<use href='#crown' x='12' y='12' width='20' height='20'/>");
         }
         
         // Specials and name
-        svg.append(@"<text x='125' y='35' text-anchor='middle' style='fill:#b0b0b6;font-size:13px;font-style:italic'>");
+        svg.append(@"<text x='125' y='30' text-anchor='middle' style='fill:#b0b0b6;font-size:13px;font-style:italic'>");
         if prefix_name != 0 {
             svg.append(@"\"");
             let prefix_str = felt252_to_byte_array(prefix_name);
@@ -68,21 +68,21 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         }
         svg.append(@"</text>");
         
-        svg.append(@"<text x='125' y='57' text-anchor='middle' style='fill:#fff;font-size:18px;font-weight:700;letter-spacing:.7px'>");
+        svg.append(@"<text x='125' y='52' text-anchor='middle' style='fill:#fff;font-size:18px;font-weight:700;letter-spacing:.7px'>");
         let beast_name_str = felt252_to_byte_array(beast_name);
         svg.append(@beast_name_str);
         svg.append(@"</text>");
         
         // Beast image with clip path
         svg.append(@"<clipPath id='artClip'>");
-        svg.append(@"<rect x='65' y='72' width='120' height='120' rx='8'/>");
+        svg.append(@"<rect x='60' y='67' width='130' height='130' rx='8'/>");
         svg.append(@"</clipPath>");
-        svg.append(@"<rect x='65' y='72' width='120' height='120' rx='8' fill='#141418'/>");
-        svg.append(@"<image x='65' y='72' width='120' height='120' href='");
+        svg.append(@"<rect x='60' y='67' width='130' height='130' rx='8' fill='#141418'/>");
+        svg.append(@"<image x='60' y='67' width='130' height='130' image-rendering='pixelated' href='");
         let beast_image = get_beast_png(beast.id);
         svg.append(@beast_image);
         svg.append(@"' clip-path='url(#artClip)'/>");
-        svg.append(@"<rect x='65' y='72' width='120' height='120' rx='8' fill='none' stroke='#fff' stroke-opacity='.08' stroke-width='2'/>");
+        svg.append(@"<rect x='60' y='67' width='130' height='130' rx='8' fill='none' stroke='#fff' stroke-opacity='.08' stroke-width='2'/>");
         
         // Stats panels
         svg.append(@"<g transform='translate(18 208)'>");
@@ -136,12 +136,12 @@ pub impl BeastSvgImpl of BeastSvgTrait {
     }
     
     /// Generates a complete data URI for the SVG
-    fn generate_svg_data_uri(beast: PackableBeast, king_beast_power: u16) -> ByteArray {
+    fn generate_svg_data_uri(beast: PackableBeast, rank: u16) -> ByteArray {
         let mut data_uri: ByteArray = "";
         data_uri.append(@"data:image/svg+xml,");
         
         // Get the SVG content
-        let svg_content = Self::generate_beast_svg(beast, king_beast_power);
+        let svg_content = Self::generate_beast_svg(beast, rank);
         
         // Append the SVG content directly
         data_uri.append(@svg_content);

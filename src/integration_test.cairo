@@ -13,7 +13,8 @@ mod integration_test {
             prefix: 1,  // Agony
             suffix: 2,  // Root  
             level: 42,
-            health: 1337
+            health: 1337,
+            shiny: false
         };
         
         // Test packing/unpacking
@@ -25,7 +26,8 @@ mod integration_test {
         assert(unpacked.suffix == beast.suffix, 'Pack/unpack suffix');
         assert(unpacked.level == beast.level, 'Pack/unpack level');
         assert(unpacked.health == beast.health, 'Pack/unpack health');
-        
+        assert(unpacked.shiny == beast.shiny, 'Pack/unpack shiny');
+
         // Test metadata generation
         let beast_name = beast_definitions::get_beast_name(beast.id);
         let beast_name_str = felt252_to_byte_array(beast_name);
@@ -67,7 +69,8 @@ mod integration_test {
                 prefix: (beast_id % 69) + 1,  // Valid prefix range
                 suffix: (beast_id % 18) + 1,  // Valid suffix range
                 level: (beast_id.into() * 100_u16),
-                health: (beast_id.into() * 200_u16)
+                health: (beast_id.into() * 200_u16),
+                shiny: false
             };
             
             let packed = PackableBeastStorePacking::pack(beast);

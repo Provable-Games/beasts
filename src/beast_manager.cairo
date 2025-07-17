@@ -44,7 +44,8 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         prefix: u8,
         suffix: u8,
         level: u16,
-        health: u16
+        health: u16,
+        shiny: bool
     ) -> BeastResult<PackableBeast> {
         // Validate beast ID
         match Self::validate_beast_id(beast_id) {
@@ -59,7 +60,7 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         }
         
         // Create the beast
-        let beast = PackableBeast { id: beast_id, prefix, suffix, level, health };
+        let beast = PackableBeast { id: beast_id, prefix, suffix, level, health, shiny };
         BeastResult::Ok(beast)
     }
 
@@ -77,7 +78,8 @@ pub impl BeastManagerImpl of BeastManagerTrait {
             prefix: 0, 
             suffix: 0, 
             level: 1, 
-            health: 100 
+            health: 100,
+            shiny: false
         };
         BeastResult::Ok(beast)
     }
@@ -113,12 +115,20 @@ pub impl BeastManagerImpl of BeastManagerTrait {
             tier: tier,
             level: beast.level,
             health: beast.health,
-            power: beast.level * (6 - tier.into())
+            shiny: beast.shiny,
+            power: Self::get_beast_power(beast)
         }
     }
 
     fn get_beast_power(beast: PackableBeast) -> u16 {
-        beast.level * (6 - beast_definitions::get_tier(beast.id).into())
+        let tier = beast_definitions::get_tier(beast.id);
+        let multiplier: u16 = (6 - tier.into());
+        
+        if beast.level > 65535_u16 / multiplier {
+            65535_u16
+        } else {
+            beast.level * multiplier
+        }
     }
 }
 
@@ -129,6 +139,7 @@ pub struct BeastAttributes {
     pub tier: u8,
     pub level: u16,
     pub health: u16,
+    pub shiny: bool,
     pub power: u16,
 }
 
@@ -166,7 +177,7 @@ mod tests {
 
     #[test]
     fn test_create_beast_valid() {
-        match BeastManagerTrait::create_beast(3, 1, 2, 100, 1000) {
+        match BeastManagerTrait::create_beast(3, 1, 2, 100, 1000, false) {
             BeastResult::Ok(beast) => {
                 assert(beast.id == 3, 'Beast ID mismatch');
                 assert(beast.prefix == 1, 'Prefix mismatch');
@@ -180,7 +191,7 @@ mod tests {
 
     #[test]
     fn test_create_beast_invalid_id() {
-        match BeastManagerTrait::create_beast(0, 1, 2, 100, 1000) {
+        match BeastManagerTrait::create_beast(0, 1, 2, 100, 1000, false) {
             BeastResult::Ok(_) => { assert(false, 'Should fail'); },
             BeastResult::Err(e) => { assert(e == 'Invalid beast ID', 'Wrong error'); }
         }
@@ -188,7 +199,7 @@ mod tests {
 
     #[test]
     fn test_create_beast_invalid_attributes() {
-        match BeastManagerTrait::create_beast(5, 100, 2, 100, 1000) {
+        match BeastManagerTrait::create_beast(5, 100, 2, 100, 1000, false) {
             BeastResult::Ok(_) => { assert(false, 'Should fail'); },
             BeastResult::Err(e) => { assert(e == 'Invalid prefix', 'Wrong error'); }
         }
@@ -203,6 +214,7 @@ mod tests {
                 assert(beast.suffix == 0, 'Suffix should be 0');
                 assert(beast.level == 1, 'Level should be 1');
                 assert(beast.health == 100, 'Health should be 100');
+                assert(beast.shiny == false, 'Shiny should be false');
             },
             BeastResult::Err(_) => { assert(false, 'Should not fail'); }
         }
@@ -220,7 +232,7 @@ mod tests {
 
     #[test]
     fn test_get_full_beast_name() {
-        let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337 };
+        let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: false };
         let (prefix, name, suffix) = BeastManagerTrait::get_full_beast_name(beast);
         
         assert(name == 'Jiangshi', 'Beast name mismatch');
@@ -230,7 +242,7 @@ mod tests {
 
     #[test]
     fn test_get_full_beast_name_no_prefix_suffix() {
-        let beast = PackableBeast { id: 1, prefix: 0, suffix: 0, level: 1, health: 100 };
+        let beast = PackableBeast { id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: false };
         let (prefix, name, suffix) = BeastManagerTrait::get_full_beast_name(beast);
         
         assert(name == 'Warlock', 'Beast name mismatch');
@@ -240,7 +252,7 @@ mod tests {
 
     #[test]
     fn test_get_beast_attributes() {
-        let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337 };
+        let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: false };
         let attrs = BeastManagerTrait::get_beast_attributes(beast);
         
         assert(attrs.beast_type == 'Magical', 'Type mismatch');
