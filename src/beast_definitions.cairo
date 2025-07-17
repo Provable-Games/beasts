@@ -209,82 +209,159 @@ pub const SUFFIX_SUN: u8 = 17;
 pub const SUFFIX_MOON: u8 = 18;
 
 pub fn get_beast_name(beast: u8) -> felt252 {
-    if beast == WARLOCK { 'Warlock' }
-    else if beast == TYPHON { 'Typhon' }
-    else if beast == JIANGSHI { 'Jiangshi' }
-    else if beast == ANANSI { 'Anansi' }
-    else if beast == BASILISK { 'Basilisk' }
-    else if beast == GORGON { 'Gorgon' }
-    else if beast == KITSUNE { 'Kitsune' }
-    else if beast == LICH { 'Lich' }
-    else if beast == CHIMERA { 'Chimera' }
-    else if beast == WENDIGO { 'Wendigo' }
-    else if beast == RAKSHASA { 'Rakshasa' }
-    else if beast == WEREWOLF { 'Werewolf' }
-    else if beast == BANSHEE { 'Banshee' }
-    else if beast == DRAUGR { 'Draugr' }
-    else if beast == VAMPIRE { 'Vampire' }
-    else if beast == GOBLIN { 'Goblin' }
-    else if beast == GHOUL { 'Ghoul' }
-    else if beast == WRAITH { 'Wraith' }
-    else if beast == SPRITE { 'Sprite' }
-    else if beast == KAPPA { 'Kappa' }
-    else if beast == FAIRY { 'Fairy' }
-    else if beast == LEPRECHAUN { 'Leprechaun' }
-    else if beast == KELPIE { 'Kelpie' }
-    else if beast == PIXIE { 'Pixie' }
-    else if beast == GNOME { 'Gnome' }
-    else if beast == GRIFFIN { 'Griffin' }
-    else if beast == MANTICORE { 'Manticore' }
-    else if beast == PHOENIX { 'Phoenix' }
-    else if beast == DRAGON { 'Dragon' }
-    else if beast == MINOTAUR { 'Minotaur' }
-    else if beast == QILIN { 'Qilin' }
-    else if beast == AMMIT { 'Ammit' }
-    else if beast == NUE { 'Nue' }
-    else if beast == SKINWALKER { 'Skinwalker' }
-    else if beast == CHUPACABRA { 'Chupacabra' }
-    else if beast == WERETIGER { 'Weretiger' }
-    else if beast == WYVERN { 'Wyvern' }
-    else if beast == ROC { 'Roc' }
-    else if beast == HARPY { 'Harpy' }
-    else if beast == PEGASUS { 'Pegasus' }
-    else if beast == HIPPOGRIFF { 'Hippogriff' }
-    else if beast == FENRIR { 'Fenrir' }
-    else if beast == JAGUAR { 'Jaguar' }
-    else if beast == SATORI { 'Satori' }
-    else if beast == DIREWOLF { 'Direwolf' }
-    else if beast == BEAR { 'Bear' }
-    else if beast == WOLF { 'Wolf' }
-    else if beast == MANTIS { 'Mantis' }
-    else if beast == SPIDER { 'Spider' }
-    else if beast == RAT { 'Rat' }
-    else if beast == KRAKEN { 'Kraken' }
-    else if beast == COLOSSUS { 'Colossus' }
-    else if beast == BALROG { 'Balrog' }
-    else if beast == LEVIATHAN { 'Leviathan' }
-    else if beast == TARRASQUE { 'Tarrasque' }
-    else if beast == TITAN { 'Titan' }
-    else if beast == NEPHILIM { 'Nephilim' }
-    else if beast == BEHEMOTH { 'Behemoth' }
-    else if beast == HYDRA { 'Hydra' }
-    else if beast == JUGGERNAUT { 'Juggernaut' }
-    else if beast == ONI { 'Oni' }
-    else if beast == JOTUNN { 'Jotunn' }
-    else if beast == ETTIN { 'Ettin' }
-    else if beast == CYCLOPS { 'Cyclops' }
-    else if beast == GIANT { 'Giant' }
-    else if beast == NEMEANLION { 'Nemean Lion' }
-    else if beast == BERSERKER { 'Berserker' }
-    else if beast == YETI { 'Yeti' }
-    else if beast == GOLEM { 'Golem' }
-    else if beast == ENT { 'Ent' }
-    else if beast == TROLL { 'Troll' }
-    else if beast == BIGFOOT { 'Bigfoot' }
-    else if beast == OGRE { 'Ogre' }
-    else if beast == ORC { 'Orc' }
-    else if beast == SKELETON { 'Skeleton' }
-    else { 'Unknown' }
+    if beast == WARLOCK {
+        'Warlock'
+    } else if beast == TYPHON {
+        'Typhon'
+    } else if beast == JIANGSHI {
+        'Jiangshi'
+    } else if beast == ANANSI {
+        'Anansi'
+    } else if beast == BASILISK {
+        'Basilisk'
+    } else if beast == GORGON {
+        'Gorgon'
+    } else if beast == KITSUNE {
+        'Kitsune'
+    } else if beast == LICH {
+        'Lich'
+    } else if beast == CHIMERA {
+        'Chimera'
+    } else if beast == WENDIGO {
+        'Wendigo'
+    } else if beast == RAKSHASA {
+        'Rakshasa'
+    } else if beast == WEREWOLF {
+        'Werewolf'
+    } else if beast == BANSHEE {
+        'Banshee'
+    } else if beast == DRAUGR {
+        'Draugr'
+    } else if beast == VAMPIRE {
+        'Vampire'
+    } else if beast == GOBLIN {
+        'Goblin'
+    } else if beast == GHOUL {
+        'Ghoul'
+    } else if beast == WRAITH {
+        'Wraith'
+    } else if beast == SPRITE {
+        'Sprite'
+    } else if beast == KAPPA {
+        'Kappa'
+    } else if beast == FAIRY {
+        'Fairy'
+    } else if beast == LEPRECHAUN {
+        'Leprechaun'
+    } else if beast == KELPIE {
+        'Kelpie'
+    } else if beast == PIXIE {
+        'Pixie'
+    } else if beast == GNOME {
+        'Gnome'
+    } else if beast == GRIFFIN {
+        'Griffin'
+    } else if beast == MANTICORE {
+        'Manticore'
+    } else if beast == PHOENIX {
+        'Phoenix'
+    } else if beast == DRAGON {
+        'Dragon'
+    } else if beast == MINOTAUR {
+        'Minotaur'
+    } else if beast == QILIN {
+        'Qilin'
+    } else if beast == AMMIT {
+        'Ammit'
+    } else if beast == NUE {
+        'Nue'
+    } else if beast == SKINWALKER {
+        'Skinwalker'
+    } else if beast == CHUPACABRA {
+        'Chupacabra'
+    } else if beast == WERETIGER {
+        'Weretiger'
+    } else if beast == WYVERN {
+        'Wyvern'
+    } else if beast == ROC {
+        'Roc'
+    } else if beast == HARPY {
+        'Harpy'
+    } else if beast == PEGASUS {
+        'Pegasus'
+    } else if beast == HIPPOGRIFF {
+        'Hippogriff'
+    } else if beast == FENRIR {
+        'Fenrir'
+    } else if beast == JAGUAR {
+        'Jaguar'
+    } else if beast == SATORI {
+        'Satori'
+    } else if beast == DIREWOLF {
+        'Direwolf'
+    } else if beast == BEAR {
+        'Bear'
+    } else if beast == WOLF {
+        'Wolf'
+    } else if beast == MANTIS {
+        'Mantis'
+    } else if beast == SPIDER {
+        'Spider'
+    } else if beast == RAT {
+        'Rat'
+    } else if beast == KRAKEN {
+        'Kraken'
+    } else if beast == COLOSSUS {
+        'Colossus'
+    } else if beast == BALROG {
+        'Balrog'
+    } else if beast == LEVIATHAN {
+        'Leviathan'
+    } else if beast == TARRASQUE {
+        'Tarrasque'
+    } else if beast == TITAN {
+        'Titan'
+    } else if beast == NEPHILIM {
+        'Nephilim'
+    } else if beast == BEHEMOTH {
+        'Behemoth'
+    } else if beast == HYDRA {
+        'Hydra'
+    } else if beast == JUGGERNAUT {
+        'Juggernaut'
+    } else if beast == ONI {
+        'Oni'
+    } else if beast == JOTUNN {
+        'Jotunn'
+    } else if beast == ETTIN {
+        'Ettin'
+    } else if beast == CYCLOPS {
+        'Cyclops'
+    } else if beast == GIANT {
+        'Giant'
+    } else if beast == NEMEANLION {
+        'Nemean Lion'
+    } else if beast == BERSERKER {
+        'Berserker'
+    } else if beast == YETI {
+        'Yeti'
+    } else if beast == GOLEM {
+        'Golem'
+    } else if beast == ENT {
+        'Ent'
+    } else if beast == TROLL {
+        'Troll'
+    } else if beast == BIGFOOT {
+        'Bigfoot'
+    } else if beast == OGRE {
+        'Ogre'
+    } else if beast == ORC {
+        'Orc'
+    } else if beast == SKELETON {
+        'Skeleton'
+    } else {
+        'Unknown'
+    }
 }
 
 pub fn get_tier(beast: u8) -> u8 {
@@ -327,96 +404,187 @@ pub fn get_type(beast: u8) -> felt252 {
 }
 
 pub fn get_prefix(prefix: u8) -> felt252 {
-    if prefix == PREFIX_AGONY { 'Agony' }
-    else if prefix == PREFIX_APOCALYPSE { 'Apocalypse' }
-    else if prefix == PREFIX_ARMAGEDDON { 'Armageddon' }
-    else if prefix == PREFIX_BEAST { 'Beast' }
-    else if prefix == PREFIX_BEHEMOTH { 'Behemoth' }
-    else if prefix == PREFIX_BLIGHT { 'Blight' }
-    else if prefix == PREFIX_BLOOD { 'Blood' }
-    else if prefix == PREFIX_BRAMBLE { 'Bramble' }
-    else if prefix == PREFIX_BRIMSTONE { 'Brimstone' }
-    else if prefix == PREFIX_BROOD { 'Brood' }
-    else if prefix == PREFIX_CARRION { 'Carrion' }
-    else if prefix == PREFIX_CATACLYSM { 'Cataclysm' }
-    else if prefix == PREFIX_CHIMERIC { 'Chimeric' }
-    else if prefix == PREFIX_CORPSE { 'Corpse' }
-    else if prefix == PREFIX_CORRUPTION { 'Corruption' }
-    else if prefix == PREFIX_DAMNATION { 'Damnation' }
-    else if prefix == PREFIX_DEATH { 'Death' }
-    else if prefix == PREFIX_DEMON { 'Demon' }
-    else if prefix == PREFIX_DIRE { 'Dire' }
-    else if prefix == PREFIX_DRAGON { 'Dragon' }
-    else if prefix == PREFIX_DREAD { 'Dread' }
-    else if prefix == PREFIX_DOOM { 'Doom' }
-    else if prefix == PREFIX_DUSK { 'Dusk' }
-    else if prefix == PREFIX_EAGLE { 'Eagle' }
-    else if prefix == PREFIX_EMPYREAN { 'Empyrean' }
-    else if prefix == PREFIX_FATE { 'Fate' }
-    else if prefix == PREFIX_FOE { 'Foe' }
-    else if prefix == PREFIX_GALE { 'Gale' }
-    else if prefix == PREFIX_GHOUL { 'Ghoul' }
-    else if prefix == PREFIX_GLOOM { 'Gloom' }
-    else if prefix == PREFIX_GLYPH { 'Glyph' }
-    else if prefix == PREFIX_GOLEM { 'Golem' }
-    else if prefix == PREFIX_GRIM { 'Grim' }
-    else if prefix == PREFIX_HATE { 'Hate' }
-    else if prefix == PREFIX_HAVOC { 'Havoc' }
-    else if prefix == PREFIX_HONOUR { 'Honour' }
-    else if prefix == PREFIX_HORROR { 'Horror' }
-    else if prefix == PREFIX_HYPNOTIC { 'Hypnotic' }
-    else if prefix == PREFIX_KRAKEN { 'Kraken' }
-    else if prefix == PREFIX_LOATH { 'Loath' }
-    else if prefix == PREFIX_MAELSTROM { 'Maelstrom' }
-    else if prefix == PREFIX_MIND { 'Mind' }
-    else if prefix == PREFIX_MIRACLE { 'Miracle' }
-    else if prefix == PREFIX_MORBID { 'Morbid' }
-    else if prefix == PREFIX_OBLIVION { 'Oblivion' }
-    else if prefix == PREFIX_ONSLAUGHT { 'Onslaught' }
-    else if prefix == PREFIX_PAIN { 'Pain' }
-    else if prefix == PREFIX_PANDEMONIUM { 'Pandemonium' }
-    else if prefix == PREFIX_PHOENIX { 'Phoenix' }
-    else if prefix == PREFIX_PLAGUE { 'Plague' }
-    else if prefix == PREFIX_RAGE { 'Rage' }
-    else if prefix == PREFIX_RAPTURE { 'Rapture' }
-    else if prefix == PREFIX_RUNE { 'Rune' }
-    else if prefix == PREFIX_SKULL { 'Skull' }
-    else if prefix == PREFIX_SOL { 'Sol' }
-    else if prefix == PREFIX_SOUL { 'Soul' }
-    else if prefix == PREFIX_SORROW { 'Sorrow' }
-    else if prefix == PREFIX_SPIRIT { 'Spirit' }
-    else if prefix == PREFIX_STORM { 'Storm' }
-    else if prefix == PREFIX_TEMPEST { 'Tempest' }
-    else if prefix == PREFIX_TORMENT { 'Torment' }
-    else if prefix == PREFIX_VENGEANCE { 'Vengeance' }
-    else if prefix == PREFIX_VICTORY { 'Victory' }
-    else if prefix == PREFIX_VIPER { 'Viper' }
-    else if prefix == PREFIX_VORTEX { 'Vortex' }
-    else if prefix == PREFIX_WOE { 'Woe' }
-    else if prefix == PREFIX_WRATH { 'Wrath' }
-    else if prefix == PREFIX_LIGHTS { 'Lights' }
-    else if prefix == PREFIX_SHIMMERING { 'Shimmering' }
-    else { '' }
+    if prefix == PREFIX_AGONY {
+        'Agony'
+    } else if prefix == PREFIX_APOCALYPSE {
+        'Apocalypse'
+    } else if prefix == PREFIX_ARMAGEDDON {
+        'Armageddon'
+    } else if prefix == PREFIX_BEAST {
+        'Beast'
+    } else if prefix == PREFIX_BEHEMOTH {
+        'Behemoth'
+    } else if prefix == PREFIX_BLIGHT {
+        'Blight'
+    } else if prefix == PREFIX_BLOOD {
+        'Blood'
+    } else if prefix == PREFIX_BRAMBLE {
+        'Bramble'
+    } else if prefix == PREFIX_BRIMSTONE {
+        'Brimstone'
+    } else if prefix == PREFIX_BROOD {
+        'Brood'
+    } else if prefix == PREFIX_CARRION {
+        'Carrion'
+    } else if prefix == PREFIX_CATACLYSM {
+        'Cataclysm'
+    } else if prefix == PREFIX_CHIMERIC {
+        'Chimeric'
+    } else if prefix == PREFIX_CORPSE {
+        'Corpse'
+    } else if prefix == PREFIX_CORRUPTION {
+        'Corruption'
+    } else if prefix == PREFIX_DAMNATION {
+        'Damnation'
+    } else if prefix == PREFIX_DEATH {
+        'Death'
+    } else if prefix == PREFIX_DEMON {
+        'Demon'
+    } else if prefix == PREFIX_DIRE {
+        'Dire'
+    } else if prefix == PREFIX_DRAGON {
+        'Dragon'
+    } else if prefix == PREFIX_DREAD {
+        'Dread'
+    } else if prefix == PREFIX_DOOM {
+        'Doom'
+    } else if prefix == PREFIX_DUSK {
+        'Dusk'
+    } else if prefix == PREFIX_EAGLE {
+        'Eagle'
+    } else if prefix == PREFIX_EMPYREAN {
+        'Empyrean'
+    } else if prefix == PREFIX_FATE {
+        'Fate'
+    } else if prefix == PREFIX_FOE {
+        'Foe'
+    } else if prefix == PREFIX_GALE {
+        'Gale'
+    } else if prefix == PREFIX_GHOUL {
+        'Ghoul'
+    } else if prefix == PREFIX_GLOOM {
+        'Gloom'
+    } else if prefix == PREFIX_GLYPH {
+        'Glyph'
+    } else if prefix == PREFIX_GOLEM {
+        'Golem'
+    } else if prefix == PREFIX_GRIM {
+        'Grim'
+    } else if prefix == PREFIX_HATE {
+        'Hate'
+    } else if prefix == PREFIX_HAVOC {
+        'Havoc'
+    } else if prefix == PREFIX_HONOUR {
+        'Honour'
+    } else if prefix == PREFIX_HORROR {
+        'Horror'
+    } else if prefix == PREFIX_HYPNOTIC {
+        'Hypnotic'
+    } else if prefix == PREFIX_KRAKEN {
+        'Kraken'
+    } else if prefix == PREFIX_LOATH {
+        'Loath'
+    } else if prefix == PREFIX_MAELSTROM {
+        'Maelstrom'
+    } else if prefix == PREFIX_MIND {
+        'Mind'
+    } else if prefix == PREFIX_MIRACLE {
+        'Miracle'
+    } else if prefix == PREFIX_MORBID {
+        'Morbid'
+    } else if prefix == PREFIX_OBLIVION {
+        'Oblivion'
+    } else if prefix == PREFIX_ONSLAUGHT {
+        'Onslaught'
+    } else if prefix == PREFIX_PAIN {
+        'Pain'
+    } else if prefix == PREFIX_PANDEMONIUM {
+        'Pandemonium'
+    } else if prefix == PREFIX_PHOENIX {
+        'Phoenix'
+    } else if prefix == PREFIX_PLAGUE {
+        'Plague'
+    } else if prefix == PREFIX_RAGE {
+        'Rage'
+    } else if prefix == PREFIX_RAPTURE {
+        'Rapture'
+    } else if prefix == PREFIX_RUNE {
+        'Rune'
+    } else if prefix == PREFIX_SKULL {
+        'Skull'
+    } else if prefix == PREFIX_SOL {
+        'Sol'
+    } else if prefix == PREFIX_SOUL {
+        'Soul'
+    } else if prefix == PREFIX_SORROW {
+        'Sorrow'
+    } else if prefix == PREFIX_SPIRIT {
+        'Spirit'
+    } else if prefix == PREFIX_STORM {
+        'Storm'
+    } else if prefix == PREFIX_TEMPEST {
+        'Tempest'
+    } else if prefix == PREFIX_TORMENT {
+        'Torment'
+    } else if prefix == PREFIX_VENGEANCE {
+        'Vengeance'
+    } else if prefix == PREFIX_VICTORY {
+        'Victory'
+    } else if prefix == PREFIX_VIPER {
+        'Viper'
+    } else if prefix == PREFIX_VORTEX {
+        'Vortex'
+    } else if prefix == PREFIX_WOE {
+        'Woe'
+    } else if prefix == PREFIX_WRATH {
+        'Wrath'
+    } else if prefix == PREFIX_LIGHTS {
+        'Lights'
+    } else if prefix == PREFIX_SHIMMERING {
+        'Shimmering'
+    } else {
+        ''
+    }
 }
 
 pub fn get_suffix(suffix: u8) -> felt252 {
-    if suffix == SUFFIX_BANE { 'Bane' }
-    else if suffix == SUFFIX_ROOT { 'Root' }
-    else if suffix == SUFFIX_BITE { 'Bite' }
-    else if suffix == SUFFIX_SONG { 'Song' }
-    else if suffix == SUFFIX_ROAR { 'Roar' }
-    else if suffix == SUFFIX_GRASP { 'Grasp' }
-    else if suffix == SUFFIX_INSTRUMENT { 'Instrument' }
-    else if suffix == SUFFIX_GLOW { 'Glow' }
-    else if suffix == SUFFIX_BENDER { 'Bender' }
-    else if suffix == SUFFIX_SHADOW { 'Shadow' }
-    else if suffix == SUFFIX_WHISPER { 'Whisper' }
-    else if suffix == SUFFIX_SHOUT { 'Shout' }
-    else if suffix == SUFFIX_GROWL { 'Growl' }
-    else if suffix == SUFFIX_TEAR { 'Tear' }
-    else if suffix == SUFFIX_PEAK { 'Peak' }
-    else if suffix == SUFFIX_FORM { 'Form' }
-    else if suffix == SUFFIX_SUN { 'Sun' }
-    else if suffix == SUFFIX_MOON { 'Moon' }
-    else { '' }
+    if suffix == SUFFIX_BANE {
+        'Bane'
+    } else if suffix == SUFFIX_ROOT {
+        'Root'
+    } else if suffix == SUFFIX_BITE {
+        'Bite'
+    } else if suffix == SUFFIX_SONG {
+        'Song'
+    } else if suffix == SUFFIX_ROAR {
+        'Roar'
+    } else if suffix == SUFFIX_GRASP {
+        'Grasp'
+    } else if suffix == SUFFIX_INSTRUMENT {
+        'Instrument'
+    } else if suffix == SUFFIX_GLOW {
+        'Glow'
+    } else if suffix == SUFFIX_BENDER {
+        'Bender'
+    } else if suffix == SUFFIX_SHADOW {
+        'Shadow'
+    } else if suffix == SUFFIX_WHISPER {
+        'Whisper'
+    } else if suffix == SUFFIX_SHOUT {
+        'Shout'
+    } else if suffix == SUFFIX_GROWL {
+        'Growl'
+    } else if suffix == SUFFIX_TEAR {
+        'Tear'
+    } else if suffix == SUFFIX_PEAK {
+        'Peak'
+    } else if suffix == SUFFIX_FORM {
+        'Form'
+    } else if suffix == SUFFIX_SUN {
+        'Sun'
+    } else if suffix == SUFFIX_MOON {
+        'Moon'
+    } else {
+        ''
+    }
 }

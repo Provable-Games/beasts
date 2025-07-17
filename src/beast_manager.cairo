@@ -1,5 +1,5 @@
-use super::pack::{PackableBeast, get_hash};
 use super::beast_definitions;
+use super::pack::{PackableBeast, get_hash};
 
 /// Result type for beast operations
 #[derive(Drop, Copy, Serde, PartialEq)]
@@ -29,36 +29,31 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         if prefix > 69 {
             return BeastResult::Err('Invalid prefix');
         }
-        
+
         // Suffix validation (0-18 based on beast_definitions)
         if suffix > 18 {
             return BeastResult::Err('Invalid suffix');
         }
-        
+
         BeastResult::Ok(())
     }
 
     /// Creates a new beast with validation
     fn create_beast(
-        beast_id: u8,
-        prefix: u8,
-        suffix: u8,
-        level: u16,
-        health: u16,
-        shiny: bool
+        beast_id: u8, prefix: u8, suffix: u8, level: u16, health: u16, shiny: bool,
     ) -> BeastResult<PackableBeast> {
         // Validate beast ID
         match Self::validate_beast_id(beast_id) {
             BeastResult::Ok(_) => {},
-            BeastResult::Err(e) => { return BeastResult::Err(e); }
+            BeastResult::Err(e) => { return BeastResult::Err(e); },
         }
-        
+
         // Validate attributes
         match Self::validate_beast_attributes(prefix, suffix) {
             BeastResult::Ok(_) => {},
-            BeastResult::Err(e) => { return BeastResult::Err(e); }
+            BeastResult::Err(e) => { return BeastResult::Err(e); },
         }
-        
+
         // Create the beast
         let beast = PackableBeast { id: beast_id, prefix, suffix, level, health, shiny };
         BeastResult::Ok(beast)
@@ -69,17 +64,12 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         // Validate beast ID
         match Self::validate_beast_id(beast_id) {
             BeastResult::Ok(_) => {},
-            BeastResult::Err(e) => { return BeastResult::Err(e); }
+            BeastResult::Err(e) => { return BeastResult::Err(e); },
         }
-        
+
         // Create genesis beast with default attributes
-        let beast = PackableBeast { 
-            id: beast_id, 
-            prefix: 0, 
-            suffix: 0, 
-            level: 1, 
-            health: 100,
-            shiny: false
+        let beast = PackableBeast {
+            id: beast_id, prefix: 0, suffix: 0, level: 1, health: 100, shiny: false,
         };
         BeastResult::Ok(beast)
     }
@@ -102,7 +92,7 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         } else {
             0
         };
-        
+
         (prefix_name, base_name, suffix_name)
     }
 
@@ -116,14 +106,14 @@ pub impl BeastManagerImpl of BeastManagerTrait {
             level: beast.level,
             health: beast.health,
             shiny: beast.shiny,
-            power: Self::get_beast_power(beast)
+            power: Self::get_beast_power(beast),
         }
     }
 
     fn get_beast_power(beast: PackableBeast) -> u16 {
         let tier = beast_definitions::get_tier(beast.id);
         let multiplier: u16 = (6 - tier.into());
-        
+
         if beast.level > 65535_u16 / multiplier {
             65535_u16
         } else {
@@ -149,30 +139,71 @@ mod tests {
 
     #[test]
     fn test_validate_beast_id_valid() {
-        assert(BeastManagerTrait::validate_beast_id(1) == BeastResult::Ok(()), 'ID 1 should be valid');
-        assert(BeastManagerTrait::validate_beast_id(42) == BeastResult::Ok(()), 'ID 42 should be valid');
-        assert(BeastManagerTrait::validate_beast_id(75) == BeastResult::Ok(()), 'ID 75 should be valid');
+        assert(
+            BeastManagerTrait::validate_beast_id(1) == BeastResult::Ok(()), 'ID 1 should be valid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_id(42) == BeastResult::Ok(()),
+            'ID 42 should be valid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_id(75) == BeastResult::Ok(()),
+            'ID 75 should be valid',
+        );
     }
 
     #[test]
     fn test_validate_beast_id_invalid() {
-        assert(BeastManagerTrait::validate_beast_id(0) == BeastResult::Err('Invalid beast ID'), 'ID 0 should be invalid');
-        assert(BeastManagerTrait::validate_beast_id(76) == BeastResult::Err('Invalid beast ID'), 'ID 76 should be invalid');
-        assert(BeastManagerTrait::validate_beast_id(255) == BeastResult::Err('Invalid beast ID'), 'ID 255 should be invalid');
+        assert(
+            BeastManagerTrait::validate_beast_id(0) == BeastResult::Err('Invalid beast ID'),
+            'ID 0 should be invalid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_id(76) == BeastResult::Err('Invalid beast ID'),
+            'ID 76 should be invalid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_id(255) == BeastResult::Err('Invalid beast ID'),
+            'ID 255 should be invalid',
+        );
     }
 
     #[test]
     fn test_validate_beast_attributes_valid() {
-        assert(BeastManagerTrait::validate_beast_attributes(0, 0) == BeastResult::Ok(()), 'Attrs 0,0 should be valid');
-        assert(BeastManagerTrait::validate_beast_attributes(69, 18) == BeastResult::Ok(()), 'Max attrs should be valid');
-        assert(BeastManagerTrait::validate_beast_attributes(10, 5) == BeastResult::Ok(()), 'Mid attrs should be valid');
+        assert(
+            BeastManagerTrait::validate_beast_attributes(0, 0) == BeastResult::Ok(()),
+            'Attrs 0,0 should be valid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_attributes(69, 18) == BeastResult::Ok(()),
+            'Max attrs should be valid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_attributes(10, 5) == BeastResult::Ok(()),
+            'Mid attrs should be valid',
+        );
     }
 
     #[test]
     fn test_validate_beast_attributes_invalid() {
-        assert(BeastManagerTrait::validate_beast_attributes(70, 0) == BeastResult::Err('Invalid prefix'), 'Prefix 70 invalid');
-        assert(BeastManagerTrait::validate_beast_attributes(0, 19) == BeastResult::Err('Invalid suffix'), 'Suffix 19 invalid');
-        assert(BeastManagerTrait::validate_beast_attributes(255, 255) == BeastResult::Err('Invalid prefix'), 'Max values invalid');
+        assert(
+            BeastManagerTrait::validate_beast_attributes(
+                70, 0,
+            ) == BeastResult::Err('Invalid prefix'),
+            'Prefix 70 invalid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_attributes(
+                0, 19,
+            ) == BeastResult::Err('Invalid suffix'),
+            'Suffix 19 invalid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_attributes(
+                255, 255,
+            ) == BeastResult::Err('Invalid prefix'),
+            'Max values invalid',
+        );
     }
 
     #[test]
@@ -185,7 +216,7 @@ mod tests {
                 assert(beast.level == 100, 'Level mismatch');
                 assert(beast.health == 1000, 'Health mismatch');
             },
-            BeastResult::Err(_) => { assert(false, 'Should not fail'); }
+            BeastResult::Err(_) => { assert(false, 'Should not fail'); },
         }
     }
 
@@ -193,7 +224,7 @@ mod tests {
     fn test_create_beast_invalid_id() {
         match BeastManagerTrait::create_beast(0, 1, 2, 100, 1000, false) {
             BeastResult::Ok(_) => { assert(false, 'Should fail'); },
-            BeastResult::Err(e) => { assert(e == 'Invalid beast ID', 'Wrong error'); }
+            BeastResult::Err(e) => { assert(e == 'Invalid beast ID', 'Wrong error'); },
         }
     }
 
@@ -201,7 +232,7 @@ mod tests {
     fn test_create_beast_invalid_attributes() {
         match BeastManagerTrait::create_beast(5, 100, 2, 100, 1000, false) {
             BeastResult::Ok(_) => { assert(false, 'Should fail'); },
-            BeastResult::Err(e) => { assert(e == 'Invalid prefix', 'Wrong error'); }
+            BeastResult::Err(e) => { assert(e == 'Invalid prefix', 'Wrong error'); },
         }
     }
 
@@ -216,7 +247,7 @@ mod tests {
                 assert(beast.health == 100, 'Health should be 100');
                 assert(beast.shiny == false, 'Shiny should be false');
             },
-            BeastResult::Err(_) => { assert(false, 'Should not fail'); }
+            BeastResult::Err(_) => { assert(false, 'Should not fail'); },
         }
     }
 
@@ -225,16 +256,18 @@ mod tests {
         let hash1 = BeastManagerTrait::get_beast_hash(1, 2, 3);
         let hash2 = BeastManagerTrait::get_beast_hash(1, 2, 3);
         let hash3 = BeastManagerTrait::get_beast_hash(1, 2, 4);
-        
+
         assert(hash1 == hash2, 'Same inputs should match');
         assert(hash1 != hash3, 'Different inputs should differ');
     }
 
     #[test]
     fn test_get_full_beast_name() {
-        let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: false };
+        let beast = PackableBeast {
+            id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: false,
+        };
         let (prefix, name, suffix) = BeastManagerTrait::get_full_beast_name(beast);
-        
+
         assert(name == 'Jiangshi', 'Beast name mismatch');
         assert(prefix == 'Agony', 'Prefix name mismatch');
         assert(suffix == 'Root', 'Suffix name mismatch');
@@ -242,9 +275,11 @@ mod tests {
 
     #[test]
     fn test_get_full_beast_name_no_prefix_suffix() {
-        let beast = PackableBeast { id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: false };
+        let beast = PackableBeast {
+            id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: false,
+        };
         let (prefix, name, suffix) = BeastManagerTrait::get_full_beast_name(beast);
-        
+
         assert(name == 'Warlock', 'Beast name mismatch');
         assert(prefix == 0, 'Prefix should be 0');
         assert(suffix == 0, 'Suffix should be 0');
@@ -252,9 +287,11 @@ mod tests {
 
     #[test]
     fn test_get_beast_attributes() {
-        let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: false };
+        let beast = PackableBeast {
+            id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: false,
+        };
         let attrs = BeastManagerTrait::get_beast_attributes(beast);
-        
+
         assert(attrs.beast_type == 'Magical', 'Type mismatch');
         assert(attrs.tier == 1, 'Tier mismatch');
         assert(attrs.level == 42, 'Level mismatch');
