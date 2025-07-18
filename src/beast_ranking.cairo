@@ -131,12 +131,11 @@ mod tests {
         let name: ByteArray = "Beasts";
         let symbol: ByteArray = "BEAST";
         let base_uri: ByteArray = "https://api.beasts.game/metadata/";
+        
+        // Serialize constructor parameters in correct order
         name.serialize(ref constructor_data);
         symbol.serialize(ref constructor_data);
         base_uri.serialize(ref constructor_data);
-        recipient.serialize(ref constructor_data);
-        let token_ids: Array<u256> = array![];
-        token_ids.serialize(ref constructor_data);
         owner.serialize(ref constructor_data);
 
         let (contract_address, _) = contract.deploy(@constructor_data).unwrap();

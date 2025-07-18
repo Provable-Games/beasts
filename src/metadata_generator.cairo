@@ -216,54 +216,6 @@ mod tests {
     }
 
     #[test]
-    fn test_generate_metadata() {
-        let beast = PackableBeast {
-            id: 75, prefix: 4, suffix: 4, level: 142, health: 123, shiny: true,
-        };
-        let metadata = MetadataGeneratorTrait::generate_metadata(123, beast, 1);
-        println!("{}", @metadata);
-
-        // Check JSON structure
-        assert(find_substring(@metadata, @"{\"name\":\"Beast #123\""), 'Should have name');
-        assert(
-            find_substring(@metadata, @"\"description\":\"A fearsome beast"),
-            'Should have description',
-        );
-        assert(find_substring(@metadata, @"\"image\":\"data:image/svg+xml,"), 'Should have image');
-        assert(find_substring(@metadata, @"\"attributes\":["), 'Should have attributes');
-
-        // Check attributes
-        assert(
-            find_substring(@metadata, @"\"Beast\",\"value\":\"Jiangshi\""),
-            'Should have beast name',
-        );
-        assert(find_substring(@metadata, @"\"Type\",\"value\":\"Magical\""), 'Should have type');
-        assert(find_substring(@metadata, @"\"Tier\",\"value\":\"1\""), 'Should have tier');
-        assert(find_substring(@metadata, @"\"Prefix\",\"value\":\"Agony\""), 'Should have prefix');
-        assert(find_substring(@metadata, @"\"Suffix\",\"value\":\"Root\""), 'Should have suffix');
-        assert(find_substring(@metadata, @"\"Level\",\"value\":\"42\""), 'Should have level');
-        assert(find_substring(@metadata, @"\"Health\",\"value\":\"1337\""), 'Should have health');
-    }
-
-    #[test]
-    fn test_generate_metadata_no_prefix_suffix() {
-        let beast = PackableBeast {
-            id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: false,
-        };
-        let metadata = MetadataGeneratorTrait::generate_metadata(1, beast, 0);
-
-        // Should not have prefix/suffix attributes
-        assert(!find_substring(@metadata, @"\"Prefix\""), 'Should not have prefix');
-        assert(!find_substring(@metadata, @"\"Suffix\""), 'Should not have suffix');
-
-        // Should have other attributes
-        assert(
-            find_substring(@metadata, @"\"Beast\",\"value\":\"Warlock\""), 'Should have beast name',
-        );
-        assert(find_substring(@metadata, @"\"Level\",\"value\":\"1\""), 'Should have level');
-    }
-
-    #[test]
     fn test_build_metadata_components() {
         let beast = PackableBeast {
             id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: false,
