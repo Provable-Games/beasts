@@ -6,7 +6,7 @@ use super::utils::felt252_to_byte_array;
 #[generate_trait]
 pub impl BeastSvgImpl of BeastSvgTrait {
     /// Generates a complete data URI for the SVG
-    fn generate_svg_data_uri(
+    fn generate_svg(
         beast_id: u8,
         prefix_name: felt252,
         suffix_name: felt252,
@@ -14,9 +14,6 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         rank: u16,
         beast_attrs: BeastAttributes,
     ) -> ByteArray {
-        let mut data_uri: ByteArray = "";
-        data_uri.append(@"data:image/svg+xml,");
-
         let mut svg: ByteArray = "";
 
         svg
@@ -266,55 +263,8 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         }
 
         svg.append(@"</svg>");
-        data_uri.append(@uri_encode(svg));
-
-        data_uri
+        svg
     }
-}
-
-fn to_hex_digit(n: u8) -> u8 {
-    if n < 10_u8 {
-        48_u8 + n
-    } else {
-        55_u8 + n
-    }
-}
-
-/// RFC 3986 un‑reserved characters that may stay as‑is in a URL
-fn is_unreserved(b: u8) -> bool {
-    (65_u8 <= b && b <= 90_u8)
-        || // A-Z
-         (97_u8 <= b && b <= 122_u8)
-        || // a-z
-         (48_u8 <= b && b <= 57_u8)
-        || // 0-9
-        b == 45_u8
-        || b == 95_u8
-        || b == 46_u8
-        || b == 126_u8 // - _ . ~
-}
-
-/// `uri_encode(svg) -> encoded_svg`
-pub fn uri_encode(mut svg: ByteArray) -> ByteArray {
-    let mut out: ByteArray = "";
-    let mut iter = svg.into_iter();
-
-    loop {
-        match iter.next() {
-            Option::Some(byte) => {
-                if is_unreserved(byte) {
-                    out.append_byte(byte);
-                } else {
-                    // '%' + two upper‑case hex digits
-                    out.append_byte(37_u8); // %
-                    out.append_byte(to_hex_digit(byte / 16_u8));
-                    out.append_byte(to_hex_digit(byte & 0x0f_u8));
-                }
-            },
-            Option::None(_) => { break; },
-        }
-    }
-    out
 }
 
 fn get_beast_png(beast_id: u8) -> ByteArray {

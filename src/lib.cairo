@@ -2,12 +2,12 @@ pub mod beast_definitions;
 pub mod beast_manager;
 pub mod beast_ranking;
 pub mod beast_svg;
+pub mod encoding;
 pub mod interfaces;
 pub mod metadata_generator;
 pub mod minting_coordinator;
 pub mod pack;
 pub mod utils;
-
 
 #[starknet::contract]
 pub mod beasts_nft {

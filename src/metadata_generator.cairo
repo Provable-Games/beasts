@@ -1,5 +1,6 @@
 use super::beast_manager::BeastManagerTrait;
 use super::beast_svg::BeastSvgTrait;
+use super::encoding::bytes_base64_encode;
 use super::pack::PackableBeast;
 use super::utils::felt252_to_byte_array;
 
@@ -28,7 +29,9 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
     /// Generates complete metadata JSON for a beast
     fn generate_metadata(token_id: u256, beast: PackableBeast, rank: u16) -> ByteArray {
         let components = Self::build_metadata_components(token_id, beast, rank);
-        Self::components_to_json(components)
+        let json = Self::components_to_json(components);
+
+        format!("data:application/json;base64,{}", bytes_base64_encode(json))
     }
 
     /// Builds metadata components from beast data
@@ -48,9 +51,10 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
 
         // Image
-        let image = BeastSvgTrait::generate_svg_data_uri(
+        let svg = BeastSvgTrait::generate_svg(
             beast.id, prefix_name, suffix_name, beast_name, rank, beast_attrs,
         );
+        let image = format!("data:image/svg+xml;base64,{}", bytes_base64_encode(svg));
 
         // Build attributes
         let mut attributes = array![];
