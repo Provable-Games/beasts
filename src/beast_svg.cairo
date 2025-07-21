@@ -275,7 +275,6 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         }
 
         svg.append(@"</svg>");
-        println!("{}", svg);
         svg
     }
 }
