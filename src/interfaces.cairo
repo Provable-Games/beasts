@@ -17,7 +17,9 @@ pub trait IBeasts<TContractState> {
         suffix: u8,
         level: u16,
         health: u16,
-        shiny: bool,
+        shiny: u8,
+        animated: u8,
+        timeline: u8,
     );
     fn mint_genesis_beasts(ref self: TContractState, to: ContractAddress);
 

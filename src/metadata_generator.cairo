@@ -117,6 +117,22 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         shiny_value.append(@format!("{}", beast_attrs.shiny));
         attributes.append(Attribute { trait_type: "Shiny", value: shiny_value });
 
+        // Animated attribute
+        let mut animated_value: ByteArray = "";
+        animated_value.append(@format!("{}", beast_attrs.animated));
+        attributes.append(Attribute { trait_type: "Animated", value: animated_value });
+
+        // Timeline attribute
+        let mut timeline_value: ByteArray = "";
+        if beast.timeline == 0 {
+            timeline_value.append(@"v1");
+        } else if beast.timeline == 1 {
+            timeline_value.append(@"v1.5");
+        } else {
+            timeline_value.append(@"v2");
+        }
+        attributes.append(Attribute { trait_type: "Timeline", value: timeline_value });
+
         MetadataComponents { name, description, image, attributes }
     }
 
@@ -218,7 +234,14 @@ mod tests {
     #[test]
     fn test_build_metadata_components() {
         let beast = PackableBeast {
-            id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: false,
+            id: 75,
+            prefix: 1,
+            suffix: 2,
+            level: 42,
+            health: 1337,
+            shiny: 1,
+            animated: 1,
+            timeline: 1,
         };
         let components = MetadataGeneratorTrait::build_metadata_components(123, beast, 1);
 
@@ -227,7 +250,7 @@ mod tests {
             components.description == "A fearsome beast from the Loot Survivor universe",
             'Description mismatch',
         );
-        assert(components.attributes.len() == 10, 'Should have 10 attributes');
+        assert(components.attributes.len() == 12, 'Should have 12 attributes');
     }
 
     #[test]

@@ -161,16 +161,28 @@ pub impl BeastSvgImpl of BeastSvgTrait {
 
         // Beast image with clip path
         svg.append(@"<clipPath id='artClip'>");
-        svg.append(@"<rect x='60' y='65' width='130' height='130' rx='8'/>");
+        svg.append(@"<rect width='130' height='130' rx='8'/>");
         svg.append(@"</clipPath>");
         svg.append(@"<rect x='60' y='65' width='130' height='130' rx='8' fill='#141418'/>");
-        svg
-            .append(
-                @"<image x='60' y='65' width='130' height='130' image-rendering='pixelated' href='",
-            );
-        let beast_image = get_beast_png(beast_id);
-        svg.append(@beast_image);
-        svg.append(@"' clip-path='url(#artClip)'/>");
+        svg.append(@"<g transform='translate(60, 65)' clip-path='url(#artClip)'>");
+        // If animated, use the sheet image, otherwise use the single image
+        if beast_attrs.animated == 1 {
+            svg.append(@"<image width='780' height='130' image-rendering='pixelated' href='");
+            let beast_image = get_beast_png(beast_id, true);
+            svg.append(@beast_image);
+            svg.append(@"'>");
+            svg
+                .append(
+                    @"<animate attributeName='x' values='0;-130;-260;-390;0' dur='1s' calcMode='discrete' repeatCount='indefinite'/>",
+                );
+        } else {
+            svg.append(@"<image width='130' height='130' image-rendering='pixelated' href='");
+            let beast_image = get_beast_png(beast_id, false);
+            svg.append(@beast_image);
+            svg.append(@"'>");
+        }
+
+        svg.append(@"</image></g>");
         svg
             .append(
                 @"<rect x='60' y='65' width='130' height='130' rx='8' fill='none' stroke='#fff' stroke-opacity='.08' stroke-width='2'/>",
@@ -206,7 +218,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"</g>");
 
         // Power and Health panels
-        svg.append(@"<g transform='translate(21.5 265)'>");
+        svg.append(@"<g transform='translate(20 265)'>");
         svg.append(@"<rect width='100' height='60' rx='5' fill='url(#panel)'/>");
         svg.append(@"<use href='#bolt' x='75' y='20'/>");
         svg.append(@"<text x='18' y='22' class='label'>POWER</text>");
@@ -215,7 +227,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"</text>");
         svg.append(@"</g>");
 
-        svg.append(@"<g transform='translate(131.5 265)'>");
+        svg.append(@"<g transform='translate(131 265)'>");
         svg.append(@"<rect width='100' height='60' rx='5' fill='url(#panel)'/>");
         svg.append(@"<use href='#heart' x='68' y='20'/>");
         svg.append(@"<text x='18' y='22' class='label'>HEALTH</text>");
@@ -225,7 +237,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"</g>");
 
         // Add shiny border glow effect if beast is shiny
-        if beast_attrs.shiny {
+        if beast_attrs.shiny > 0 {
             svg
                 .append(
                     @"<rect x='4.5' y='4.5' width='241' height='341' rx='9' fill='none' stroke='url(#shiny)' stroke-width='6'/>",
@@ -263,161 +275,462 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         }
 
         svg.append(@"</svg>");
+        println!("{}", svg);
         svg
     }
 }
 
-fn get_beast_png(beast_id: u8) -> ByteArray {
+fn get_beast_png(beast_id: u8, animated: bool) -> ByteArray {
     if beast_id == beast_definitions::WARLOCK {
-        get_warlock_svg()
+        if animated {
+            get_warlock_sheet_svg()
+        } else {
+            get_warlock_svg()
+        }
     } else if beast_id == beast_definitions::TYPHON {
-        get_typhon_svg()
+        if animated {
+            get_typhon_sheet_svg()
+        } else {
+            get_typhon_svg()
+        }
     } else if beast_id == beast_definitions::JIANGSHI {
-        get_jiangshi_svg()
+        if animated {
+            get_jiangshi_sheet_svg()
+        } else {
+            get_jiangshi_svg()
+        }
     } else if beast_id == beast_definitions::ANANSI {
-        get_anansi_svg()
+        if animated {
+            get_anansi_sheet_svg()
+        } else {
+            get_anansi_svg()
+        }
     } else if beast_id == beast_definitions::BASILISK {
-        get_basilisk_svg()
+        if animated {
+            get_basilisk_sheet_svg()
+        } else {
+            get_basilisk_svg()
+        }
     } else if beast_id == beast_definitions::GORGON {
-        get_gorgon_svg()
+        if animated {
+            get_gorgon_sheet_svg()
+        } else {
+            get_gorgon_svg()
+        }
     } else if beast_id == beast_definitions::KITSUNE {
-        get_kitsune_svg()
+        if animated {
+            get_kitsune_sheet_svg()
+        } else {
+            get_kitsune_svg()
+        }
     } else if beast_id == beast_definitions::LICH {
-        get_lich_svg()
+        if animated {
+            get_lich_sheet_svg()
+        } else {
+            get_lich_svg()
+        }
     } else if beast_id == beast_definitions::CHIMERA {
-        get_chimera_svg()
+        if animated {
+            get_chimera_sheet_svg()
+        } else {
+            get_chimera_svg()
+        }
     } else if beast_id == beast_definitions::WENDIGO {
-        get_wendigo_svg()
+        if animated {
+            get_wendigo_sheet_svg()
+        } else {
+            get_wendigo_svg()
+        }
     } else if beast_id == beast_definitions::RAKSHASA {
-        get_rakshasa_svg()
+        if animated {
+            get_rakshasa_sheet_svg()
+        } else {
+            get_rakshasa_svg()
+        }
     } else if beast_id == beast_definitions::WEREWOLF {
-        get_werewolf_svg()
+        if animated {
+            get_werewolf_sheet_svg()
+        } else {
+            get_werewolf_svg()
+        }
     } else if beast_id == beast_definitions::BANSHEE {
-        get_banshee_svg()
+        if animated {
+            get_banshee_sheet_svg()
+        } else {
+            get_banshee_svg()
+        }
     } else if beast_id == beast_definitions::DRAUGR {
-        get_draugr_svg()
+        if animated {
+            get_draugr_sheet_svg()
+        } else {
+            get_draugr_svg()
+        }
     } else if beast_id == beast_definitions::VAMPIRE {
-        get_vampire_svg()
+        if animated {
+            get_vampire_sheet_svg()
+        } else {
+            get_vampire_svg()
+        }
     } else if beast_id == beast_definitions::GOBLIN {
-        get_goblin_svg()
+        if animated {
+            get_goblin_sheet_svg()
+        } else {
+            get_goblin_svg()
+        }
     } else if beast_id == beast_definitions::GHOUL {
-        get_ghoul_svg()
+        if animated {
+            get_ghoul_sheet_svg()
+        } else {
+            get_ghoul_svg()
+        }
     } else if beast_id == beast_definitions::WRAITH {
-        get_wraith_svg()
+        if animated {
+            get_wraith_sheet_svg()
+        } else {
+            get_wraith_svg()
+        }
     } else if beast_id == beast_definitions::SPRITE {
-        get_sprite_svg()
+        if animated {
+            get_sprite_sheet_svg()
+        } else {
+            get_sprite_svg()
+        }
     } else if beast_id == beast_definitions::KAPPA {
-        get_kappa_svg()
+        if animated {
+            get_kappa_sheet_svg()
+        } else {
+            get_kappa_svg()
+        }
     } else if beast_id == beast_definitions::FAIRY {
-        get_fairy_svg()
+        if animated {
+            get_fairy_sheet_svg()
+        } else {
+            get_fairy_svg()
+        }
     } else if beast_id == beast_definitions::LEPRECHAUN {
-        get_leprechaun_svg()
+        if animated {
+            get_leprechaun_sheet_svg()
+        } else {
+            get_leprechaun_svg()
+        }
     } else if beast_id == beast_definitions::KELPIE {
-        get_kelpie_svg()
+        if animated {
+            get_kelpie_sheet_svg()
+        } else {
+            get_kelpie_svg()
+        }
     } else if beast_id == beast_definitions::PIXIE {
-        get_pixie_svg()
+        if animated {
+            get_pixie_sheet_svg()
+        } else {
+            get_pixie_svg()
+        }
     } else if beast_id == beast_definitions::GNOME {
-        get_gnome_svg()
+        if animated {
+            get_gnome_sheet_svg()
+        } else {
+            get_gnome_svg()
+        }
     } else if beast_id == beast_definitions::GRIFFIN {
-        get_griffin_svg()
+        if animated {
+            get_griffin_sheet_svg()
+        } else {
+            get_griffin_svg()
+        }
     } else if beast_id == beast_definitions::MANTICORE {
-        get_manticore_svg()
+        if animated {
+            get_manticore_sheet_svg()
+        } else {
+            get_manticore_svg()
+        }
     } else if beast_id == beast_definitions::PHOENIX {
-        get_phoenix_svg()
+        if animated {
+            get_phoenix_sheet_svg()
+        } else {
+            get_phoenix_svg()
+        }
     } else if beast_id == beast_definitions::DRAGON {
-        get_dragon_svg()
+        if animated {
+            get_dragon_sheet_svg()
+        } else {
+            get_dragon_svg()
+        }
     } else if beast_id == beast_definitions::MINOTAUR {
-        get_minotaur_svg()
+        if animated {
+            get_minotaur_sheet_svg()
+        } else {
+            get_minotaur_svg()
+        }
     } else if beast_id == beast_definitions::QILIN {
-        get_qilin_svg()
+        if animated {
+            get_qilin_sheet_svg()
+        } else {
+            get_qilin_svg()
+        }
     } else if beast_id == beast_definitions::AMMIT {
-        get_ammit_svg()
+        if animated {
+            get_ammit_sheet_svg()
+        } else {
+            get_ammit_svg()
+        }
     } else if beast_id == beast_definitions::NUE {
-        get_nue_svg()
+        if animated {
+            get_nue_sheet_svg()
+        } else {
+            get_nue_svg()
+        }
     } else if beast_id == beast_definitions::SKINWALKER {
-        get_skinwalker_svg()
+        if animated {
+            get_skinwalker_sheet_svg()
+        } else {
+            get_skinwalker_svg()
+        }
     } else if beast_id == beast_definitions::CHUPACABRA {
-        get_chupacabra_svg()
+        if animated {
+            get_chupacabra_sheet_svg()
+        } else {
+            get_chupacabra_svg()
+        }
     } else if beast_id == beast_definitions::WERETIGER {
-        get_weretiger_svg()
+        if animated {
+            get_weretiger_sheet_svg()
+        } else {
+            get_weretiger_svg()
+        }
     } else if beast_id == beast_definitions::WYVERN {
-        get_wyvern_svg()
+        if animated {
+            get_wyvern_sheet_svg()
+        } else {
+            get_wyvern_svg()
+        }
     } else if beast_id == beast_definitions::ROC {
-        get_roc_svg()
+        if animated {
+            get_roc_sheet_svg()
+        } else {
+            get_roc_svg()
+        }
     } else if beast_id == beast_definitions::HARPY {
-        get_harpy_svg()
+        if animated {
+            get_harpy_sheet_svg()
+        } else {
+            get_harpy_svg()
+        }
     } else if beast_id == beast_definitions::PEGASUS {
-        get_pegasus_svg()
+        if animated {
+            get_pegasus_sheet_svg()
+        } else {
+            get_pegasus_svg()
+        }
     } else if beast_id == beast_definitions::HIPPOGRIFF {
-        get_hippogriff_svg()
+        if animated {
+            get_hippogriff_sheet_svg()
+        } else {
+            get_hippogriff_svg()
+        }
     } else if beast_id == beast_definitions::FENRIR {
-        get_fenrir_svg()
+        if animated {
+            get_fenrir_sheet_svg()
+        } else {
+            get_fenrir_svg()
+        }
     } else if beast_id == beast_definitions::JAGUAR {
-        get_jaguar_svg()
+        if animated {
+            get_jaguar_sheet_svg()
+        } else {
+            get_jaguar_svg()
+        }
     } else if beast_id == beast_definitions::SATORI {
-        get_satori_svg()
+        if animated {
+            get_satori_sheet_svg()
+        } else {
+            get_satori_svg()
+        }
     } else if beast_id == beast_definitions::DIREWOLF {
-        get_direwolf_svg()
+        if animated {
+            get_direwolf_sheet_svg()
+        } else {
+            get_direwolf_svg()
+        }
     } else if beast_id == beast_definitions::BEAR {
-        get_bear_svg()
+        if animated {
+            get_bear_sheet_svg()
+        } else {
+            get_bear_svg()
+        }
     } else if beast_id == beast_definitions::WOLF {
-        get_wolf_svg()
+        if animated {
+            get_wolf_sheet_svg()
+        } else {
+            get_wolf_svg()
+        }
     } else if beast_id == beast_definitions::MANTIS {
-        get_mantis_svg()
+        if animated {
+            get_mantis_sheet_svg()
+        } else {
+            get_mantis_svg()
+        }
     } else if beast_id == beast_definitions::SPIDER {
-        get_spider_svg()
+        if animated {
+            get_spider_sheet_svg()
+        } else {
+            get_spider_svg()
+        }
     } else if beast_id == beast_definitions::RAT {
-        get_rat_svg()
+        if animated {
+            get_rat_sheet_svg()
+        } else {
+            get_rat_svg()
+        }
     } else if beast_id == beast_definitions::KRAKEN {
-        get_kraken_svg()
+        if animated {
+            get_kraken_sheet_svg()
+        } else {
+            get_kraken_svg()
+        }
     } else if beast_id == beast_definitions::COLOSSUS {
-        get_colossus_svg()
+        if animated {
+            get_colossus_sheet_svg()
+        } else {
+            get_colossus_svg()
+        }
     } else if beast_id == beast_definitions::BALROG {
-        get_balrog_svg()
+        if animated {
+            get_balrog_sheet_svg()
+        } else {
+            get_balrog_svg()
+        }
     } else if beast_id == beast_definitions::LEVIATHAN {
-        get_leviathan_svg()
+        if animated {
+            get_leviathan_sheet_svg()
+        } else {
+            get_leviathan_svg()
+        }
     } else if beast_id == beast_definitions::TARRASQUE {
-        get_tarrasque_svg()
+        if animated {
+            get_tarrasque_sheet_svg()
+        } else {
+            get_tarrasque_svg()
+        }
     } else if beast_id == beast_definitions::TITAN {
-        get_titan_svg()
+        if animated {
+            get_titan_sheet_svg()
+        } else {
+            get_titan_svg()
+        }
     } else if beast_id == beast_definitions::NEPHILIM {
-        get_nephilim_svg()
+        if animated {
+            get_nephilim_sheet_svg()
+        } else {
+            get_nephilim_svg()
+        }
     } else if beast_id == beast_definitions::BEHEMOTH {
-        get_behemoth_svg()
+        if animated {
+            get_behemoth_sheet_svg()
+        } else {
+            get_behemoth_svg()
+        }
     } else if beast_id == beast_definitions::HYDRA {
-        get_hydra_svg()
+        if animated {
+            get_hydra_sheet_svg()
+        } else {
+            get_hydra_svg()
+        }
     } else if beast_id == beast_definitions::JUGGERNAUT {
-        get_juggernaut_svg()
+        if animated {
+            get_juggernaut_sheet_svg()
+        } else {
+            get_juggernaut_svg()
+        }
     } else if beast_id == beast_definitions::ONI {
-        get_oni_svg()
+        if animated {
+            get_oni_sheet_svg()
+        } else {
+            get_oni_svg()
+        }
     } else if beast_id == beast_definitions::JOTUNN {
-        get_jotunn_svg()
+        if animated {
+            get_jotunn_sheet_svg()
+        } else {
+            get_jotunn_svg()
+        }
     } else if beast_id == beast_definitions::ETTIN {
-        get_ettin_svg()
+        if animated {
+            get_ettin_sheet_svg()
+        } else {
+            get_ettin_svg()
+        }
     } else if beast_id == beast_definitions::CYCLOPS {
-        get_cyclops_svg()
+        if animated {
+            get_cyclops_sheet_svg()
+        } else {
+            get_cyclops_svg()
+        }
     } else if beast_id == beast_definitions::GIANT {
-        get_giant_svg()
+        if animated {
+            get_giant_sheet_svg()
+        } else {
+            get_giant_svg()
+        }
     } else if beast_id == beast_definitions::NEMEANLION {
-        get_nemeanlion_svg()
+        if animated {
+            get_nemeanlion_sheet_svg()
+        } else {
+            get_nemeanlion_svg()
+        }
     } else if beast_id == beast_definitions::BERSERKER {
-        get_berserker_svg()
+        if animated {
+            get_berserker_sheet_svg()
+        } else {
+            get_berserker_svg()
+        }
     } else if beast_id == beast_definitions::YETI {
-        get_yeti_svg()
+        if animated {
+            get_yeti_sheet_svg()
+        } else {
+            get_yeti_svg()
+        }
     } else if beast_id == beast_definitions::GOLEM {
-        get_golem_svg()
+        if animated {
+            get_golem_sheet_svg()
+        } else {
+            get_golem_svg()
+        }
     } else if beast_id == beast_definitions::ENT {
-        get_ent_svg()
+        if animated {
+            get_ent_sheet_svg()
+        } else {
+            get_ent_svg()
+        }
     } else if beast_id == beast_definitions::TROLL {
-        get_troll_svg()
+        if animated {
+            get_troll_sheet_svg()
+        } else {
+            get_troll_svg()
+        }
     } else if beast_id == beast_definitions::BIGFOOT {
-        get_bigfoot_svg()
+        if animated {
+            get_bigfoot_sheet_svg()
+        } else {
+            get_bigfoot_svg()
+        }
     } else if beast_id == beast_definitions::OGRE {
-        get_ogre_svg()
+        if animated {
+            get_ogre_sheet_svg()
+        } else {
+            get_ogre_svg()
+        }
     } else if beast_id == beast_definitions::ORC {
-        get_orc_svg()
+        if animated {
+            get_orc_sheet_svg()
+        } else {
+            get_orc_svg()
+        }
     } else if beast_id == beast_definitions::SKELETON {
-        get_skeleton_svg()
+        if animated {
+            get_skeleton_sheet_svg()
+        } else {
+            get_skeleton_svg()
+        }
     } else {
         // Default empty image
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
@@ -1038,6 +1351,15 @@ fn get_warlock_svg() -> ByteArray {
     svg
 }
 
+fn get_warlock_sheet_svg() -> ByteArray {
+    let mut svg: ByteArray = "";
+    svg
+        .append(
+            @"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAASFJREFUSIm1VW2uxCAIVE/dI+yt3/vBBu0wfLVZstlQhAFGxTF+IH+frc+HYVc1aj1Al0+wgKeuVjugcGkfXhGJX1r+KT2K0oqkp6KzW1cjst5BXdrlQ6TV35ZDsYJ9BiEUaXAKUTlL01rn9dVVGfcjD7hwGyBkqVX9VKekx23ZkHVmO3PQYDqOaEO6OsHppMV+gsiq/ivUaVlevaM8MhURsoosMckvQN8tM7vNsR28isAyzOmie+CluWE9uKUSRW9P6T0ABnawuRy26sa4tuxXHtG8A0rxqcRSpYiia9ZXCbwNuKH4OUp78Gb6NyhyIUKK8g7s+QH0OH2VIjoqFD0aiCk0iXGqpo327kEXfaQUwQa4I/Nyh1iDIvumDsYhtPIPgYPBCOPyCoAAAAAASUVORK5CYII=",
+        );
+    svg
+}
+
 fn get_wendigo_svg() -> ByteArray {
     let mut svg: ByteArray = "";
     svg
@@ -1101,3 +1423,376 @@ fn get_yeti_svg() -> ByteArray {
     svg
 }
 
+fn get_typhon_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_typhon_svg()
+}
+
+fn get_jiangshi_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_jiangshi_svg()
+}
+
+fn get_anansi_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_anansi_svg()
+}
+
+fn get_basilisk_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_basilisk_svg()
+}
+
+fn get_gorgon_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_gorgon_svg()
+}
+
+fn get_kitsune_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_kitsune_svg()
+}
+
+fn get_lich_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_lich_svg()
+}
+
+fn get_chimera_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_chimera_svg()
+}
+
+fn get_wendigo_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_wendigo_svg()
+}
+
+fn get_rakshasa_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_rakshasa_svg()
+}
+
+fn get_werewolf_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_werewolf_svg()
+}
+
+fn get_banshee_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_banshee_svg()
+}
+
+fn get_draugr_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_draugr_svg()
+}
+
+fn get_vampire_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_vampire_svg()
+}
+
+fn get_goblin_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_goblin_svg()
+}
+
+fn get_ghoul_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_ghoul_svg()
+}
+
+fn get_wraith_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_wraith_svg()
+}
+
+fn get_sprite_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_sprite_svg()
+}
+
+fn get_kappa_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_kappa_svg()
+}
+
+fn get_fairy_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_fairy_svg()
+}
+
+fn get_leprechaun_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_leprechaun_svg()
+}
+
+fn get_kelpie_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_kelpie_svg()
+}
+
+fn get_pixie_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_pixie_svg()
+}
+
+fn get_gnome_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_gnome_svg()
+}
+
+fn get_griffin_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_griffin_svg()
+}
+
+fn get_manticore_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_manticore_svg()
+}
+
+fn get_phoenix_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_phoenix_svg()
+}
+
+fn get_dragon_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_dragon_svg()
+}
+
+fn get_minotaur_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_minotaur_svg()
+}
+
+fn get_qilin_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_qilin_svg()
+}
+
+fn get_ammit_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_ammit_svg()
+}
+
+fn get_nue_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_nue_svg()
+}
+
+fn get_skinwalker_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_skinwalker_svg()
+}
+
+fn get_chupacabra_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_chupacabra_svg()
+}
+
+fn get_weretiger_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_weretiger_svg()
+}
+
+fn get_wyvern_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_wyvern_svg()
+}
+
+fn get_roc_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_roc_svg()
+}
+
+fn get_harpy_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_harpy_svg()
+}
+
+fn get_pegasus_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_pegasus_svg()
+}
+
+fn get_hippogriff_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_hippogriff_svg()
+}
+
+fn get_fenrir_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_fenrir_svg()
+}
+
+fn get_jaguar_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_jaguar_svg()
+}
+
+fn get_satori_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_satori_svg()
+}
+
+fn get_direwolf_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_direwolf_svg()
+}
+
+fn get_bear_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_bear_svg()
+}
+
+fn get_wolf_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_wolf_svg()
+}
+
+fn get_mantis_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_mantis_svg()
+}
+
+fn get_spider_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_spider_svg()
+}
+
+fn get_rat_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_rat_svg()
+}
+
+fn get_kraken_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_kraken_svg()
+}
+
+fn get_colossus_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_colossus_svg()
+}
+
+fn get_balrog_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_balrog_svg()
+}
+
+fn get_leviathan_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_leviathan_svg()
+}
+
+fn get_tarrasque_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_tarrasque_svg()
+}
+
+fn get_titan_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_titan_svg()
+}
+
+fn get_nephilim_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_nephilim_svg()
+}
+
+fn get_behemoth_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_behemoth_svg()
+}
+
+fn get_hydra_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_hydra_svg()
+}
+
+fn get_juggernaut_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_juggernaut_svg()
+}
+
+fn get_oni_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_oni_svg()
+}
+
+fn get_jotunn_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_jotunn_svg()
+}
+
+fn get_ettin_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_ettin_svg()
+}
+
+fn get_cyclops_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_cyclops_svg()
+}
+
+fn get_giant_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_giant_svg()
+}
+
+fn get_nemeanlion_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_nemeanlion_svg()
+}
+
+fn get_berserker_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_berserker_svg()
+}
+
+fn get_yeti_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_yeti_svg()
+}
+
+fn get_golem_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_golem_svg()
+}
+
+fn get_ent_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_ent_svg()
+}
+
+fn get_troll_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_troll_svg()
+}
+
+fn get_bigfoot_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_bigfoot_svg()
+}
+
+fn get_ogre_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_ogre_svg()
+}
+
+fn get_orc_sheet_svg() -> ByteArray {
+    // For now, return the same image as the regular function
+    get_orc_svg()
+}
+
+fn get_skeleton_sheet_svg() -> ByteArray {
+    let mut svg: ByteArray = "";
+    svg
+        .append(
+            @"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAwwAAACCCAMAAADc8798AAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAALZUExURQAAAAACAACpAAD/AABjAAAFAAAVAAAWAAAUAAADAAAPAAAXAAAJAAAEAAAzAADPAADYAADZAADFAAAhAAABAACPAADbAABUAAAqAADLAAA9AAD4AADrAAAoAACrAABkAAAyAADyAACqAAA8AAD2AADpAAAnAAAxAADvAADwAAALAAAQAAARAACkAADzAABnAAAHAAAMAABFAADnAAD+AAD9AADxAADqAAA0AAANAAA+AADiAAA7AACTAADRAADOAADMAABmAAAvAACRAADQAADNAABbAADJAACoAAA4AABZAADfAABEAAAwAABKAAD7AADVAADBAADGAADXAAD8AADtAABRAACvAAC4AABVAACcAABzAADEAAATAAAbAADgAADoAAAlAAC2AABWAABxAABJAAD6AADCAAAeAADhAAD1AAAIAAAKAACmAAD5AABlAAAGAAAfAAAmAAD3AAAuAAAZAAC3AADDAACLAABqAAA6AACOAADIAACyAABNAABIAACuAADsAAC5AACdAADkAADaAACbAAByAABHAAAsAAAjAAC1AACGAABGAAB0AAC7AAAOAABsAAD0AAC/AAC9AABiAACCAAAkAACAAACNAAB/AABXAADuAACBAACsAABuAAArAABSAAB2AACEAADlAAAaAAASAABMAABhAAAcAACeAABvAACSAACVAAB9AACWAAB3AAA3AABdAACXAAAYAADjAAA/AACDAAB5AACIAACMAAAgAACQAABAAABwAABTAABeAAB8AACfAABtAAChAAA5AABgAACaAABfAAB7AACgAACzAACZAABCAAC+AABLAACJAADeAAC6AACjAAAdAAApAABPAAA1AAB4AABBAAAiAAB+AACHAADHAABcAAAtAADSAABQAACFAABDAADWAADcAABOAACKAADKAAB1AAA2AABoAADTAACYAADmAADUAACxAACwAP///7d073UAAAABYktHRPLbto54AAAAB3RJTUUH6QcVCR4KEz12GQAAFrtJREFUeNrtnftjE2W+xiedpqFpS1MMRdNb6JWQWlpIii1d6tZWq0tbgaq9ovTe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",
+        );
+    svg
+}

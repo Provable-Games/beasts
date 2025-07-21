@@ -14,7 +14,9 @@ mod integration_test {
             suffix: 2, // Root  
             level: 42,
             health: 1337,
-            shiny: false,
+            shiny: 0,
+            animated: 0,
+            timeline: 0,
         };
 
         // Test packing/unpacking
@@ -27,6 +29,8 @@ mod integration_test {
         assert(unpacked.level == beast.level, 'Pack/unpack level');
         assert(unpacked.health == beast.health, 'Pack/unpack health');
         assert(unpacked.shiny == beast.shiny, 'Pack/unpack shiny');
+        assert(unpacked.animated == beast.animated, 'Pack/unpack animated');
+        assert(unpacked.timeline == beast.timeline, 'Pack/unpack timeline');
 
         // Test metadata generation
         let beast_name = beast_definitions::get_beast_name(beast.id);
@@ -67,7 +71,9 @@ mod integration_test {
                 suffix: (beast_id % 18) + 1, // Valid suffix range
                 level: (beast_id.into() * 100_u16),
                 health: (beast_id.into() * 200_u16),
-                shiny: false,
+                shiny: 0,
+                animated: 0,
+                timeline: 0,
             };
 
             let packed = PackableBeastStorePacking::pack(beast);

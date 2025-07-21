@@ -112,14 +112,18 @@ pub mod beasts_nft {
             suffix: u8,
             level: u16,
             health: u16,
-            shiny: bool,
+            shiny: u8,
+            animated: u8,
+            timeline: u8,
         ) {
             // Check minter authorization
             let caller = starknet::get_caller_address();
             assert(caller == self.minter.read(), 'Not authorized to mint');
 
             // Prepare mint request
-            let request = MintRequest { beast_id, prefix, suffix, level, health, shiny };
+            let request = MintRequest {
+                beast_id, prefix, suffix, level, health, shiny, animated, timeline,
+            };
             let next_token_id = self.token_counter.read() + 1;
 
             // Validate and prepare mint data

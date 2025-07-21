@@ -133,7 +133,7 @@ mod mint_tests {
 
         // Try to mint without being minter
         start_cheat_caller_address(beasts.contract_address, random_caller);
-        beasts.mint(recipient, 1, 0, 0, 1, 100);
+        beasts.mint(recipient, 1, 0, 0, 1, 100, 0, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
     }
 
@@ -150,7 +150,7 @@ mod mint_tests {
 
         // Try to mint beast with ID 0
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(minter, 0, 0, 0, 1, 100);
+        beasts.mint(minter, 0, 0, 0, 1, 100, 0, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
     }
 
@@ -167,7 +167,7 @@ mod mint_tests {
 
         // Try to mint beast with ID 76
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(minter, 76, 0, 0, 1, 100);
+        beasts.mint(minter, 76, 0, 0, 1, 100, 0, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
     }
 
@@ -185,10 +185,13 @@ mod mint_tests {
 
         // Mint a beast
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(recipient, 1, 2, 3, 100, 200);
+        beasts.mint(recipient, 1, 2, 3, 100, 200, 0, 0, 0);
 
         // Try to mint the same beast again (same id, prefix, suffix)
-        beasts.mint(recipient, 1, 2, 3, 500, 600); // Different level/health but same identity
+        beasts
+            .mint(
+                recipient, 1, 2, 3, 500, 600, 0, 0, 0,
+            ); // Different level/health but same identity
         stop_cheat_caller_address(beasts.contract_address);
     }
 
@@ -205,9 +208,9 @@ mod mint_tests {
 
         // Mint same beast ID with different prefix/suffix
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(recipient, 5, 0, 0, 100, 200); // Basilisk with no prefix/suffix
-        beasts.mint(recipient, 5, 1, 0, 100, 200); // Basilisk with Agony prefix
-        beasts.mint(recipient, 5, 0, 1, 100, 200); // Basilisk with Bane suffix
+        beasts.mint(recipient, 5, 0, 0, 100, 200, 0, 0, 0); // Basilisk with no prefix/suffix
+        beasts.mint(recipient, 5, 1, 0, 100, 200, 0, 0, 0); // Basilisk with Agony prefix
+        beasts.mint(recipient, 5, 0, 1, 100, 200, 0, 0, 0); // Basilisk with Bane suffix
         stop_cheat_caller_address(beasts.contract_address);
 
         // Should have 3 NFTs
@@ -276,13 +279,13 @@ mod mint_tests {
 
         // Mint some beasts
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(minter, 1, 0, 0, 1, 100);
+        beasts.mint(minter, 1, 0, 0, 1, 100, 0, 0, 0);
         assert(beasts.total_supply() == 1, 'Supply should be 1');
 
-        beasts.mint(minter, 2, 0, 0, 1, 100);
+        beasts.mint(minter, 2, 0, 0, 1, 100, 0, 0, 0);
         assert(beasts.total_supply() == 2, 'Supply should be 2');
 
-        beasts.mint(minter, 3, 0, 0, 1, 100);
+        beasts.mint(minter, 3, 0, 0, 1, 100, 0, 0, 0);
         assert(beasts.total_supply() == 3, 'Supply should be 3');
         stop_cheat_caller_address(beasts.contract_address);
     }
@@ -307,7 +310,10 @@ mod mint_tests {
                 1, // Agony prefix
                 2, // Root suffix
                 42, // Level
-                1337 // Health
+                1337, // Health
+                0, // Shiny
+                0, // Animated
+                0 // Timeline
             );
         stop_cheat_caller_address(beasts.contract_address);
 
@@ -381,7 +387,7 @@ mod mint_tests {
 
         // Test minting a beast with level 10 (first beast of this type)
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(recipient, 1, 0, 0, 10, 100); // Beast ID 1 (Warlock), level 10
+        beasts.mint(recipient, 1, 0, 0, 10, 100, 0, 0, 0); // Beast ID 1 (Warlock), level 10
         stop_cheat_caller_address(beasts.contract_address);
 
         // Calculate expected power: level * (6 - tier)
@@ -407,13 +413,13 @@ mod mint_tests {
 
         // Mint first beast of type 1 (Warlock) with level 10
         // Power = 10 * (6 - 1) = 50
-        beasts.mint(recipient, 1, 0, 0, 10, 100);
+        beasts.mint(recipient, 1, 0, 0, 10, 100, 0, 0, 0);
         let king_power_after_first = beasts.get_king_beast_power(1);
         assert(king_power_after_first == 50, 'First king should be 50');
 
         // Mint second beast of same type with higher level 15
         // Power = 15 * (6 - 1) = 75
-        beasts.mint(recipient2, 1, 1, 1, 15, 150);
+        beasts.mint(recipient2, 1, 1, 1, 15, 150, 0, 0, 0);
         let king_power_after_second = beasts.get_king_beast_power(1);
         assert(king_power_after_second == 75, 'King power should be 75');
 
@@ -436,13 +442,13 @@ mod mint_tests {
 
         // Mint first beast of type 1 (Warlock) with level 20
         // Power = 20 * (6 - 1) = 100
-        beasts.mint(recipient, 1, 0, 0, 20, 200);
+        beasts.mint(recipient, 1, 0, 0, 20, 200, 0, 0, 0);
         let king_power_after_first = beasts.get_king_beast_power(1);
         assert(king_power_after_first == 100, 'First king should be 100');
 
         // Mint second beast of same type with lower level 10
         // Power = 10 * (6 - 1) = 50
-        beasts.mint(recipient2, 1, 1, 1, 10, 100);
+        beasts.mint(recipient2, 1, 1, 1, 10, 100, 0, 0, 0);
         let king_power_after_second = beasts.get_king_beast_power(1);
         assert(king_power_after_second == 100, 'King should remain 100');
 
@@ -464,19 +470,19 @@ mod mint_tests {
 
         // Mint Warlock (ID 1, Tier 1) with level 10
         // Power = 10 * (6 - 1) = 50
-        beasts.mint(recipient, 1, 0, 0, 10, 100);
+        beasts.mint(recipient, 1, 0, 0, 10, 100, 0, 0, 0);
         let warlock_king_power = beasts.get_king_beast_power(1);
         assert(warlock_king_power == 50, 'Warlock king should be 50');
 
         // Mint Yeti (ID 68, Tier 4) with level 15
         // Power = 15 * (6 - 4) = 30
-        beasts.mint(recipient, 68, 0, 0, 15, 150);
+        beasts.mint(recipient, 68, 0, 0, 15, 150, 0, 0, 0);
         let yeti_king_power = beasts.get_king_beast_power(68);
         assert(yeti_king_power == 30, 'Yeti king should be 30');
 
         // Mint Skeleton (ID 75, Tier 5) with level 20
         // Power = 20 * (6 - 5) = 20
-        beasts.mint(recipient, 75, 0, 0, 20, 200);
+        beasts.mint(recipient, 75, 0, 0, 20, 200, 0, 0, 0);
         let skeleton_king_power = beasts.get_king_beast_power(75);
         assert(skeleton_king_power == 20, 'Skeleton king should be 20');
 
@@ -504,13 +510,13 @@ mod mint_tests {
 
         // Mint first beast of type 1 (Warlock) with level 10
         // Power = 10 * (6 - 1) = 50
-        beasts.mint(recipient, 1, 0, 0, 10, 100);
+        beasts.mint(recipient, 1, 0, 0, 10, 100, 0, 0, 0);
         let king_power_after_first = beasts.get_king_beast_power(1);
         assert(king_power_after_first == 50, 'First king should be 50');
 
         // Mint second beast of same type with same level
         // Power = 10 * (6 - 1) = 50
-        beasts.mint(recipient2, 1, 1, 1, 10, 100);
+        beasts.mint(recipient2, 1, 1, 1, 10, 100, 0, 0, 0);
         let king_power_after_second = beasts.get_king_beast_power(1);
         assert(king_power_after_second == 50, 'King should remain 50');
 
@@ -531,13 +537,13 @@ mod mint_tests {
         start_cheat_caller_address(beasts.contract_address, minter);
 
         // Test with minimum level
-        beasts.mint(recipient, 1, 0, 0, 1, 10);
+        beasts.mint(recipient, 1, 0, 0, 1, 10, 0, 0, 0);
         let min_king_power = beasts.get_king_beast_power(1);
         // Warlock (Tier 1): 1 * (6 - 1) = 5
         assert(min_king_power == 5, 'Min king should be 5');
 
         // Test with maximum valid beast ID and high level
-        beasts.mint(recipient, 75, 0, 0, 1000, 10000);
+        beasts.mint(recipient, 75, 0, 0, 1000, 10000, 0, 0, 0);
         let max_king_power = beasts.get_king_beast_power(75);
         // Skeleton (Tier 5): 1000 * (6 - 5) = 1000
         assert(max_king_power == 1000, 'Max king should be 1000');
