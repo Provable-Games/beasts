@@ -40,7 +40,14 @@ pub impl BeastManagerImpl of BeastManagerTrait {
 
     /// Creates a new beast with validation
     fn create_beast(
-        beast_id: u8, prefix: u8, suffix: u8, level: u16, health: u16,
+        beast_id: u8,
+        prefix: u8,
+        suffix: u8,
+        level: u16,
+        health: u16,
+        shiny: u8,
+        animated: u8,
+        timeline: u8,
     ) -> BeastResult<PackableBeast> {
         // Validate beast ID
         match Self::validate_beast_id(beast_id) {
@@ -55,7 +62,9 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         }
 
         // Create the beast
-        let beast = PackableBeast { id: beast_id, prefix, suffix, level, health };
+        let beast = PackableBeast {
+            id: beast_id, prefix, suffix, level, health, shiny, animated, timeline,
+        };
         BeastResult::Ok(beast)
     }
 
@@ -68,7 +77,16 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         }
 
         // Create genesis beast with default attributes
-        let beast = PackableBeast { id: beast_id, prefix: 0, suffix: 0, level: 1, health: 100 };
+        let beast = PackableBeast {
+            id: beast_id,
+            prefix: 0,
+            suffix: 0,
+            level: 1,
+            health: 100,
+            shiny: 0,
+            animated: 0,
+            timeline: 0,
+        };
         BeastResult::Ok(beast)
     }
 
@@ -96,11 +114,28 @@ pub impl BeastManagerImpl of BeastManagerTrait {
 
     /// Gets beast metadata attributes
     fn get_beast_attributes(beast: PackableBeast) -> BeastAttributes {
+        let tier = beast_definitions::get_tier(beast.id);
+
         BeastAttributes {
             beast_type: beast_definitions::get_type(beast.id),
-            tier: beast_definitions::get_tier(beast.id),
+            tier: tier,
             level: beast.level,
             health: beast.health,
+            shiny: beast.shiny,
+            animated: beast.animated,
+            timeline: beast.timeline,
+            power: Self::get_beast_power(beast),
+        }
+    }
+
+    fn get_beast_power(beast: PackableBeast) -> u16 {
+        let tier = beast_definitions::get_tier(beast.id);
+        let multiplier: u16 = (6 - tier.into());
+
+        if beast.level > 65535_u16 / multiplier {
+            65535_u16
+        } else {
+            beast.level * multiplier
         }
     }
 }
@@ -109,9 +144,13 @@ pub impl BeastManagerImpl of BeastManagerTrait {
 #[derive(Drop, Copy, Serde)]
 pub struct BeastAttributes {
     pub beast_type: felt252,
-    pub tier: felt252,
+    pub tier: u8,
     pub level: u16,
     pub health: u16,
+    pub shiny: u8,
+    pub animated: u8,
+    pub timeline: u8,
+    pub power: u16,
 }
 
 #[cfg(test)]
@@ -189,13 +228,16 @@ mod tests {
 
     #[test]
     fn test_create_beast_valid() {
-        match BeastManagerTrait::create_beast(3, 1, 2, 100, 1000) {
+        match BeastManagerTrait::create_beast(3, 1, 2, 100, 1000, 0, 0, 0) {
             BeastResult::Ok(beast) => {
                 assert(beast.id == 3, 'Beast ID mismatch');
                 assert(beast.prefix == 1, 'Prefix mismatch');
                 assert(beast.suffix == 2, 'Suffix mismatch');
                 assert(beast.level == 100, 'Level mismatch');
                 assert(beast.health == 1000, 'Health mismatch');
+                assert(beast.shiny == 0, 'Shiny mismatch');
+                assert(beast.animated == 0, 'Animated mismatch');
+                assert(beast.timeline == 0, 'Timeline mismatch');
             },
             BeastResult::Err(_) => { assert(false, 'Should not fail'); },
         }
@@ -203,7 +245,7 @@ mod tests {
 
     #[test]
     fn test_create_beast_invalid_id() {
-        match BeastManagerTrait::create_beast(0, 1, 2, 100, 1000) {
+        match BeastManagerTrait::create_beast(0, 1, 2, 100, 1000, 0, 0, 0) {
             BeastResult::Ok(_) => { assert(false, 'Should fail'); },
             BeastResult::Err(e) => { assert(e == 'Invalid beast ID', 'Wrong error'); },
         }
@@ -211,7 +253,7 @@ mod tests {
 
     #[test]
     fn test_create_beast_invalid_attributes() {
-        match BeastManagerTrait::create_beast(5, 100, 2, 100, 1000) {
+        match BeastManagerTrait::create_beast(5, 100, 2, 100, 1000, 0, 0, 0) {
             BeastResult::Ok(_) => { assert(false, 'Should fail'); },
             BeastResult::Err(e) => { assert(e == 'Invalid prefix', 'Wrong error'); },
         }
@@ -226,6 +268,9 @@ mod tests {
                 assert(beast.suffix == 0, 'Suffix should be 0');
                 assert(beast.level == 1, 'Level should be 1');
                 assert(beast.health == 100, 'Health should be 100');
+                assert(beast.shiny == 0, 'Shiny should be 0');
+                assert(beast.animated == 0, 'Animated should be 0');
+                assert(beast.timeline == 0, 'Timeline should be 0');
             },
             BeastResult::Err(_) => { assert(false, 'Should not fail'); },
         }
@@ -243,7 +288,16 @@ mod tests {
 
     #[test]
     fn test_get_full_beast_name() {
-        let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337 };
+        let beast = PackableBeast {
+            id: 3,
+            prefix: 1,
+            suffix: 2,
+            level: 42,
+            health: 1337,
+            shiny: 0,
+            animated: 0,
+            timeline: 0,
+        };
         let (prefix, name, suffix) = BeastManagerTrait::get_full_beast_name(beast);
 
         assert(name == 'Jiangshi', 'Beast name mismatch');
@@ -253,7 +307,9 @@ mod tests {
 
     #[test]
     fn test_get_full_beast_name_no_prefix_suffix() {
-        let beast = PackableBeast { id: 1, prefix: 0, suffix: 0, level: 1, health: 100 };
+        let beast = PackableBeast {
+            id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 0, animated: 0, timeline: 0,
+        };
         let (prefix, name, suffix) = BeastManagerTrait::get_full_beast_name(beast);
 
         assert(name == 'Warlock', 'Beast name mismatch');
@@ -263,12 +319,25 @@ mod tests {
 
     #[test]
     fn test_get_beast_attributes() {
-        let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337 };
+        let beast = PackableBeast {
+            id: 3,
+            prefix: 1,
+            suffix: 2,
+            level: 42,
+            health: 1337,
+            shiny: 0,
+            animated: 0,
+            timeline: 0,
+        };
         let attrs = BeastManagerTrait::get_beast_attributes(beast);
 
         assert(attrs.beast_type == 'Magical', 'Type mismatch');
-        assert(attrs.tier == '1', 'Tier mismatch');
+        assert(attrs.tier == 1, 'Tier mismatch');
         assert(attrs.level == 42, 'Level mismatch');
         assert(attrs.health == 1337, 'Health mismatch');
+        assert(attrs.power == 42 * 5, 'Power mismatch');
+        assert(attrs.shiny == 0, 'Shiny mismatch');
+        assert(attrs.animated == 0, 'Animated mismatch');
+        assert(attrs.timeline == 0, 'Timeline mismatch');
     }
 }

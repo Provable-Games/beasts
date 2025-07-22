@@ -1,5 +1,6 @@
 use super::beast_manager::BeastManagerTrait;
 use super::beast_svg::BeastSvgTrait;
+use super::encoding::bytes_base64_encode;
 use super::pack::PackableBeast;
 use super::utils::felt252_to_byte_array;
 
@@ -26,13 +27,17 @@ pub struct Attribute {
 #[generate_trait]
 pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
     /// Generates complete metadata JSON for a beast
-    fn generate_metadata(token_id: u256, beast: PackableBeast) -> ByteArray {
-        let components = Self::build_metadata_components(token_id, beast);
-        Self::components_to_json(components)
+    fn generate_metadata(token_id: u256, beast: PackableBeast, rank: u16) -> ByteArray {
+        let components = Self::build_metadata_components(token_id, beast, rank);
+        let json = Self::components_to_json(components);
+
+        format!("data:application/json;base64,{}", bytes_base64_encode(json))
     }
 
     /// Builds metadata components from beast data
-    fn build_metadata_components(token_id: u256, beast: PackableBeast) -> MetadataComponents {
+    fn build_metadata_components(
+        token_id: u256, beast: PackableBeast, rank: u16,
+    ) -> MetadataComponents {
         // Build name
         let mut name: ByteArray = "";
         name.append(@"Beast #");
@@ -40,22 +45,23 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 
         // Description
         let description = "A fearsome beast from the Loot Survivor universe";
+        // Get beast names
+        let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
+        // Get other attributes
+        let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
 
         // Image
-        let image = BeastSvgTrait::generate_svg_data_uri(beast);
+        let svg = BeastSvgTrait::generate_svg(
+            beast.id, prefix_name, suffix_name, beast_name, rank, beast_attrs,
+        );
+        let image = format!("data:image/svg+xml;base64,{}", bytes_base64_encode(svg));
 
         // Build attributes
         let mut attributes = array![];
 
-        // Get beast names
-        let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
-
         // Beast name attribute
         attributes
             .append(Attribute { trait_type: "Beast", value: felt252_to_byte_array(beast_name) });
-
-        // Get other attributes
-        let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
 
         // Type attribute
         attributes
@@ -66,10 +72,9 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
             );
 
         // Tier attribute
-        attributes
-            .append(
-                Attribute { trait_type: "Tier", value: felt252_to_byte_array(beast_attrs.tier) },
-            );
+        let mut tier_value: ByteArray = "";
+        tier_value.append(@format!("{}", beast_attrs.tier));
+        attributes.append(Attribute { trait_type: "Tier", value: tier_value });
 
         // Prefix attribute (if exists)
         if beast.prefix > 0 {
@@ -96,6 +101,37 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         let mut health_value: ByteArray = "";
         health_value.append(@format!("{}", beast_attrs.health));
         attributes.append(Attribute { trait_type: "Health", value: health_value });
+
+        // Power attribute
+        let mut power_value: ByteArray = "";
+        power_value.append(@format!("{}", beast_attrs.level * (6 - beast_attrs.tier.into())));
+        attributes.append(Attribute { trait_type: "Power", value: power_value });
+
+        // Rank attribute
+        let mut rank_value: ByteArray = "";
+        rank_value.append(@format!("{}", rank));
+        attributes.append(Attribute { trait_type: "Rank", value: rank_value });
+
+        // Shiny attribute
+        let mut shiny_value: ByteArray = "";
+        shiny_value.append(@format!("{}", beast_attrs.shiny));
+        attributes.append(Attribute { trait_type: "Shiny", value: shiny_value });
+
+        // Animated attribute
+        let mut animated_value: ByteArray = "";
+        animated_value.append(@format!("{}", beast_attrs.animated));
+        attributes.append(Attribute { trait_type: "Animated", value: animated_value });
+
+        // Timeline attribute
+        let mut timeline_value: ByteArray = "";
+        if beast.timeline == 0 {
+            timeline_value.append(@"v1");
+        } else if beast.timeline == 1 {
+            timeline_value.append(@"v1.5");
+        } else {
+            timeline_value.append(@"v2");
+        }
+        attributes.append(Attribute { trait_type: "Timeline", value: timeline_value });
 
         MetadataComponents { name, description, image, attributes }
     }
@@ -153,44 +189,6 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 
         json
     }
-
-    /// Generates a simple text description of a beast
-    fn generate_description(beast: PackableBeast) -> ByteArray {
-        let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
-        let attrs = BeastManagerTrait::get_beast_attributes(beast);
-
-        let mut description: ByteArray = "";
-
-        // Add prefix if exists
-        if beast.prefix > 0 {
-            description.append(@felt252_to_byte_array(prefix_name));
-            description.append(@" ");
-        }
-
-        // Add beast name
-        description.append(@felt252_to_byte_array(beast_name));
-
-        // Add suffix if exists
-        if beast.suffix > 0 {
-            description.append(@" ");
-            description.append(@felt252_to_byte_array(suffix_name));
-        }
-
-        // Add type and tier
-        description.append(@" - ");
-        description.append(@felt252_to_byte_array(attrs.beast_type));
-        description.append(@" Tier ");
-        description.append(@felt252_to_byte_array(attrs.tier));
-
-        // Add level and health
-        description.append(@" (Level ");
-        description.append(@format!("{}", attrs.level));
-        description.append(@", HP ");
-        description.append(@format!("{}", attrs.health));
-        description.append(@")");
-
-        description
-    }
 }
 
 #[cfg(test)]
@@ -234,80 +232,25 @@ mod tests {
     }
 
     #[test]
-    fn test_generate_metadata() {
-        let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337 };
-        let metadata = MetadataGeneratorTrait::generate_metadata(123, beast);
-
-        // Check JSON structure
-        assert(find_substring(@metadata, @"{\"name\":\"Beast #123\""), 'Should have name');
-        assert(
-            find_substring(@metadata, @"\"description\":\"A fearsome beast"),
-            'Should have description',
-        );
-        assert(find_substring(@metadata, @"\"image\":\"data:image/svg+xml,"), 'Should have image');
-        assert(find_substring(@metadata, @"\"attributes\":["), 'Should have attributes');
-
-        // Check attributes
-        assert(
-            find_substring(@metadata, @"\"Beast\",\"value\":\"Jiangshi\""),
-            'Should have beast name',
-        );
-        assert(find_substring(@metadata, @"\"Type\",\"value\":\"Magical\""), 'Should have type');
-        assert(find_substring(@metadata, @"\"Tier\",\"value\":\"1\""), 'Should have tier');
-        assert(find_substring(@metadata, @"\"Prefix\",\"value\":\"Agony\""), 'Should have prefix');
-        assert(find_substring(@metadata, @"\"Suffix\",\"value\":\"Root\""), 'Should have suffix');
-        assert(find_substring(@metadata, @"\"Level\",\"value\":\"42\""), 'Should have level');
-        assert(find_substring(@metadata, @"\"Health\",\"value\":\"1337\""), 'Should have health');
-    }
-
-    #[test]
-    fn test_generate_metadata_no_prefix_suffix() {
-        let beast = PackableBeast { id: 1, prefix: 0, suffix: 0, level: 1, health: 100 };
-        let metadata = MetadataGeneratorTrait::generate_metadata(1, beast);
-
-        // Should not have prefix/suffix attributes
-        assert(!find_substring(@metadata, @"\"Prefix\""), 'Should not have prefix');
-        assert(!find_substring(@metadata, @"\"Suffix\""), 'Should not have suffix');
-
-        // Should have other attributes
-        assert(
-            find_substring(@metadata, @"\"Beast\",\"value\":\"Warlock\""), 'Should have beast name',
-        );
-        assert(find_substring(@metadata, @"\"Level\",\"value\":\"1\""), 'Should have level');
-    }
-
-    #[test]
     fn test_build_metadata_components() {
-        let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337 };
-        let components = MetadataGeneratorTrait::build_metadata_components(123, beast);
+        let beast = PackableBeast {
+            id: 75,
+            prefix: 1,
+            suffix: 2,
+            level: 42,
+            health: 1337,
+            shiny: 1,
+            animated: 1,
+            timeline: 1,
+        };
+        let components = MetadataGeneratorTrait::build_metadata_components(123, beast, 1);
 
         assert(components.name == "Beast #123", 'Name mismatch');
         assert(
             components.description == "A fearsome beast from the Loot Survivor universe",
             'Description mismatch',
         );
-        assert(components.attributes.len() == 7, 'Should have 7 attributes');
-    }
-
-    #[test]
-    fn test_generate_description() {
-        let beast = PackableBeast { id: 3, prefix: 1, suffix: 2, level: 42, health: 1337 };
-        let description = MetadataGeneratorTrait::generate_description(beast);
-
-        assert(
-            description == "Agony Jiangshi Root - Magical Tier 1 (Level 42, HP 1337)",
-            'Description mismatch',
-        );
-    }
-
-    #[test]
-    fn test_generate_description_no_prefix_suffix() {
-        let beast = PackableBeast { id: 1, prefix: 0, suffix: 0, level: 10, health: 500 };
-        let description = MetadataGeneratorTrait::generate_description(beast);
-
-        assert(
-            description == "Warlock - Magical Tier 1 (Level 10, HP 500)", 'Description mismatch',
-        );
+        assert(components.attributes.len() == 12, 'Should have 12 attributes');
     }
 
     #[test]

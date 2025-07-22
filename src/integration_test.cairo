@@ -12,7 +12,11 @@ mod integration_test {
             id: 3, // Jiangshi
             prefix: 1, // Agony
             suffix: 2, // Root  
-            level: 42, health: 1337,
+            level: 42,
+            health: 1337,
+            shiny: 0,
+            animated: 0,
+            timeline: 0,
         };
 
         // Test packing/unpacking
@@ -24,6 +28,9 @@ mod integration_test {
         assert(unpacked.suffix == beast.suffix, 'Pack/unpack suffix');
         assert(unpacked.level == beast.level, 'Pack/unpack level');
         assert(unpacked.health == beast.health, 'Pack/unpack health');
+        assert(unpacked.shiny == beast.shiny, 'Pack/unpack shiny');
+        assert(unpacked.animated == beast.animated, 'Pack/unpack animated');
+        assert(unpacked.timeline == beast.timeline, 'Pack/unpack timeline');
 
         // Test metadata generation
         let beast_name = beast_definitions::get_beast_name(beast.id);
@@ -43,12 +50,8 @@ mod integration_test {
         assert(type_str == "Magical", 'Beast type');
 
         let tier = beast_definitions::get_tier(beast.id);
-        let tier_str = felt252_to_byte_array(tier);
-        assert(tier_str == "1", 'Beast tier');
-
-        println!("Beast: {} {} {}", prefix_str, beast_name_str, suffix_str);
-        println!("Type: {}, Tier: {}", type_str, tier_str);
-        println!("Level: {}, Health: {}", beast.level, beast.health);
+        assert(tier == 1, 'Beast tier');
+        // Beast information validated
     }
 
     /// Test that each beast can be properly stored and retrieved
@@ -68,13 +71,16 @@ mod integration_test {
                 suffix: (beast_id % 18) + 1, // Valid suffix range
                 level: (beast_id.into() * 100_u16),
                 health: (beast_id.into() * 200_u16),
+                shiny: 0,
+                animated: 0,
+                timeline: 0,
             };
 
             let packed = PackableBeastStorePacking::pack(beast);
             let unpacked = PackableBeastStorePacking::unpack(packed);
 
             if unpacked.id != beast.id {
-                println!("Failed on beast {}", beast_id);
+                // Failed on beast
                 failed = true;
             }
 

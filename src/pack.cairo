@@ -7,7 +7,10 @@ pub struct PackableBeast {
     pub prefix: u8, // 7 bits in storage - name prefix
     pub suffix: u8, // 5 bits in storage - name suffix  
     pub level: u16, // 16 bits in storage - beast level
-    pub health: u16 // 16 bits in storage - beast health
+    pub health: u16, // 16 bits in storage - beast health
+    pub shiny: u8, // 1 bit in storage - beast shiny
+    pub animated: u8, // 1 bit in storage - beast animated
+    pub timeline: u8 // 7 bits in storage - beast timeline
 }
 
 /// Generate hash for beast uniqueness checking
@@ -27,6 +30,9 @@ mod pow {
     pub const TWO_POW_16: u256 = 0x10000; // 2^16 = 65536
     pub const TWO_POW_19: u256 = 0x80000; // 2^19
     pub const TWO_POW_35: u256 = 0x800000000; // 2^35
+    pub const TWO_POW_51: u256 = 0x8000000000000; // 2^51
+    pub const TWO_POW_52: u256 = 0x10000000000000; // 2^52
+    pub const TWO_POW_53: u256 = 0x20000000000000; // 2^53
 }
 
 // Storage packing implementation for PackableBeast
@@ -34,13 +40,17 @@ pub impl PackableBeastStorePacking of starknet::storage_access::StorePacking<
     PackableBeast, felt252,
 > {
     fn pack(value: PackableBeast) -> felt252 {
-        // Pack according to old contract structure:
-        // id: 7 bits, prefix: 7 bits, suffix: 5 bits, level: 16 bits, health: 16 bits
+        // Pack according to structure:
+        // id: 7 bits, prefix: 7 bits, suffix: 5 bits, level: 16 bits, health: 16 bits, shiny: 1
+        // bit, animated: 1 bit, timeline: 7 bits
         (value.id.into()
             + value.prefix.into() * pow::TWO_POW_7
             + value.suffix.into() * pow::TWO_POW_14
             + value.level.into() * pow::TWO_POW_19
-            + value.health.into() * pow::TWO_POW_35)
+            + value.health.into() * pow::TWO_POW_35
+            + value.shiny.into() * pow::TWO_POW_51
+            + value.animated.into() * pow::TWO_POW_52
+            + value.timeline.into() * pow::TWO_POW_53)
             .try_into()
             .expect('pack beast overflow')
     }
@@ -66,8 +76,21 @@ pub impl PackableBeastStorePacking of starknet::storage_access::StorePacking<
 
         // Extract health (16 bits)
         let health = (packed % pow::TWO_POW_16).try_into().expect('unpack health');
+        packed = packed / pow::TWO_POW_16;
 
-        PackableBeast { id, prefix, suffix, level, health }
+        // Extract shiny (1 bit)
+        let shiny = (packed % 2_u256).try_into().expect('unpack shiny');
+        packed = packed / 2_u256;
+
+        // Extract animated (1 bit)
+        let animated = (packed % 2_u256).try_into().expect('unpack animated');
+        packed = packed / 2_u256;
+
+        // Extract timeline (7 bits)
+        let timeline = (packed % pow::TWO_POW_7).try_into().expect('unpack timeline');
+        packed = packed / pow::TWO_POW_7;
+
+        PackableBeast { id, prefix, suffix, level, health, shiny, animated, timeline }
     }
 }
 
@@ -77,7 +100,9 @@ mod tests {
 
     #[test]
     fn test_pack_and_unpack_basic() {
-        let beast = PackableBeast { id: 1, prefix: 2, suffix: 3, level: 4, health: 5 };
+        let beast = PackableBeast {
+            id: 1, prefix: 2, suffix: 3, level: 4, health: 5, shiny: 0, animated: 1, timeline: 5,
+        };
         let packed = PackableBeastStorePacking::pack(beast);
         let unpacked = PackableBeastStorePacking::unpack(packed);
 
@@ -86,11 +111,16 @@ mod tests {
         assert(beast.suffix == unpacked.suffix, 'suffix mismatch');
         assert(beast.level == unpacked.level, 'level mismatch');
         assert(beast.health == unpacked.health, 'health mismatch');
+        assert(beast.shiny == unpacked.shiny, 'shiny mismatch');
+        assert(beast.animated == unpacked.animated, 'animated mismatch');
+        assert(beast.timeline == unpacked.timeline, 'timeline mismatch');
     }
 
     #[test]
     fn test_pack_and_unpack_zero() {
-        let beast = PackableBeast { id: 0, prefix: 0, suffix: 0, level: 0, health: 0 };
+        let beast = PackableBeast {
+            id: 0, prefix: 0, suffix: 0, level: 0, health: 0, shiny: 0, animated: 0, timeline: 0,
+        };
         let packed = PackableBeastStorePacking::pack(beast);
         let unpacked = PackableBeastStorePacking::unpack(packed);
 
@@ -99,6 +129,9 @@ mod tests {
         assert(beast.suffix == unpacked.suffix, 'zero suffix');
         assert(beast.level == unpacked.level, 'zero level');
         assert(beast.health == unpacked.health, 'zero health');
+        assert(beast.shiny == unpacked.shiny, 'zero shiny');
+        assert(beast.animated == unpacked.animated, 'zero animated');
+        assert(beast.timeline == unpacked.timeline, 'zero timeline');
     }
 
     #[test]
@@ -108,7 +141,10 @@ mod tests {
             prefix: 69, // Max prefix from definitions
             suffix: 18, // Max suffix from definitions
             level: 65535, // Max u16
-            health: 65535 // Max u16
+            health: 65535, // Max u16
+            shiny: 1, // Max boolean
+            animated: 1, // Max boolean
+            timeline: 127 // Max u8
         };
         let packed = PackableBeastStorePacking::pack(beast);
         let unpacked = PackableBeastStorePacking::unpack(packed);
@@ -118,6 +154,9 @@ mod tests {
         assert(beast.suffix == unpacked.suffix, 'max suffix');
         assert(beast.level == unpacked.level, 'max level');
         assert(beast.health == unpacked.health, 'max health');
+        assert(beast.shiny == unpacked.shiny, 'max shiny');
+        assert(beast.animated == unpacked.animated, 'max animated');
+        assert(beast.timeline == unpacked.timeline, 'max timeline');
     }
 
     #[test]

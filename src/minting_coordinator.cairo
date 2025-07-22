@@ -9,6 +9,9 @@ pub struct MintRequest {
     pub suffix: u8,
     pub level: u16,
     pub health: u16,
+    pub shiny: u8,
+    pub animated: u8,
+    pub timeline: u8,
 }
 
 /// Result of a mint operation
@@ -29,7 +32,14 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
     fn prepare_mint(request: MintRequest, next_token_id: u256) -> BeastResult<MintData> {
         // Create and validate the beast
         match BeastManagerTrait::create_beast(
-            request.beast_id, request.prefix, request.suffix, request.level, request.health,
+            request.beast_id,
+            request.prefix,
+            request.suffix,
+            request.level,
+            request.health,
+            request.shiny,
+            request.animated,
+            request.timeline,
         ) {
             BeastResult::Ok(beast) => {
                 // Generate hash for uniqueness checking
@@ -112,7 +122,16 @@ mod tests {
 
     #[test]
     fn test_prepare_mint_valid() {
-        let request = MintRequest { beast_id: 3, prefix: 1, suffix: 2, level: 100, health: 1000 };
+        let request = MintRequest {
+            beast_id: 3,
+            prefix: 1,
+            suffix: 2,
+            level: 100,
+            health: 1000,
+            shiny: 0,
+            animated: 1,
+            timeline: 5,
+        };
 
         match MintingCoordinatorTrait::prepare_mint(request, 42) {
             BeastResult::Ok(data) => {
@@ -121,6 +140,9 @@ mod tests {
                 assert(data.beast.suffix == 2, 'Suffix mismatch');
                 assert(data.beast.level == 100, 'Level mismatch');
                 assert(data.beast.health == 1000, 'Health mismatch');
+                assert(data.beast.shiny == 0, 'Shiny mismatch');
+                assert(data.beast.animated == 1, 'Animated mismatch');
+                assert(data.beast.timeline == 5, 'Timeline mismatch');
                 assert(data.token_id == 42, 'Token ID mismatch');
                 assert(data.hash != 0, 'Hash should not be zero');
             },
@@ -130,7 +152,16 @@ mod tests {
 
     #[test]
     fn test_prepare_mint_invalid_id() {
-        let request = MintRequest { beast_id: 0, prefix: 1, suffix: 2, level: 100, health: 1000 };
+        let request = MintRequest {
+            beast_id: 0,
+            prefix: 1,
+            suffix: 2,
+            level: 100,
+            health: 1000,
+            shiny: 0,
+            animated: 0,
+            timeline: 0,
+        };
 
         match MintingCoordinatorTrait::prepare_mint(request, 42) {
             BeastResult::Ok(_) => { assert(false, 'Should fail'); },
@@ -147,6 +178,9 @@ mod tests {
                 assert(data.beast.suffix == 0, 'Suffix should be 0');
                 assert(data.beast.level == 1, 'Level should be 1');
                 assert(data.beast.health == 100, 'Health should be 100');
+                assert(data.beast.shiny == 0, 'Shiny should be 0');
+                assert(data.beast.animated == 0, 'Animated should be 0');
+                assert(data.beast.timeline == 0, 'Timeline should be 0');
                 assert(data.token_id == 100, 'Token ID mismatch');
             },
             BeastResult::Err(_) => { assert(false, 'Should not fail'); },
@@ -191,7 +225,16 @@ mod tests {
     #[test]
     fn test_validate_uniqueness_duplicate() {
         // First, get the hash for beast 1, prefix 2, suffix 3
-        let request = MintRequest { beast_id: 1, prefix: 2, suffix: 3, level: 100, health: 1000 };
+        let request = MintRequest {
+            beast_id: 1,
+            prefix: 2,
+            suffix: 3,
+            level: 100,
+            health: 1000,
+            shiny: 0,
+            animated: 0,
+            timeline: 0,
+        };
 
         let hash = match MintingCoordinatorTrait::prepare_mint(request, 1) {
             BeastResult::Ok(data) => data.hash,

@@ -26,11 +26,5 @@ mod test_felt252_conversion {
         let magical_str = felt252_to_byte_array(magical);
         println!("Magical as ByteArray: {}", magical_str);
         assert(magical_str == "Magical", 'Should convert to Magical');
-
-        // Test tiers
-        let tier1 = beast_definitions::TIER_1;
-        let tier1_str = felt252_to_byte_array(tier1);
-        println!("Tier 1 as ByteArray: {}", tier1_str);
-        assert(tier1_str == "1", 'Should convert to 1');
     }
 }

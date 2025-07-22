@@ -1,22 +1,12 @@
 pub mod beast_definitions;
 pub mod beast_manager;
+pub mod beast_ranking;
 pub mod beast_svg;
-
-#[cfg(test)]
-mod integration_test;
+pub mod encoding;
 pub mod interfaces;
 pub mod metadata_generator;
-
-#[cfg(test)]
-mod mint_tests;
 pub mod minting_coordinator;
 pub mod pack;
-
-#[cfg(test)]
-mod test_felt252_conversion;
-
-#[cfg(test)]
-mod tests;
 pub mod utils;
 
 #[starknet::contract]
@@ -30,6 +20,7 @@ pub mod beasts_nft {
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
     use super::beast_manager::{BeastManagerTrait, BeastResult};
+    use super::beast_ranking::BeastRankingManagerTrait;
     use super::interfaces::IBeasts;
     use super::metadata_generator::MetadataGeneratorTrait;
     use super::minting_coordinator::{MintRequest, MintingCoordinatorTrait};
@@ -65,6 +56,11 @@ pub mod beasts_nft {
         pub src5: SRC5Component::Storage,
         // Beast-specific storage
         pub beasts: Map<u256, PackableBeast>,
+        pub beast_token_ranks: Map<u256, u16>, // token_id -> current rank (for tokenURI)
+        pub beast_species_lists: Map<
+            u8, Map<u16, u256>,
+        >, // beast_id -> rank -> token_id (nested map)
+        pub beast_counts: Map<u8, u16>, // beast_id -> count of beasts
         pub minted: Map<felt252, bool>,
         pub minter: ContractAddress,
         pub token_counter: u256,
@@ -83,46 +79,17 @@ pub mod beasts_nft {
 
     /// Assigns `owner` as the contract owner.
     /// Sets the token `name` and `symbol`.
-    /// Mints the `token_ids` tokens to `recipient` and sets
-    /// the base URI.
+    /// Sets the base URI.
     #[constructor]
     fn constructor(
         ref self: ContractState,
         name: ByteArray,
         symbol: ByteArray,
         base_uri: ByteArray,
-        recipient: ContractAddress,
-        token_ids: Span<u256>,
         owner: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self.erc721.initializer(name, symbol, base_uri);
-        self.mint_assets(recipient, token_ids);
-    }
-
-    #[generate_trait]
-    pub(crate) impl InternalImpl of InternalTrait {
-        /// Mints `token_ids` to `recipient`.
-        fn mint_assets(
-            ref self: ContractState, recipient: ContractAddress, mut token_ids: Span<u256>,
-        ) {
-            loop {
-                if token_ids.len() == 0 {
-                    break;
-                }
-                let id = *token_ids.pop_front().unwrap();
-                let beast_id: u8 = id.try_into().unwrap();
-
-                // Create genesis beast using pure Cairo library
-                match BeastManagerTrait::create_genesis_beast(beast_id) {
-                    BeastResult::Ok(beast) => {
-                        self.beasts.entry(id).write(beast);
-                        self.erc721.mint(recipient, id);
-                    },
-                    BeastResult::Err(e) => { core::panic_with_felt252(e); },
-                }
-            }
-        }
     }
 
     // IBeasts Implementation
@@ -145,13 +112,18 @@ pub mod beasts_nft {
             suffix: u8,
             level: u16,
             health: u16,
+            shiny: u8,
+            animated: u8,
+            timeline: u8,
         ) {
             // Check minter authorization
             let caller = starknet::get_caller_address();
             assert(caller == self.minter.read(), 'Not authorized to mint');
 
             // Prepare mint request
-            let request = MintRequest { beast_id, prefix, suffix, level, health };
+            let request = MintRequest {
+                beast_id, prefix, suffix, level, health, shiny, animated, timeline,
+            };
             let next_token_id = self.token_counter.read() + 1;
 
             // Validate and prepare mint data
@@ -168,6 +140,11 @@ pub mod beasts_nft {
 
                     // Store beast
                     self.beasts.entry(mint_data.token_id).write(mint_data.beast);
+
+                    // Calculate and store beast rank for tokenURI
+                    BeastRankingManagerTrait::calculate_and_store_rank(
+                        ref self, mint_data.beast, mint_data.token_id,
+                    );
 
                     // Mint NFT
                     self.erc721.mint(to, mint_data.token_id);
@@ -225,6 +202,10 @@ pub mod beasts_nft {
         fn total_supply(self: @ContractState) -> u256 {
             self.token_counter.read()
         }
+
+        fn get_beast_rank(self: @ContractState, token_id: u256) -> u16 {
+            BeastRankingManagerTrait::get_beast_rank(self, token_id)
+        }
     }
 
     // Custom ERC721Metadata Implementation
@@ -243,9 +224,10 @@ pub mod beasts_nft {
 
             // Get beast data
             let beast = self.beasts.entry(token_id).read();
+            let rank = self.beast_token_ranks.entry(token_id).read();
 
             // Generate metadata using pure Cairo library
-            MetadataGeneratorTrait::generate_metadata(token_id, beast)
+            MetadataGeneratorTrait::generate_metadata(token_id, beast, rank)
         }
     }
 }

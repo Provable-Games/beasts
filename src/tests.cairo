@@ -5,7 +5,7 @@ mod tests {
         IERC721MetadataDispatcher, IERC721MetadataDispatcherTrait,
     };
     use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
-    use starknet::ContractAddress;
+    use starknet::contract_address_const;
 
     #[test]
     fn test_beast_names() {
@@ -51,8 +51,8 @@ mod tests {
     #[test]
     fn test_token_uri_returns_proper_strings() {
         // Deploy contract
-        let owner: ContractAddress = 'owner'.try_into().unwrap();
-        let recipient: ContractAddress = 'recipient'.try_into().unwrap();
+        let owner = contract_address_const::<'owner'>();
+        let recipient = contract_address_const::<'recipient'>();
 
         // Declare and deploy contract
         let contract = declare("beasts_nft").unwrap().contract_class();

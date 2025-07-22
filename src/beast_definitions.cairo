@@ -1,11 +1,11 @@
 // Beast definitions - All 75 beasts for Loot Survivor
 
 // Tiers
-pub const TIER_1: felt252 = '1';
-pub const TIER_2: felt252 = '2';
-pub const TIER_3: felt252 = '3';
-pub const TIER_4: felt252 = '4';
-pub const TIER_5: felt252 = '5';
+pub const TIER_1: u8 = 1;
+pub const TIER_2: u8 = 2;
+pub const TIER_3: u8 = 3;
+pub const TIER_4: u8 = 4;
+pub const TIER_5: u8 = 5;
 
 // Types
 pub const TYPE_MAGICAL: felt252 = 'Magical';
@@ -364,7 +364,7 @@ pub fn get_beast_name(beast: u8) -> felt252 {
     }
 }
 
-pub fn get_tier(beast: u8) -> felt252 {
+pub fn get_tier(beast: u8) -> u8 {
     if ((beast != 0 && beast <= 5)
         || (beast >= 26 && beast <= 30)
         || (beast >= 51 && beast <= 55)) {
