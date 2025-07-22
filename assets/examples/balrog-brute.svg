@@ -1,0 +1,67 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='250' height='350' viewBox='0 0 250 350'>
+  <rect width='250' height='350' fill='#000000'/>
+  <!-- Fancy border with depth -->
+  <defs>
+    <!-- Animated gradient for magical border effect -->
+    <linearGradient id='depthGradient' x1='0%' y1='0%' x2='100%' y2='100%'>
+      <stop offset='0%' style='stop-color:#FF8C00;stop-opacity:0.3'>
+        <animate attributeName='stop-opacity' values='0.3;0.7;0.3' dur='3s' repeatCount='indefinite' />
+      </stop>
+      <stop offset='50%' style='stop-color:#FFFFFF;stop-opacity:0.6'>
+        <animate attributeName='stop-opacity' values='0.6;1;0.6' dur='3s' repeatCount='indefinite' />
+      </stop>
+      <stop offset='100%' style='stop-color:#FF8C00;stop-opacity:1'>
+        <animate attributeName='stop-opacity' values='1;0.5;1' dur='3s' repeatCount='indefinite' />
+      </stop>
+      <animateTransform attributeName='gradientTransform' type='rotate' from='0 0.5 0.5' to='360 0.5 0.5' dur='8s' repeatCount='indefinite' />
+    </linearGradient>
+  </defs>
+  
+  <g>
+    <!-- Main border -->
+    <rect x='10' y='10' width='230' height='330' rx='10' ry='10' fill='none' stroke='url(#depthGradient)' stroke-width='3'/>
+    
+    <!-- Inner frame for depth -->
+    <rect x='15' y='15' width='220' height='320' rx='8' ry='8' fill='none' stroke='#FFFFFF' stroke-width='1' opacity='0.5'>
+      <animate attributeName='opacity' values='0.5;0.8;0.5' dur='4s' repeatCount='indefinite' />
+    </rect>
+    <rect x='18' y='18' width='214' height='314' rx='6' ry='6' fill='none' stroke='#FFFFFF' stroke-width='0.5' opacity='0.3'>
+      <animate attributeName='opacity' values='0.3;0.5;0.3' dur='4s' repeatCount='indefinite' begin='0.5s' />
+    </rect>
+  </g>
+  
+  <!-- Level (top-left) -->
+  <text x='30' y='40' font-family='VT323' font-size='13' fill='#FFFFFF'>LVL 99</text>
+  
+  <!-- Health (top-right) with heart icon -->
+  <text x='222' y='40' font-family='VT323' font-size='13' text-anchor='end' fill='#FFFFFF'>666</text>
+  <text x='187' y='40' font-family='VT323' font-size='13' fill='#FF0000'>❤</text>
+  
+  <!-- Special name (centered) -->
+  <text x='125' y='75' font-family='VT323' font-size='15' text-anchor='middle' fill='#FFFFFF'>"Blood Iron"</text>
+  
+  <!-- Balrog beast image -->
+  <image x='50' y='95' width='150' height='150' image-rendering='pixelated' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAAXNSR0IArs4c6QAAAAlQTFRFAAAAAAAA/4AABnhFZgAAAAN0Uk5TAP//RFDWIQAAAM9JREFUOI2tUkkSA0EIQv7/6GRasHEuuSQ1FRV3bNSPH1qQ3PgAsNUIRzgEE03BLQbG49FXbKXVk/EEcLtfIQV3VlRPOFARZDaJCMXBHk0fSkdAI6v/zCbsWyFGjMJ3zFmzhhqmX0TF/snHIWolVXZvBeWr3EVD472F6pPucm9RHoPmwWpfc0j1rmMcHCY4V5NxgrBe0Zb3ReWR1tEOD1RW7zL/hrHMqGMY17gsju0ZJpMhBCNz4g5T788V3tIBe/UkpYmyGo+9bhoiafMgxwcWBAVgSaxWswAAAABJRU5ErkJggg==' preserveAspectRatio='xMidYMid meet'/>
+  
+  <!-- Beast name (centered below image) -->
+  <text x='125' y='280' font-family='VT323' font-size='17' text-anchor='middle' fill='#FFFFFF'>BALROG</text>
+  
+  <!-- Type icon (bottom-left) - Brute -->
+  <g transform='translate(25, 305)'>
+    <!-- Brute shield icon -->
+    <path d='M10 0 L20 5 L20 15 Q20 20 10 25 Q0 20 0 15 L0 5 Z' fill='none' stroke='#FFFFFF' stroke-width='2' opacity='0.8'/>
+    <!-- Shield inner design -->
+    <path d='M10 5 L10 20' stroke='#FFFFFF' stroke-width='1.5' opacity='0.7'/>
+    <path d='M5 10 L15 10' stroke='#FFFFFF' stroke-width='1.5' opacity='0.7'/>
+    <!-- Shield glow effect -->
+    <path d='M10 0 L20 5 L20 15 Q20 20 10 25 Q0 20 0 15 L0 5 Z' fill='none' stroke='#FFFFFF' stroke-width='1' opacity='0.3'>
+      <animate attributeName='stroke-width' values='1;3;1' dur='2s' repeatCount='indefinite' />
+      <animate attributeName='opacity' values='0.3;0.6;0.3' dur='2s' repeatCount='indefinite' />
+    </path>
+  </g>
+  
+  <!-- Card number (bottom-right) -->
+  <text x='225' y='325' font-family='VT323' font-size='10' text-anchor='end' fill='#FFFFFF' opacity='0.7'>
+    <tspan>53</tspan><tspan>/1242</tspan>
+  </text>
+</svg>

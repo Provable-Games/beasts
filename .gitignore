@@ -1,2 +1,6 @@
 target
 deployments
+.snfoundry_cache/.prev_tests_failed
+coverage/coverage.lcov
+snfoundry_trace/
+.env
