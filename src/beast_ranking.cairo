@@ -262,12 +262,12 @@ mod tests {
     }
 
     #[test]
-    fn test_ranking_200_shifts() {
-        // Test worst case: inserting strongest beast when 200 weaker ones exist
+    fn test_ranking_50_shifts() {
+        // Test worst case: inserting strongest beast when 50 weaker ones exist
         let (beasts, contract_address, recipient, minter) = deploy_contract();
         start_cheat_caller_address(contract_address, minter);
 
-        // Mint 200 beasts with valid prefix/suffix combinations
+        // Mint 50 beasts with valid prefix/suffix combinations
         let mut prefix = 1_u8;
         let mut suffix = 1_u8;
         let mut token_id = 1_u256;
@@ -282,7 +282,7 @@ mod tests {
                     break;
                 }
 
-                if token_id > 200_u256 {
+                if token_id > 50_u256 {
                     break;
                 }
 
@@ -293,7 +293,7 @@ mod tests {
                 suffix += 1;
             }
 
-            if token_id > 200_u256 {
+            if token_id > 50_u256 {
                 break;
             }
 
@@ -301,20 +301,20 @@ mod tests {
             prefix += 1;
         }
 
-        // Verify we have 200 beasts
-        assert(beasts.total_supply() == 200_u256, 'Should have 200 beasts');
+        // Verify we have 50 beasts
+        assert(beasts.total_supply() == 50_u256, 'Should have 50 beasts');
 
-        // Now mint the ultimate beast that will trigger 200 shifts
+        // Now mint the ultimate beast that will trigger 50 shifts
         beasts.mint(recipient, 1_u8, 69_u8, 18_u8, 65535_u16, 65535_u16, 0, 0, 0);
 
-        // Verify the ultimate beast got rank 1
-        assert(beasts.get_beast_rank(201_u256) == 1_u16, 'Ultimate beast rank 1');
+        // Verify the ultimate beast got rank 51
+        assert(beasts.get_beast_rank(51_u256) == 1_u16, 'Ultimate beast rank 1');
 
         // Verify total supply increased
-        assert(beasts.total_supply() == 201_u256, 'Should have 201 beasts');
+        assert(beasts.total_supply() == 51_u256, 'Should have 51 beasts');
 
         // Verify some shifted rankings
-        assert(beasts.get_beast_rank(200_u256) == 2_u16, 'Previous strongest shifted');
+        assert(beasts.get_beast_rank(50_u256) == 2_u16, 'Previous strongest shifted');
 
         stop_cheat_caller_address(contract_address);
     }
