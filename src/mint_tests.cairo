@@ -133,7 +133,7 @@ mod mint_tests {
 
         // Try to mint without being minter
         start_cheat_caller_address(beasts.contract_address, random_caller);
-        beasts.mint(recipient, 1, 0, 0, 1, 100, 0, 0, 0);
+        beasts.mint(recipient, 1, 0, 0, 1, 100, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
     }
 
@@ -150,7 +150,7 @@ mod mint_tests {
 
         // Try to mint beast with ID 0
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(minter, 0, 0, 0, 1, 100, 0, 0, 0);
+        beasts.mint(minter, 0, 0, 0, 1, 100, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
     }
 
@@ -167,7 +167,7 @@ mod mint_tests {
 
         // Try to mint beast with ID 76
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(minter, 76, 0, 0, 1, 100, 0, 0, 0);
+        beasts.mint(minter, 76, 0, 0, 1, 100, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
     }
 
@@ -185,13 +185,10 @@ mod mint_tests {
 
         // Mint a beast
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(recipient, 1, 2, 3, 100, 200, 0, 0, 0);
+        beasts.mint(recipient, 1, 2, 3, 100, 200, 0, 0);
 
         // Try to mint the same beast again (same id, prefix, suffix)
-        beasts
-            .mint(
-                recipient, 1, 2, 3, 500, 600, 0, 0, 0,
-            ); // Different level/health but same identity
+        beasts.mint(recipient, 1, 2, 3, 500, 600, 0, 0); // Different level/health but same identity
         stop_cheat_caller_address(beasts.contract_address);
     }
 
@@ -208,9 +205,9 @@ mod mint_tests {
 
         // Mint same beast ID with different prefix/suffix
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(recipient, 5, 0, 0, 100, 200, 0, 0, 0); // Basilisk with no prefix/suffix
-        beasts.mint(recipient, 5, 1, 0, 100, 200, 0, 0, 0); // Basilisk with Agony prefix
-        beasts.mint(recipient, 5, 0, 1, 100, 200, 0, 0, 0); // Basilisk with Bane suffix
+        beasts.mint(recipient, 5, 0, 0, 100, 200, 0, 0); // Basilisk with no prefix/suffix
+        beasts.mint(recipient, 5, 1, 0, 100, 200, 0, 0); // Basilisk with Agony prefix
+        beasts.mint(recipient, 5, 0, 1, 100, 200, 0, 0); // Basilisk with Bane suffix
         stop_cheat_caller_address(beasts.contract_address);
 
         // Should have 3 NFTs
@@ -279,13 +276,13 @@ mod mint_tests {
 
         // Mint some beasts
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(minter, 1, 0, 0, 1, 100, 0, 0, 0);
+        beasts.mint(minter, 1, 0, 0, 1, 100, 0, 0);
         assert(beasts.total_supply() == 1, 'Supply should be 1');
 
-        beasts.mint(minter, 2, 0, 0, 1, 100, 0, 0, 0);
+        beasts.mint(minter, 2, 0, 0, 1, 100, 0, 0);
         assert(beasts.total_supply() == 2, 'Supply should be 2');
 
-        beasts.mint(minter, 3, 0, 0, 1, 100, 0, 0, 0);
+        beasts.mint(minter, 3, 0, 0, 1, 100, 0, 0);
         assert(beasts.total_supply() == 3, 'Supply should be 3');
         stop_cheat_caller_address(beasts.contract_address);
     }
