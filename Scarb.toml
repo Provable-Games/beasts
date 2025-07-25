@@ -3,6 +3,8 @@ name = "beasts_nft"
 version = "0.1.0"
 edition = "2024_07"
 
+[lib]
+
 [dependencies]
 starknet = "2.10.1"
 openzeppelin_access = "1.0.0"
