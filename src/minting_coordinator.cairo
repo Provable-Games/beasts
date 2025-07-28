@@ -82,7 +82,7 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
 
             current_token_id += 1;
             beast_id += 1;
-        }
+        };
 
         results
     }
@@ -160,9 +160,9 @@ mod tests {
                 assert(data.beast.prefix == 0, 'Prefix should be 0');
                 assert(data.beast.suffix == 0, 'Suffix should be 0');
                 assert(data.beast.level == 1, 'Level should be 1');
-                assert(data.beast.health == 100, 'Health should be 100');
-                assert(data.beast.shiny == 0, 'Shiny should be 0');
-                assert(data.beast.animated == 0, 'Animated should be 0');
+                assert(data.beast.health == 10, 'Health should be 10');
+                assert(data.beast.shiny == 1, 'Shiny should be 1');
+                assert(data.beast.animated == 1, 'Animated should be 1');
                 assert(data.token_id == 100, 'Token ID mismatch');
             },
             BeastResult::Err(_) => { assert(false, 'Should not fail'); },

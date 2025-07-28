@@ -73,7 +73,7 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
             } else {
                 left = mid + 1;
             }
-        }
+        };
 
         left
     }
@@ -108,6 +108,11 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
 
     /// Gets the rank of a specific token (only function needed for tokenURI)
     fn get_beast_rank(state: @super::beasts_nft::ContractState, token_id: u256) -> u16 {
+        // Genesis beasts (token IDs 1-75) are not part of ranking system
+        if token_id <= 75 {
+            return 0; // Genesis beasts have no rank
+        }
+        
         state.beast_token_ranks.read(token_id)
     }
 }
@@ -154,18 +159,22 @@ mod tests {
         let (beasts, contract_address, recipient, minter) = deploy_contract();
         start_cheat_caller_address(contract_address, minter);
 
-        // Mint first beast
+        // Genesis beasts are already minted (tokens 1-75), so new mints start at 76
+        // Genesis beasts should have rank 0 (not part of ranking)
+        assert(beasts.get_beast_rank(1_u256) == 0_u16, 'Genesis has no rank');
+        
+        // Mint first custom beast
         beasts.mint(recipient, 1_u8, 1_u8, 1_u8, 100_u16, 50_u16, 0, 0);
-        assert(beasts.get_beast_rank(1_u256) == 1_u16, 'First beast rank 1');
+        assert(beasts.get_beast_rank(76_u256) == 1_u16, 'First custom beast rank 1');
 
         // Mint stronger beast
         beasts.mint(recipient, 1_u8, 1_u8, 2_u8, 200_u16, 80_u16, 0, 0);
-        assert(beasts.get_beast_rank(2_u256) == 1_u16, 'Strong beast rank 1');
-        assert(beasts.get_beast_rank(1_u256) == 2_u16, 'Weak beast rank 2');
+        assert(beasts.get_beast_rank(77_u256) == 1_u16, 'Strong beast rank 1');
+        assert(beasts.get_beast_rank(76_u256) == 2_u16, 'Weak beast rank 2');
 
         // Mint weakest beast
         beasts.mint(recipient, 1_u8, 1_u8, 3_u8, 50_u16, 30_u16, 0, 0);
-        assert(beasts.get_beast_rank(3_u256) == 3_u16, 'Weakest rank 3');
+        assert(beasts.get_beast_rank(78_u256) == 3_u16, 'Weakest rank 3');
 
         stop_cheat_caller_address(contract_address);
     }
@@ -176,13 +185,13 @@ mod tests {
         let (beasts, contract_address, recipient, minter) = deploy_contract();
         start_cheat_caller_address(contract_address, minter);
 
-        // Same level, different health
+        // Same level, different health (token IDs start at 76 after genesis)
         beasts.mint(recipient, 1_u8, 1_u8, 1_u8, 100_u16, 30_u16, 0, 0);
         beasts.mint(recipient, 1_u8, 1_u8, 2_u8, 100_u16, 80_u16, 0, 0);
 
         // Higher health should win tiebreaker
-        assert(beasts.get_beast_rank(2_u256) == 1_u16, 'Higher health rank 1');
-        assert(beasts.get_beast_rank(1_u256) == 2_u16, 'Lower health rank 2');
+        assert(beasts.get_beast_rank(77_u256) == 1_u16, 'Higher health rank 1');
+        assert(beasts.get_beast_rank(76_u256) == 2_u16, 'Lower health rank 2');
 
         stop_cheat_caller_address(contract_address);
     }
@@ -193,7 +202,7 @@ mod tests {
         let (beasts, contract_address, recipient, minter) = deploy_contract();
         start_cheat_caller_address(contract_address, minter);
 
-        // Species 1 beasts
+        // Species 1 beasts (token IDs start at 76 after genesis)
         beasts.mint(recipient, 1_u8, 1_u8, 1_u8, 100_u16, 50_u16, 0, 0);
         beasts.mint(recipient, 1_u8, 1_u8, 2_u8, 80_u16, 40_u16, 0, 0);
 
@@ -201,9 +210,9 @@ mod tests {
         beasts.mint(recipient, 2_u8, 1_u8, 1_u8, 90_u16, 45_u16, 0, 0);
 
         // Verify species isolation
-        assert(beasts.get_beast_rank(1_u256) == 1_u16, 'Species 1 strongest');
-        assert(beasts.get_beast_rank(2_u256) == 2_u16, 'Species 1 weaker');
-        assert(beasts.get_beast_rank(3_u256) == 1_u16, 'Species 2 starts rank 1');
+        assert(beasts.get_beast_rank(76_u256) == 1_u16, 'Species 1 strongest');
+        assert(beasts.get_beast_rank(77_u256) == 2_u16, 'Species 1 weaker');
+        assert(beasts.get_beast_rank(78_u256) == 1_u16, 'Species 2 starts rank 1');
 
         stop_cheat_caller_address(contract_address);
     }
@@ -214,7 +223,7 @@ mod tests {
         let (beasts, contract_address, recipient, minter) = deploy_contract();
         start_cheat_caller_address(contract_address, minter);
 
-        // Insert 5 weaker beasts
+        // Insert 5 weaker beasts (token IDs start at 76 after genesis)
         beasts.mint(recipient, 1_u8, 1_u8, 1_u8, 10_u16, 30_u16, 0, 0);
         beasts.mint(recipient, 1_u8, 1_u8, 2_u8, 20_u16, 40_u16, 0, 0);
         beasts.mint(recipient, 1_u8, 1_u8, 3_u8, 30_u16, 50_u16, 0, 0);
@@ -225,10 +234,10 @@ mod tests {
         beasts.mint(recipient, 1_u8, 1_u8, 6_u8, 200_u16, 100_u16, 0, 0);
 
         // Verify all rankings
-        assert(beasts.get_beast_rank(6_u256) == 1_u16, 'Strongest rank 1');
-        assert(beasts.get_beast_rank(5_u256) == 2_u16, 'Previous strongest rank 2');
-        assert(beasts.get_beast_rank(1_u256) == 6_u16, 'Weakest rank 6');
-        assert(beasts.total_supply() == 6_u256, 'Should have 6 beasts');
+        assert(beasts.get_beast_rank(81_u256) == 1_u16, 'Strongest rank 1');
+        assert(beasts.get_beast_rank(80_u256) == 2_u16, 'Previous strongest rank 2');
+        assert(beasts.get_beast_rank(76_u256) == 6_u16, 'Weakest rank 6');
+        assert(beasts.total_supply() == 81_u256, 'Should have 81 beasts');
 
         stop_cheat_caller_address(contract_address);
     }
@@ -239,24 +248,24 @@ mod tests {
         let (beasts, contract_address, recipient, minter) = deploy_contract();
         start_cheat_caller_address(contract_address, minter);
 
-        // Mint first beast with power 100, health 50
+        // Mint first beast with power 100, health 50 (token IDs start at 76 after genesis)
         beasts.mint(recipient, 1_u8, 1_u8, 1_u8, 100_u16, 50_u16, 0, 0);
-        assert(beasts.get_beast_rank(1_u256) == 1_u16, 'First beast rank 1');
+        assert(beasts.get_beast_rank(76_u256) == 1_u16, 'First beast rank 1');
 
         // Mint second beast with identical power and health
         beasts.mint(recipient, 1_u8, 1_u8, 2_u8, 100_u16, 50_u16, 0, 0);
 
         // First beast should maintain rank 1, second beast gets rank 2
-        assert(beasts.get_beast_rank(1_u256) == 1_u16, 'First beast keeps rank 1');
-        assert(beasts.get_beast_rank(2_u256) == 2_u16, 'Second beast gets rank 2');
+        assert(beasts.get_beast_rank(76_u256) == 1_u16, 'First beast keeps rank 1');
+        assert(beasts.get_beast_rank(77_u256) == 2_u16, 'Second beast gets rank 2');
 
         // Mint third beast with same stats
         beasts.mint(recipient, 1_u8, 1_u8, 3_u8, 100_u16, 50_u16, 0, 0);
-        assert(beasts.get_beast_rank(3_u256) == 3_u16, 'Third beast gets rank 3');
+        assert(beasts.get_beast_rank(78_u256) == 3_u16, 'Third beast gets rank 3');
 
         // Verify all rankings remain stable
-        assert(beasts.get_beast_rank(1_u256) == 1_u16, 'First still rank 1');
-        assert(beasts.get_beast_rank(2_u256) == 2_u16, 'Second still rank 2');
+        assert(beasts.get_beast_rank(76_u256) == 1_u16, 'First still rank 1');
+        assert(beasts.get_beast_rank(77_u256) == 2_u16, 'Second still rank 2');
 
         stop_cheat_caller_address(contract_address);
     }
@@ -267,10 +276,10 @@ mod tests {
         let (beasts, contract_address, recipient, minter) = deploy_contract();
         start_cheat_caller_address(contract_address, minter);
 
-        // Mint 50 beasts with valid prefix/suffix combinations
+        // Mint 50 beasts with valid prefix/suffix combinations (token IDs start at 76 after genesis)
         let mut prefix = 1_u8;
         let mut suffix = 1_u8;
-        let mut token_id = 1_u256;
+        let mut count = 1_u256;
 
         loop {
             if prefix > 69_u8 {
@@ -282,39 +291,39 @@ mod tests {
                     break;
                 }
 
-                if token_id > 50_u256 {
+                if count > 50_u256 {
                     break;
                 }
 
-                let power: u16 = token_id.try_into().unwrap();
+                let power: u16 = count.try_into().unwrap();
                 beasts.mint(recipient, 1_u8, prefix, suffix, power, power / 2, 0, 0);
 
-                token_id += 1;
+                count += 1;
                 suffix += 1;
-            }
+            };
 
-            if token_id > 50_u256 {
+            if count > 50_u256 {
                 break;
             }
 
             suffix = 1_u8;
             prefix += 1;
-        }
+        };
 
-        // Verify we have 50 beasts
-        assert(beasts.total_supply() == 50_u256, 'Should have 50 beasts');
+        // Verify we have 75 genesis + 50 custom = 125 beasts
+        assert(beasts.total_supply() == 125_u256, 'Should have 125 beasts');
 
         // Now mint the ultimate beast that will trigger 50 shifts
         beasts.mint(recipient, 1_u8, 69_u8, 18_u8, 65535_u16, 65535_u16, 0, 0);
 
-        // Verify the ultimate beast got rank 51
-        assert(beasts.get_beast_rank(51_u256) == 1_u16, 'Ultimate beast rank 1');
+        // Verify the ultimate beast got rank 1
+        assert(beasts.get_beast_rank(126_u256) == 1_u16, 'Ultimate beast rank 1');
 
         // Verify total supply increased
-        assert(beasts.total_supply() == 51_u256, 'Should have 51 beasts');
+        assert(beasts.total_supply() == 126_u256, 'Should have 126 beasts');
 
-        // Verify some shifted rankings
-        assert(beasts.get_beast_rank(50_u256) == 2_u16, 'Previous strongest shifted');
+        // Verify some shifted rankings (previous strongest was token 125 with power 50)
+        assert(beasts.get_beast_rank(125_u256) == 2_u16, 'Previous strongest shifted');
 
         stop_cheat_caller_address(contract_address);
     }

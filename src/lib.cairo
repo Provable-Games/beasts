@@ -90,6 +90,7 @@ pub mod beasts_nft {
     ) {
         self.ownable.initializer(owner);
         self.erc721.initializer(name, symbol, base_uri);
+        InternalTrait::mint_genesis_beasts(ref self, owner);
     }
 
     // IBeasts Implementation
@@ -150,9 +151,31 @@ pub mod beasts_nft {
             }
         }
 
-        fn mint_genesis_beasts(ref self: ContractState, to: ContractAddress) {
-            self.ownable.assert_only_owner();
 
+        fn get_beast(self: @ContractState, token_id: u256) -> PackableBeast {
+            self.erc721._require_owned(token_id);
+            self.beasts.entry(token_id).read()
+        }
+
+        fn is_minted(self: @ContractState, beast_id: u8, prefix: u8, suffix: u8) -> bool {
+            let hash = BeastManagerTrait::get_beast_hash(beast_id, prefix, suffix);
+            self.minted.entry(hash).read()
+        }
+
+        fn total_supply(self: @ContractState) -> u256 {
+            self.token_counter.read()
+        }
+
+        fn get_beast_rank(self: @ContractState, token_id: u256) -> u16 {
+            BeastRankingManagerTrait::get_beast_rank(self, token_id)
+        }
+    }
+
+    // Internal implementations
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        /// Internal function to mint genesis beasts during contract construction
+        fn mint_genesis_beasts(ref self: ContractState, to: ContractAddress) {
             // Prepare genesis batch
             let starting_token_id = self.token_counter.read() + 1;
             let batch = MintingCoordinatorTrait::prepare_genesis_batch(starting_token_id);
@@ -177,31 +200,13 @@ pub mod beasts_nft {
                 }
 
                 i += 1;
-            }
+            };
 
             // Update token counter
             let new_supply = MintingCoordinatorTrait::calculate_new_supply(
                 self.token_counter.read(), 75,
             );
             self.token_counter.write(new_supply);
-        }
-
-        fn get_beast(self: @ContractState, token_id: u256) -> PackableBeast {
-            self.erc721._require_owned(token_id);
-            self.beasts.entry(token_id).read()
-        }
-
-        fn is_minted(self: @ContractState, beast_id: u8, prefix: u8, suffix: u8) -> bool {
-            let hash = BeastManagerTrait::get_beast_hash(beast_id, prefix, suffix);
-            self.minted.entry(hash).read()
-        }
-
-        fn total_supply(self: @ContractState) -> u256 {
-            self.token_counter.read()
-        }
-
-        fn get_beast_rank(self: @ContractState, token_id: u256) -> u16 {
-            BeastRankingManagerTrait::get_beast_rank(self, token_id)
         }
     }
 

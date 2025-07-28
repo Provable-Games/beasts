@@ -169,7 +169,7 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
             }
 
             i += 1;
-        }
+        };
 
         json.append(@"]");
 
@@ -210,7 +210,7 @@ mod tests {
                     break;
                 }
                 j += 1;
-            }
+            };
 
             if found {
                 break true;

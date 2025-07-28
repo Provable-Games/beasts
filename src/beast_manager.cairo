@@ -69,7 +69,7 @@ pub impl BeastManagerImpl of BeastManagerTrait {
 
         // Create genesis beast with default attributes
         let beast = PackableBeast {
-            id: beast_id, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 0, animated: 0,
+            id: beast_id, prefix: 0, suffix: 0, level: 1, health: 10, shiny: 1, animated: 1,
         };
         BeastResult::Ok(beast)
     }
@@ -248,9 +248,9 @@ mod tests {
                 assert(beast.prefix == 0, 'Prefix should be 0');
                 assert(beast.suffix == 0, 'Suffix should be 0');
                 assert(beast.level == 1, 'Level should be 1');
-                assert(beast.health == 100, 'Health should be 100');
-                assert(beast.shiny == 0, 'Shiny should be 0');
-                assert(beast.animated == 0, 'Animated should be 0');
+                assert(beast.health == 10, 'Health should be 10');
+                assert(beast.shiny == 1, 'Shiny should be 1');
+                assert(beast.animated == 1, 'Animated should be 1');
             },
             BeastResult::Err(_) => { assert(false, 'Should not fail'); },
         }

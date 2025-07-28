@@ -20,7 +20,6 @@ pub trait IBeasts<TContractState> {
         shiny: u8,
         animated: u8,
     );
-    fn mint_genesis_beasts(ref self: TContractState, to: ContractAddress);
 
     // Beast queries
     fn get_beast(self: @TContractState, token_id: u256) -> PackableBeast;
