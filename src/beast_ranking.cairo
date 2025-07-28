@@ -112,7 +112,7 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
         if token_id <= 75 {
             return 0; // Genesis beasts have no rank
         }
-        
+
         state.beast_token_ranks.read(token_id)
     }
 }
@@ -162,7 +162,7 @@ mod tests {
         // Genesis beasts are already minted (tokens 1-75), so new mints start at 76
         // Genesis beasts should have rank 0 (not part of ranking)
         assert(beasts.get_beast_rank(1_u256) == 0_u16, 'Genesis has no rank');
-        
+
         // Mint first custom beast
         beasts.mint(recipient, 1_u8, 1_u8, 1_u8, 100_u16, 50_u16, 0, 0);
         assert(beasts.get_beast_rank(76_u256) == 1_u16, 'First custom beast rank 1');
@@ -276,7 +276,8 @@ mod tests {
         let (beasts, contract_address, recipient, minter) = deploy_contract();
         start_cheat_caller_address(contract_address, minter);
 
-        // Mint 50 beasts with valid prefix/suffix combinations (token IDs start at 76 after genesis)
+        // Mint 50 beasts with valid prefix/suffix combinations (token IDs start at 76 after
+        // genesis)
         let mut prefix = 1_u8;
         let mut suffix = 1_u8;
         let mut count = 1_u256;
