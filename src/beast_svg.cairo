@@ -20,7 +20,6 @@ pub impl BeastSvgImpl of BeastSvgTrait {
             .append(
                 @"<svg xmlns='http://www.w3.org/2000/svg' width='250' height='350' viewBox='0 0 250 350'>",
             );
-
         svg.append(@"<defs>");
         svg.append(@"<linearGradient id='gold' x1='0%' y1='0%' x2='100%' y2='100%'>");
         svg.append(@"<stop offset='0%' stop-color='#e5d8b2'/>");
@@ -70,11 +69,11 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"</radialGradient>");
         svg
             .append(
-                @"<path d='M13 11c0-6 9-6 9 0s-9 10.5-9 10.5S4 17 4 11s9-6 9 0Z' stroke-width='3' id='heart' stroke='#ff6b6b' fill='none'/>",
+                @"<path transform='scale(0.7)' d='M13 11c0-6 9-6 9 0s-9 10.5-9 10.5S4 17 4 11s9-6 9 0Z' stroke-width='3' id='heart' stroke='#ff6b6b' fill='none'/>",
             );
         svg
             .append(
-                @"<path transform='scale(1.5)' id='bolt' stroke='#ffd166' stroke-width='2' stroke-linejoin='round' d='M6 2 2 9h5l-4 7'/>",
+                @"<path transform='scale(0.95)' id='bolt' stroke='#ffd166' stroke-width='2' stroke-linejoin='round' d='M6 2 2 9h5l-4 7'/>",
             );
         svg.append(@"<g id='crown' fill='#e6c56e' stroke='#af8a3c' stroke-width='1'>");
         svg.append(@"<path d='M2 14h16l-1.5 4h-13z'/>");
@@ -102,8 +101,9 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"<style>");
         svg
             .append(
-                @".label{fill:#c9c9d1;font-size:9px;letter-spacing:.4px}.valL{fill:#fff;font-size:16px;font-weight:700}",
+                @".label{fill:#c9c9d1;font-size:10px;letter-spacing:.4px}.valL{fill:#fff;font-size:15px;font-weight:700}",
             );
+        svg.append(@"text{font-family: Courier, monospace;}");
         svg.append(@"</style>");
         svg.append(@"</defs>");
 
@@ -118,18 +118,26 @@ pub impl BeastSvgImpl of BeastSvgTrait {
                 @"<rect x='9' y='9' width='232' height='332' rx='7' fill='none' stroke='#fff' stroke-opacity='.05'/>",
             );
 
+        svg
+            .append(
+                @"<path transform='translate(13, 12) scale(0.029)' fill-rule='evenodd' clip-rule='evenodd' d='M242.9 629.232H69.4V349.536H0V699.071H242.9V629.232ZM312.3 69.9071V0H34.7V69.9071H0V314.582H104.1V384.489H242.9V314.582H347V69.9071H312.3ZM277.6 244.675H208.2V314.582H138.8V244.675H69.4V139.814H138.8V244.675H208.2V139.814H277.6V244.675ZM104.1 594.279H277.6V734.093H0V804H312.3V734.093H347V524.372H173.5V489.418H347V419.511H104.1V594.279Z'
+            fill='",
+            );
+        svg.append(@get_tier_color(beast_attrs.tier));
+        svg.append(@"'/>");
+
         // Crown for rank 1, trophy for other ranks
         if rank == 1 {
-            svg.append(@"<use href='#crown' x='13' y='12' width='20' height='20'/>");
+            svg.append(@"<use href='#crown' x='218' y='9' width='20' height='20'/>");
             svg
                 .append(
-                    @"<text x='23' y='42' text-anchor='middle' style='fill:#e6c56e;font-size:11px;font-weight:700'>1</text>",
+                    @"<text x='228' y='39' text-anchor='middle' style='fill:#e6c56e;font-size:11px;font-weight:700'>1</text>",
                 );
         } else if rank > 1 {
-            svg.append(@"<use href='#trophy' x='13' y='12' width='20' height='20'/>");
+            svg.append(@"<use href='#trophy' x='218' y='9' width='20' height='20'/>");
             svg
                 .append(
-                    @"<text x='23' y='42' text-anchor='middle' style='fill:#fff;font-size:11px;font-weight:700'>",
+                    @"<text x='228' y='39' text-anchor='middle' style='fill:#b0b0b6;font-size:11px;font-weight:700'>",
                 );
             svg.append(@format!("{}", rank));
             svg.append(@"</text>");
@@ -138,7 +146,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         // Specials and name
         svg
             .append(
-                @"<text x='125' y='30' text-anchor='middle' style='fill:#b0b0b6;font-size:13px;font-style:italic'>",
+                @"<text x='125' y='30' text-anchor='middle' style='fill:#b0b0b6;font-size:12px;'>",
             );
         if prefix_name != 0 {
             svg.append(@"\"");
@@ -153,7 +161,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
 
         svg
             .append(
-                @"<text x='125' y='52' text-anchor='middle' style='fill:#fff;font-size:18px;font-weight:700;letter-spacing:.7px'>",
+                @"<text x='125' y='51' text-anchor='middle' style='fill:#fff;font-size:19px;font-weight:700;letter-spacing:.7px'>",
             );
         let beast_name_str = felt252_to_byte_array(beast_name);
         svg.append(@beast_name_str);
@@ -189,27 +197,27 @@ pub impl BeastSvgImpl of BeastSvgTrait {
             );
 
         // Stats panels
-        svg.append(@"<g transform='translate(18 208)'>");
-        svg.append(@"<rect width='65' height='50' rx='5' fill='url(#panel)'/>");
-        svg.append(@"<text x='32.5' y='18' text-anchor='middle' class='label'>TIER</text>");
-        svg.append(@"<text x='32.5' y='38' text-anchor='middle' class='valL'>");
+        svg.append(@"<g transform='translate(13 208)'>");
+        svg.append(@"<rect width='70' height='50' rx='5' fill='url(#panel)'/>");
+        svg.append(@"<text x='35' y='18' text-anchor='middle' class='label'>TIER</text>");
+        svg.append(@"<text x='35' y='38' text-anchor='middle' class='valL'>");
         svg.append(@format!("{}", beast_attrs.tier));
         svg.append(@"</text>");
 
         svg.append(@"<g transform='translate(75)'>");
-        svg.append(@"<rect width='65' height='50' rx='5' fill='url(#panel)'/>");
-        svg.append(@"<text x='32.5' y='18' text-anchor='middle' class='label'>LEVEL</text>");
-        svg.append(@"<text x='32.5' y='38' text-anchor='middle' class='valL'>");
+        svg.append(@"<rect width='70' height='50' rx='5' fill='url(#panel)'/>");
+        svg.append(@"<text x='35' y='18' text-anchor='middle' class='label'>LEVEL</text>");
+        svg.append(@"<text x='35' y='38' text-anchor='middle' class='valL'>");
         svg.append(@format!("{}", beast_attrs.level));
         svg.append(@"</text>");
         svg.append(@"</g>");
 
         svg.append(@"<g transform='translate(150)'>");
-        svg.append(@"<rect width='65' height='50' rx='5' fill='url(#panel)'/>");
-        svg.append(@"<text x='32.5' y='18' text-anchor='middle' class='label'>TYPE</text>");
+        svg.append(@"<rect width='70' height='50' rx='5' fill='url(#panel)'/>");
+        svg.append(@"<text x='35' y='18' text-anchor='middle' class='label'>TYPE</text>");
         svg
             .append(
-                @"<text x='32.5' y='38' text-anchor='middle' style='fill:#fff;font-size:14px;font-weight:700'>",
+                @"<text x='35' y='37' text-anchor='middle' style='fill:#fff;font-size:13px;font-weight:700'>",
             );
         let beast_type_str = felt252_to_byte_array(beast_attrs.beast_type);
         svg.append(@beast_type_str);
@@ -218,20 +226,20 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"</g>");
 
         // Power and Health panels
-        svg.append(@"<g transform='translate(20 265)'>");
-        svg.append(@"<rect width='100' height='60' rx='5' fill='url(#panel)'/>");
-        svg.append(@"<use href='#bolt' x='75' y='20'/>");
+        svg.append(@"<g transform='translate(13 265)'>");
+        svg.append(@"<rect width='107' height='65' rx='5' fill='url(#panel)'/>");
+        svg.append(@"<use href='#bolt' x='75' y='30'/>");
         svg.append(@"<text x='18' y='22' class='label'>POWER</text>");
-        svg.append(@"<text x='18' y='46' class='valL'>");
+        svg.append(@"<text x='18' y='46' style='fill:#fff;font-size:20px;font-weight:700'>");
         svg.append(@format!("{}", beast_attrs.power));
         svg.append(@"</text>");
         svg.append(@"</g>");
 
-        svg.append(@"<g transform='translate(131 265)'>");
-        svg.append(@"<rect width='100' height='60' rx='5' fill='url(#panel)'/>");
-        svg.append(@"<use href='#heart' x='68' y='20'/>");
+        svg.append(@"<g transform='translate(126 265)'>");
+        svg.append(@"<rect width='107' height='65' rx='5' fill='url(#panel)'/>");
+        svg.append(@"<use href='#heart' x='68' y='30'/>");
         svg.append(@"<text x='18' y='22' class='label'>HEALTH</text>");
-        svg.append(@"<text x='18' y='46' class='valL'>");
+        svg.append(@"<text x='18' y='46' style='fill:#fff;font-size:19px;font-weight:700'>");
         svg.append(@format!("{}", beast_attrs.health));
         svg.append(@"</text>");
         svg.append(@"</g>");
@@ -275,7 +283,20 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         }
 
         svg.append(@"</svg>");
+        println!("{}", svg);
         svg
+    }
+}
+
+fn get_tier_color(tier: u8) -> ByteArray {
+    match tier {
+        0 => "",
+        1 => "#ff8800",
+        2 => "#B634E2",
+        3 => "#6C6CF7",
+        4 => "#00ff00",
+        5 => "#ffffff",
+        _ => "",
     }
 }
 

@@ -122,6 +122,15 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         animated_value.append(@format!("{}", beast_attrs.animated));
         attributes.append(Attribute { trait_type: "Animated", value: animated_value });
 
+        // Genesis attribute
+        let mut genesis_value: ByteArray = "";
+        genesis_value.append(@format!("{}", if token_id <= 75 {
+            1
+        } else {
+            0
+        }));
+        attributes.append(Attribute { trait_type: "Genesis", value: genesis_value });
+
         MetadataComponents { name, description, image, attributes }
     }
 
@@ -223,7 +232,7 @@ mod tests {
     #[test]
     fn test_build_metadata_components() {
         let beast = PackableBeast {
-            id: 75, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: 1, animated: 1,
+            id: 2, prefix: 5, suffix: 10, level: 15, health: 142, shiny: 0, animated: 0,
         };
         let components = MetadataGeneratorTrait::build_metadata_components(123, beast, 1);
 
@@ -232,7 +241,7 @@ mod tests {
             components.description == "A fearsome beast from the Loot Survivor universe",
             'Description mismatch',
         );
-        assert(components.attributes.len() == 11, 'Should have 11 attributes');
+        assert(components.attributes.len() == 12, 'Should have 12 attributes');
     }
 
     #[test]
