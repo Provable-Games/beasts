@@ -24,7 +24,7 @@ pub impl BeastManagerImpl of BeastManagerTrait {
     }
 
     /// Validates beast attributes are within valid ranges
-    fn validate_beast_attributes(prefix: u8, suffix: u8) -> BeastResult<()> {
+    fn validate_beast_attributes(prefix: u8, suffix: u8, shiny: u8, animated: u8) -> BeastResult<()> {
         // Prefix validation (0-69 based on beast_definitions)
         if prefix > 69 {
             return BeastResult::Err('Invalid prefix');
@@ -33,6 +33,16 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         // Suffix validation (0-18 based on beast_definitions)
         if suffix > 18 {
             return BeastResult::Err('Invalid suffix');
+        }
+
+        // Shiny validation (0 or 1 only)
+        if shiny > 1 {
+            return BeastResult::Err('Invalid shiny value');
+        }
+
+        // Animated validation (0 or 1 only)
+        if animated > 1 {
+            return BeastResult::Err('Invalid animated value');
         }
 
         BeastResult::Ok(())
@@ -49,7 +59,7 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         }
 
         // Validate attributes
-        match Self::validate_beast_attributes(prefix, suffix) {
+        match Self::validate_beast_attributes(prefix, suffix, shiny, animated) {
             BeastResult::Ok(_) => {},
             BeastResult::Err(e) => { return BeastResult::Err(e); },
         }
@@ -173,15 +183,15 @@ mod tests {
     #[test]
     fn test_validate_beast_attributes_valid() {
         assert(
-            BeastManagerTrait::validate_beast_attributes(0, 0) == BeastResult::Ok(()),
-            'Attrs 0,0 should be valid',
+            BeastManagerTrait::validate_beast_attributes(0, 0, 0, 0) == BeastResult::Ok(()),
+            'Attrs 0,0,0,0 should be valid',
         );
         assert(
-            BeastManagerTrait::validate_beast_attributes(69, 18) == BeastResult::Ok(()),
+            BeastManagerTrait::validate_beast_attributes(69, 18, 1, 1) == BeastResult::Ok(()),
             'Max attrs should be valid',
         );
         assert(
-            BeastManagerTrait::validate_beast_attributes(10, 5) == BeastResult::Ok(()),
+            BeastManagerTrait::validate_beast_attributes(10, 5, 0, 1) == BeastResult::Ok(()),
             'Mid attrs should be valid',
         );
     }
@@ -190,21 +200,49 @@ mod tests {
     fn test_validate_beast_attributes_invalid() {
         assert(
             BeastManagerTrait::validate_beast_attributes(
-                70, 0,
+                70, 0, 0, 0,
             ) == BeastResult::Err('Invalid prefix'),
             'Prefix 70 invalid',
         );
         assert(
             BeastManagerTrait::validate_beast_attributes(
-                0, 19,
+                0, 19, 0, 0,
             ) == BeastResult::Err('Invalid suffix'),
             'Suffix 19 invalid',
         );
         assert(
             BeastManagerTrait::validate_beast_attributes(
-                255, 255,
+                255, 255, 0, 0,
             ) == BeastResult::Err('Invalid prefix'),
             'Max values invalid',
+        );
+    }
+
+    #[test]
+    fn test_validate_beast_attributes_shiny_animated_invalid() {
+        assert(
+            BeastManagerTrait::validate_beast_attributes(
+                0, 0, 2, 0,
+            ) == BeastResult::Err('Invalid shiny value'),
+            'Shiny 2 invalid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_attributes(
+                0, 0, 0, 2,
+            ) == BeastResult::Err('Invalid animated value'),
+            'Animated 2 invalid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_attributes(
+                0, 0, 255, 0,
+            ) == BeastResult::Err('Invalid shiny value'),
+            'Shiny 255 invalid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_attributes(
+                0, 0, 0, 255,
+            ) == BeastResult::Err('Invalid animated value'),
+            'Animated 255 invalid',
         );
     }
 
@@ -237,6 +275,22 @@ mod tests {
         match BeastManagerTrait::create_beast(5, 100, 2, 100, 1000, 0, 0) {
             BeastResult::Ok(_) => { assert(false, 'Should fail'); },
             BeastResult::Err(e) => { assert(e == 'Invalid prefix', 'Wrong error'); },
+        }
+    }
+
+    #[test]
+    fn test_create_beast_invalid_shiny() {
+        match BeastManagerTrait::create_beast(5, 1, 2, 100, 1000, 2, 0) {
+            BeastResult::Ok(_) => { assert(false, 'Should fail'); },
+            BeastResult::Err(e) => { assert(e == 'Invalid shiny value', 'Wrong error'); },
+        }
+    }
+
+    #[test]
+    fn test_create_beast_invalid_animated() {
+        match BeastManagerTrait::create_beast(5, 1, 2, 100, 1000, 0, 2) {
+            BeastResult::Ok(_) => { assert(false, 'Should fail'); },
+            BeastResult::Err(e) => { assert(e == 'Invalid animated value', 'Wrong error'); },
         }
     }
 
