@@ -24,7 +24,9 @@ pub impl BeastManagerImpl of BeastManagerTrait {
     }
 
     /// Validates beast attributes are within valid ranges
-    fn validate_beast_attributes(prefix: u8, suffix: u8, shiny: u8, animated: u8) -> BeastResult<()> {
+    fn validate_beast_attributes(
+        prefix: u8, suffix: u8, shiny: u8, animated: u8,
+    ) -> BeastResult<()> {
         // Prefix validation (0-69 based on beast_definitions)
         if prefix > 69 {
             return BeastResult::Err('Invalid prefix');
