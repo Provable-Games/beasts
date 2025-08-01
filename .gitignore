@@ -4,3 +4,4 @@ deployments
 coverage/coverage.lcov
 snfoundry_trace/
 .env
+accounts/
