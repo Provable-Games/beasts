@@ -17,6 +17,8 @@ mod mint_tests {
     ) {
         let owner = contract_address_const::<'owner'>();
         let recipient = contract_address_const::<'recipient'>();
+        let royalty_receiver: ContractAddress = contract_address_const::<'royalty_receiver'>();
+        let royalty_fraction: u128 = 500;
 
         // Declare and deploy contract
         let contract = declare("beasts_nft").unwrap().contract_class();
@@ -47,6 +49,12 @@ mod mint_tests {
 
         // Owner
         calldata.append(owner.into());
+
+        // Royalty receiver
+        calldata.append(royalty_receiver.into());
+
+        // Royalty fraction
+        calldata.append(royalty_fraction);
 
         let (contract_address, _) = contract.deploy(@calldata).unwrap();
 

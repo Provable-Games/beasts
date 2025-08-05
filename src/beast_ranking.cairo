@@ -131,6 +131,8 @@ mod tests {
         let owner: ContractAddress = 0x123.try_into().unwrap();
         let recipient: ContractAddress = 0x456.try_into().unwrap();
         let minter: ContractAddress = 0x789.try_into().unwrap();
+        let royalty_receiver: ContractAddress = 0xabc.try_into().unwrap();
+        let royalty_fraction: u128 = 500;
 
         let mut constructor_data = array![];
         let name: ByteArray = "Beasts";
@@ -142,6 +144,8 @@ mod tests {
         symbol.serialize(ref constructor_data);
         base_uri.serialize(ref constructor_data);
         owner.serialize(ref constructor_data);
+        royalty_receiver.serialize(ref constructor_data);
+        royalty_fraction.serialize(ref constructor_data);
 
         let (contract_address, _) = contract.deploy(@constructor_data).unwrap();
         let dispatcher = IBeastsDispatcher { contract_address };
