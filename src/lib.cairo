@@ -15,6 +15,7 @@ pub mod beasts_nft {
     use openzeppelin_introspection::src5::SRC5Component;
     use openzeppelin_token::erc721::interface::IERC721Metadata;
     use openzeppelin_token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
+    use openzeppelin_token::common::erc2981::ERC2981Component;
     use starknet::ContractAddress;
     use starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
@@ -29,6 +30,7 @@ pub mod beasts_nft {
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
+    component!(path: ERC2981Component, storage: erc2981, event: ERC2981Event);
 
     // Ownable Mixin
     #[abi(embed_v0)]
@@ -45,6 +47,19 @@ pub mod beasts_nft {
     // SRC5 Implementation
     #[abi(embed_v0)]
     impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
+    impl SRC5InternalImpl = SRC5Component::InternalImpl<ContractState>;
+
+    // ERC2981 Implementation
+    #[abi(embed_v0)]
+    impl ERC2981Impl = ERC2981Component::ERC2981Impl<ContractState>;
+    #[abi(embed_v0)]
+    impl ERC2981AdminOwnableImpl =
+        ERC2981Component::ERC2981AdminOwnableImpl<ContractState>;
+    impl ERC2981InternalImpl = ERC2981Component::InternalImpl<ContractState>;
+
+    impl ERC2981ImmutableConfig of ERC2981Component::ImmutableConfig {
+        const FEE_DENOMINATOR: u128 = 10_000; // 10,000 = 100% (so 500 = 5%)
+    }
 
     #[storage]
     pub struct Storage {
@@ -54,6 +69,8 @@ pub mod beasts_nft {
         pub erc721: ERC721Component::Storage,
         #[substorage(v0)]
         pub src5: SRC5Component::Storage,
+        #[substorage(v0)]
+        pub erc2981: ERC2981Component::Storage,
         // Beast-specific storage
         pub beasts: Map<u256, PackableBeast>,
         pub beast_token_ranks: Map<u256, u16>, // token_id -> current rank (for tokenURI)
@@ -75,11 +92,14 @@ pub mod beasts_nft {
         ERC721Event: ERC721Component::Event,
         #[flat]
         SRC5Event: SRC5Component::Event,
+        #[flat]
+        ERC2981Event: ERC2981Component::Event,
     }
 
     /// Assigns `owner` as the contract owner.
     /// Sets the token `name` and `symbol`.
     /// Sets the base URI.
+    /// Sets default royalty info.
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -87,9 +107,13 @@ pub mod beasts_nft {
         symbol: ByteArray,
         base_uri: ByteArray,
         owner: ContractAddress,
+        royalty_receiver: ContractAddress,
+        royalty_fraction: u128,
     ) {
         self.ownable.initializer(owner);
         self.erc721.initializer(name, symbol, base_uri);
+        self.erc2981.initializer(royalty_receiver, royalty_fraction);
+
         InternalTrait::mint_genesis_beasts(ref self, owner);
     }
 

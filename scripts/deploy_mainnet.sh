@@ -11,6 +11,8 @@ NAME="Beasts"
 SYMBOL="BEAST"
 BASE_URI="https://api.beasts.game/metadata/"
 OWNER="0x418ed348930686c844fda4556173457d3f71ae547262406d271de534af6b35e"
+ROYALTY_RECEIVER="0x418ed348930686c844fda4556173457d3f71ae547262406d271de534af6b35e"
+ROYALTY_FRACTION="500"
 
 # Contract class declaration
 echo "Starting contract declaration..."
@@ -30,7 +32,9 @@ DEPLOY_OUTPUT=$(starkli deploy --account "$STARKNET_ACCOUNT" --private-key $STAR
     bytearray:str:"$NAME" \
     bytearray:str:"$SYMBOL" \
     bytearray:str:"$BASE_URI" \
-    $OWNER 2>&1)
+    $OWNER \
+    $ROYALTY_RECEIVER \
+    $ROYALTY_FRACTION 2>&1)
 
 DEPLOYED_ADDRESS=$(echo "$DEPLOY_OUTPUT" | grep -oE "0x[0-9a-fA-F]+" | tail -1)
 
