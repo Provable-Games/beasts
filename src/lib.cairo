@@ -172,7 +172,10 @@ pub mod beasts_nft {
                     self.erc721.mint(to, mint_data.token_id);
                     mint_data.token_id
                 },
-                BeastResult::Err(e) => { core::panic_with_felt252(e); 0 },
+                BeastResult::Err(e) => {
+                    core::panic_with_felt252(e);
+                    0
+                },
             }
         }
 
