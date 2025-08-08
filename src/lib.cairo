@@ -139,7 +139,7 @@ pub mod beasts_nft {
             health: u16,
             shiny: u8,
             animated: u8,
-        ) {
+        ) -> u256 {
             // Check minter authorization
             let caller = starknet::get_caller_address();
             assert(caller == self.minter.read(), 'Not authorized to mint');
@@ -170,8 +170,9 @@ pub mod beasts_nft {
 
                     // Mint NFT
                     self.erc721.mint(to, mint_data.token_id);
+                    mint_data.token_id
                 },
-                BeastResult::Err(e) => { core::panic_with_felt252(e); },
+                BeastResult::Err(e) => { core::panic_with_felt252(e); 0 },
             }
         }
 

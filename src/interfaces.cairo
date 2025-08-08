@@ -19,7 +19,7 @@ pub trait IBeasts<TContractState> {
         health: u16,
         shiny: u8,
         animated: u8,
-    );
+    ) -> u256;
 
     // Beast queries
     fn get_beast(self: @TContractState, token_id: u256) -> PackableBeast;
