@@ -124,7 +124,7 @@ mod tests {
         stop_cheat_caller_address,
     };
     use starknet::ContractAddress;
-    use super::super::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait};
+    use super::super::interface::{IBeastsDispatcher, IBeastsDispatcherTrait};
 
     fn deploy_contract() -> (IBeastsDispatcher, ContractAddress, ContractAddress, ContractAddress) {
         let contract = declare("beasts_nft").unwrap().contract_class();
