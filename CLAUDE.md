@@ -79,7 +79,7 @@ The project uses a component-based architecture with the following structure:
 4. **`metadata_generator.cairo`** - Generates fully onchain JSON metadata
 5. **`beast_svg.cairo`** - Creates dynamic SVG artwork for each beast
 6. **`minting_coordinator.cairo`** - Handles single and batch minting operations
-7. **`interface.cairo`** - Defines contract interfaces for external integration
+7. **`interfaces.cairo`** - Defines contract interfaces for external integration
 
 **Beast Data Model**:
 

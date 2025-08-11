@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod mint_tests {
-    use beasts_nft::interface::{IBeastsDispatcher, IBeastsDispatcherTrait};
+    use beasts_nft::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait};
     use openzeppelin_access::ownable::interface::IOwnableDispatcher;
     use openzeppelin_token::erc721::interface::{
         IERC721Dispatcher, IERC721DispatcherTrait, IERC721MetadataDispatcher,
