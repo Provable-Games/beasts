@@ -10,6 +10,8 @@ starknet = "2.10.1"
 openzeppelin_access = "1.0.0"
 openzeppelin_token = "1.0.0"
 openzeppelin_introspection = "1.0.0"
+openzeppelin_governance = "1.0.0"
+openzeppelin_utils = "1.0.0"
 
 [scripts]
 test = "snforge test"
