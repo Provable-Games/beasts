@@ -141,7 +141,7 @@ pub mod beasts_nft {
             ref self: ERC721Component::ComponentState<ContractState>,
             to: ContractAddress,
             token_id: u256,
-            auth: ContractAddress
+            auth: ContractAddress,
         ) {
             let mut contract_state = self.get_contract_mut();
 
