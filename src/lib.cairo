@@ -2,6 +2,11 @@ pub mod beast_definitions;
 pub mod beast_manager;
 pub mod beast_ranking;
 pub mod beast_svg;
+pub mod beast_images;
+pub mod beast_png_regular_data;
+pub mod beast_png_shiny_data;
+pub mod beast_gif_regular_data;
+pub mod beast_gif_shiny_data;
 pub mod encoding;
 pub mod interfaces;
 pub mod metadata_generator;
@@ -11,6 +16,7 @@ pub mod utils;
 
 #[starknet::contract]
 pub mod beasts_nft {
+    use core::num::traits::{Zero};
     use openzeppelin_access::ownable::OwnableComponent;
     use openzeppelin_introspection::src5::SRC5Component;
     use openzeppelin_token::erc721::interface::IERC721Metadata;
@@ -26,7 +32,10 @@ pub mod beasts_nft {
     };
     use super::beast_manager::{BeastManagerTrait, BeastResult};
     use super::beast_ranking::BeastRankingManagerTrait;
-    use super::interfaces::IBeasts;
+    use super::interfaces::{
+        IBeasts, IBeastImageDataProviderDispatcher, IBeastSystemsDispatcher,
+        IBeastSystemsDispatcherTrait,
+    };
     use super::metadata_generator::MetadataGeneratorTrait;
     use super::minting_coordinator::{MintRequest, MintingCoordinatorTrait};
     use super::pack::PackableBeast;
@@ -101,6 +110,14 @@ pub mod beasts_nft {
         pub minted: Map<felt252, bool>,
         pub minter: ContractAddress,
         pub token_counter: u256,
+        // External data providers
+        pub regular_png_provider: IBeastImageDataProviderDispatcher,
+        pub shiny_png_provider: IBeastImageDataProviderDispatcher,
+        pub regular_gif_provider: IBeastImageDataProviderDispatcher,
+        pub shiny_gif_provider: IBeastImageDataProviderDispatcher,
+        pub death_mountain_dispatcher: IBeastSystemsDispatcher,
+        // If non-zero, contract becomes terminal after this timestamp
+        pub terminal_timestamp: u64,
     }
 
     #[event]
@@ -141,7 +158,7 @@ pub mod beasts_nft {
             ref self: ERC721Component::ComponentState<ContractState>,
             to: ContractAddress,
             token_id: u256,
-            auth: ContractAddress
+            auth: ContractAddress,
         ) {
             let mut contract_state = self.get_contract_mut();
 
@@ -161,14 +178,47 @@ pub mod beasts_nft {
         ref self: ContractState,
         name: ByteArray,
         symbol: ByteArray,
-        base_uri: ByteArray,
         owner: ContractAddress,
         royalty_receiver: ContractAddress,
         royalty_fraction: u128,
+        regular_png_provider: ContractAddress,
+        shiny_png_provider: ContractAddress,
+        regular_gif_provider: ContractAddress,
+        shiny_gif_provider: ContractAddress,
+        death_mountain_address: ContractAddress,
+        terminal_timestamp: u64,
     ) {
         self.ownable.initializer(owner);
-        self.erc721.initializer(name, symbol, base_uri);
+        self.erc721.initializer(name, symbol, "");
         self.erc2981.initializer(royalty_receiver, royalty_fraction);
+
+        // Store external image data dispatchers
+        let regular_png_provider = IBeastImageDataProviderDispatcher {
+            contract_address: regular_png_provider,
+        };
+        let shiny_png_provider = IBeastImageDataProviderDispatcher {
+            contract_address: shiny_png_provider,
+        };
+        let regular_gif_provider = IBeastImageDataProviderDispatcher {
+            contract_address: regular_gif_provider,
+        };
+        let shiny_gif_provider = IBeastImageDataProviderDispatcher {
+            contract_address: shiny_gif_provider,
+        };
+
+        self.regular_png_provider.write(regular_png_provider);
+        self.shiny_png_provider.write(shiny_png_provider);
+        self.regular_gif_provider.write(regular_gif_provider);
+        self.shiny_gif_provider.write(shiny_gif_provider);
+
+        if death_mountain_address != Zero::zero() {
+            self
+                .death_mountain_dispatcher
+                .write(IBeastSystemsDispatcher { contract_address: death_mountain_address });
+        }
+
+        // Configure terminal timestamp (0 means disabled)
+        self.terminal_timestamp.write(terminal_timestamp);
 
         InternalTrait::mint_genesis_beasts(ref self, owner);
     }
@@ -308,12 +358,62 @@ pub mod beasts_nft {
         fn token_uri(self: @ContractState, token_id: u256) -> ByteArray {
             self.erc721._require_owned(token_id);
 
+            // If terminal timestamp is set and passed, disallow token_uri
+            let terminal_ts = self.terminal_timestamp.read();
+            if terminal_ts != 0_u64 {
+                let now = starknet::get_block_timestamp();
+                assert(now <= terminal_ts, 'Terminal: token_uri disabled');
+            }
+
             // Get beast data
             let beast = self.beasts.entry(token_id).read();
             let rank = self.beast_token_ranks.entry(token_id).read();
 
+            // Get additional data from death mountain
+            let mut last_killed_timestamp = 0;
+            let mut last_killed_by_adventurer = 0;
+            let mut adventurers_killed = 0;
+            let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
+            if death_mountain_dispatcher.contract_address != Zero::zero() {
+                let death_mountain_address = self.minter.read();
+                if death_mountain_address != Zero::zero() {
+                    let beast_hash = BeastManagerTrait::get_beast_hash(
+                        beast.id, beast.prefix, beast.suffix,
+                    );
+                    let collectable_entity = death_mountain_dispatcher
+                        .get_collectable(death_mountain_address, beast_hash, 0);
+                    let entity_stats = death_mountain_dispatcher
+                        .get_entity_stats(death_mountain_address, beast_hash);
+
+                    last_killed_timestamp = collectable_entity.timestamp;
+                    last_killed_by_adventurer = collectable_entity.killed_by;
+                    adventurers_killed = entity_stats.adventurers_killed;
+                }
+            }
+
+            let mut image_data_provider = self.regular_gif_provider.read();
+            if beast.animated == 0 {
+                if beast.shiny == 1 {
+                    image_data_provider = self.shiny_png_provider.read();
+                } else {
+                    image_data_provider = self.regular_png_provider.read();
+                }
+            } else {
+                if beast.shiny == 1 {
+                    image_data_provider = self.shiny_gif_provider.read();
+                }
+            }
+
             // Generate metadata using pure Cairo library
-            MetadataGeneratorTrait::generate_metadata(token_id, beast, rank)
+            MetadataGeneratorTrait::generate_metadata(
+                token_id,
+                beast,
+                rank,
+                image_data_provider,
+                adventurers_killed,
+                last_killed_by_adventurer,
+                last_killed_timestamp,
+            )
         }
     }
 }

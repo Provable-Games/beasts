@@ -353,7 +353,7 @@ mod tests {
         };
         let attrs = BeastManagerTrait::get_beast_attributes(beast);
 
-        assert(attrs.beast_type == 'Magical', 'Type mismatch');
+        assert(attrs.beast_type == 'Magic', 'Type mismatch');
         assert(attrs.tier == 1, 'Tier mismatch');
         assert(attrs.level == 42, 'Level mismatch');
         assert(attrs.health == 1337, 'Health mismatch');
