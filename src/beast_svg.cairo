@@ -175,13 +175,16 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"<g transform='translate(60, 65)' clip-path='url(#artClip)'>");
         // If animated, use the sheet image, otherwise use the single image
         if beast_attrs.animated == 1 {
-            svg.append(@"<image width='780' height='130' image-rendering='pixelated' href='");
+            svg
+                .append(
+                    @"<image width='780' height='130' background-repeat:no-repeat;background-size:contain;background-position:center;image-rendering:-webkit-optimize-contrast;-ms-interpolation-mode:nearest-neighbor;image-rendering:-moz-crisp-edges;image-rendering:pixelated;' href='",
+                );
             let beast_image = get_beast_png(beast_id, true);
             svg.append(@beast_image);
             svg.append(@"'>");
             svg
                 .append(
-                    @"<animate attributeName='x' values='0;-130;-260;-390;0' dur='1s' calcMode='discrete' repeatCount='indefinite'/>",
+                    @"<animate attributeName='opacity' dur='2.2s' from='1' to='0.999' repeatCount='indefinite'/>",
                 );
         } else {
             svg.append(@"<image width='130' height='130' image-rendering='pixelated' href='");
