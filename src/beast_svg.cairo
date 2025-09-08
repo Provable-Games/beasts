@@ -1,11 +1,7 @@
 use core::byte_array::ByteArrayTrait;
-use starknet::ContractAddress;
 use super::beast_manager::BeastAttributes;
 use super::utils::felt252_to_byte_array;
-use super::interfaces::{
-    IBeastGifDataDispatcher, IBeastGifDataDispatcherTrait, IBeastPngDataDispatcher,
-    IBeastPngDataDispatcherTrait,
-};
+use super::interfaces::{IBeastImageDataProviderDispatcher, IBeastImageDataProviderDispatcherTrait};
 
 #[generate_trait]
 pub impl BeastSvgImpl of BeastSvgTrait {
@@ -17,9 +13,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         beast_name: felt252,
         rank: u16,
         beast_attrs: BeastAttributes,
-        png_provider: ContractAddress,
-        gif_provider: ContractAddress,
-        shiny_gif_provider: ContractAddress,
+        image_data_provider: IBeastImageDataProviderDispatcher,
     ) -> ByteArray {
         let is_shiny = beast_attrs.shiny > 0;
 
@@ -188,9 +182,8 @@ pub impl BeastSvgImpl of BeastSvgTrait {
                 .append(
                     @"<image width='780' height='130' background-repeat:no-repeat;background-size:contain;background-position:center;image-rendering:-webkit-optimize-contrast;-ms-interpolation-mode:nearest-neighbor;image-rendering:-moz-crisp-edges;image-rendering:pixelated;' href='",
                 );
-            let beast_image = get_beast_image_via_providers(
-                beast_id, true, is_shiny, png_provider, gif_provider, shiny_gif_provider,
-            );
+
+            let beast_image = image_data_provider.get_data_uri(beast_id);
             svg.append(@beast_image);
             svg.append(@"'>");
             svg
@@ -199,9 +192,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
                 );
         } else {
             svg.append(@"<image width='130' height='130' image-rendering='pixelated' href='");
-            let beast_image = get_beast_image_via_providers(
-                beast_id, false, is_shiny, png_provider, gif_provider, shiny_gif_provider,
-            );
+            let beast_image = image_data_provider.get_data_uri(beast_id);
             svg.append(@beast_image);
             svg.append(@"'>");
         }
@@ -300,29 +291,6 @@ pub impl BeastSvgImpl of BeastSvgTrait {
 
         svg.append(@"</svg>");
         svg
-    }
-}
-
-/// Resolve the appropriate image data URI by dispatching to external providers.
-fn get_beast_image_via_providers(
-    beast_id: u8,
-    animated: bool,
-    is_shiny: bool,
-    png_provider: ContractAddress,
-    gif_provider: ContractAddress,
-    shiny_gif_provider: ContractAddress,
-) -> ByteArray {
-    if animated {
-        if is_shiny {
-            let shiny = IBeastGifDataDispatcher { contract_address: shiny_gif_provider };
-            shiny.get_data_uri(beast_id, true)
-        } else {
-            let reg = IBeastGifDataDispatcher { contract_address: gif_provider };
-            reg.get_data_uri(beast_id, false)
-        }
-    } else {
-        let png = IBeastPngDataDispatcher { contract_address: png_provider };
-        png.get_data_uri(beast_id)
     }
 }
 

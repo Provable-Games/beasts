@@ -30,14 +30,8 @@ pub trait IBeasts<TContractState> {
     fn get_beast_rank(self: @TContractState, token_id: u256) -> u16;
 }
 
-/// Image data providers (external contracts)
-#[starknet::interface]
-pub trait IBeastGifData<TContractState> {
-    /// Returns a data URI (base64 GIF) for the given beast_id (regular/non-shiny set)
-    fn get_data_uri(self: @TContractState, beast_id: u8, shiny: bool) -> ByteArray;
-}
 
 #[starknet::interface]
-pub trait IBeastPngData<TContractState> {
+pub trait IBeastImageDataProvider<TContractState> {
     fn get_data_uri(self: @TContractState, beast_id: u8) -> ByteArray;
 }

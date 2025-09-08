@@ -1,16 +1,14 @@
-use super::interfaces::IBeastPngData;
-
 #[starknet::contract]
 mod beast_png_shiny_data {
     use core::byte_array::ByteArrayTrait;
-    use super::IBeastPngData;
     use super::super::beast_definitions;
+    use super::super::interfaces::IBeastImageDataProvider;
 
     #[storage]
     struct Storage {}
 
     #[abi(embed_v0)]
-    impl PngShinyDataImpl of IBeastPngData<ContractState> {
+    impl BeastImageDataProviderImpl of IBeastImageDataProvider<ContractState> {
         fn get_data_uri(self: @ContractState, beast_id: u8) -> ByteArray {
             if beast_id == beast_definitions::WARLOCK {
                 get_warlock_shiny_svg()

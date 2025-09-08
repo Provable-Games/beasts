@@ -1,9 +1,9 @@
 use super::beast_manager::BeastManagerTrait;
 use super::beast_svg::BeastSvgTrait;
-use starknet::ContractAddress;
 use super::encoding::bytes_base64_encode;
 use super::pack::PackableBeast;
 use super::utils::felt252_to_byte_array;
+use super::interfaces::IBeastImageDataProviderDispatcher;
 
 /// Generates metadata for beasts
 #[derive(Drop)]
@@ -32,12 +32,10 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         token_id: u256,
         beast: PackableBeast,
         rank: u16,
-        png_provider: ContractAddress,
-        gif_provider: ContractAddress,
-        shiny_gif_provider: ContractAddress,
+        image_data_provider: IBeastImageDataProviderDispatcher,
     ) -> ByteArray {
         let components = Self::build_metadata_components(
-            token_id, beast, rank, png_provider, gif_provider, shiny_gif_provider,
+            token_id, beast, rank, image_data_provider,
         );
         let json = Self::components_to_json(components);
 
@@ -49,9 +47,7 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         token_id: u256,
         beast: PackableBeast,
         rank: u16,
-        png_provider: ContractAddress,
-        gif_provider: ContractAddress,
-        shiny_gif_provider: ContractAddress,
+        image_data_provider: IBeastImageDataProviderDispatcher,
     ) -> MetadataComponents {
         // Build name
         let mut name: ByteArray = "";
@@ -67,15 +63,7 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 
         // Image
         let svg = BeastSvgTrait::generate_svg(
-            beast.id,
-            prefix_name,
-            suffix_name,
-            beast_name,
-            rank,
-            beast_attrs,
-            png_provider,
-            gif_provider,
-            shiny_gif_provider,
+            beast.id, prefix_name, suffix_name, beast_name, rank, beast_attrs, image_data_provider,
         );
         let image = format!("data:image/svg+xml;base64,{}", bytes_base64_encode(svg));
 

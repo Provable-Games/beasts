@@ -5,7 +5,7 @@ pub mod beast_svg;
 pub mod beast_images;
 pub mod beast_png_regular_data;
 pub mod beast_png_shiny_data;
-pub mod beast_gif_data;
+pub mod beast_gif_regular_data;
 pub mod encoding;
 pub mod interfaces;
 pub mod metadata_generator;
@@ -30,7 +30,7 @@ pub mod beasts_nft {
     };
     use super::beast_manager::{BeastManagerTrait, BeastResult};
     use super::beast_ranking::BeastRankingManagerTrait;
-    use super::interfaces::IBeasts;
+    use super::interfaces::{IBeasts, IBeastImageDataProviderDispatcher};
     use super::metadata_generator::MetadataGeneratorTrait;
     use super::minting_coordinator::{MintRequest, MintingCoordinatorTrait};
     use super::pack::PackableBeast;
@@ -106,9 +106,10 @@ pub mod beasts_nft {
         pub minter: ContractAddress,
         pub token_counter: u256,
         // External data providers
-        pub png_provider: ContractAddress,
-        pub gif_provider: ContractAddress,
-        pub shiny_gif_provider: ContractAddress,
+        pub regular_png_provider: IBeastImageDataProviderDispatcher,
+        pub shiny_png_provider: IBeastImageDataProviderDispatcher,
+        pub regular_gif_provider: IBeastImageDataProviderDispatcher,
+        pub shiny_gif_provider: IBeastImageDataProviderDispatcher,
     }
 
     #[event]
@@ -173,17 +174,32 @@ pub mod beasts_nft {
         owner: ContractAddress,
         royalty_receiver: ContractAddress,
         royalty_fraction: u128,
-        png_provider: ContractAddress,
-        gif_provider: ContractAddress,
+        regular_png_provider: ContractAddress,
+        shiny_png_provider: ContractAddress,
+        regular_gif_provider: ContractAddress,
         shiny_gif_provider: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self.erc721.initializer(name, symbol, base_uri);
         self.erc2981.initializer(royalty_receiver, royalty_fraction);
 
-        // Store external data provider addresses
-        self.png_provider.write(png_provider);
-        self.gif_provider.write(gif_provider);
+        // Store external image data dispatchers
+        let regular_png_provider = IBeastImageDataProviderDispatcher {
+            contract_address: regular_png_provider,
+        };
+        let shiny_png_provider = IBeastImageDataProviderDispatcher {
+            contract_address: shiny_png_provider,
+        };
+        let regular_gif_provider = IBeastImageDataProviderDispatcher {
+            contract_address: regular_gif_provider,
+        };
+        let shiny_gif_provider = IBeastImageDataProviderDispatcher {
+            contract_address: shiny_gif_provider,
+        };
+
+        self.regular_png_provider.write(regular_png_provider);
+        self.shiny_png_provider.write(shiny_png_provider);
+        self.regular_gif_provider.write(regular_gif_provider);
         self.shiny_gif_provider.write(shiny_gif_provider);
 
         InternalTrait::mint_genesis_beasts(ref self, owner);
@@ -328,15 +344,22 @@ pub mod beasts_nft {
             let beast = self.beasts.entry(token_id).read();
             let rank = self.beast_token_ranks.entry(token_id).read();
 
+            let mut image_data_provider = self.regular_gif_provider.read();
+
+            if beast.animated == 0 {
+                if beast.shiny == 1 {
+                    image_data_provider = self.shiny_png_provider.read();
+                } else {
+                    image_data_provider = self.regular_png_provider.read();
+                }
+            } else {
+                if beast.shiny == 1 {
+                    image_data_provider = self.shiny_gif_provider.read();
+                }
+            }
+
             // Generate metadata using pure Cairo library
-            MetadataGeneratorTrait::generate_metadata(
-                token_id,
-                beast,
-                rank,
-                self.png_provider.read(),
-                self.gif_provider.read(),
-                self.shiny_gif_provider.read(),
-            )
+            MetadataGeneratorTrait::generate_metadata(token_id, beast, rank, image_data_provider)
         }
     }
 }
