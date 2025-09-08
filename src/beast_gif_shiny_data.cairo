@@ -10,7 +10,7 @@ mod beast_gif_shiny_data {
     struct Storage {}
 
     #[abi(embed_v0)]
-    impl IBeastDataImpl of IBeastData<ContractState> {
+    impl BeastImageDataProviderImpl of IBeastImageDataProvider<ContractState> {
         fn get_data_uri(self: @ContractState, beast_id: u8) -> ByteArray {
             if beast_id == beast_definitions::WARLOCK {
                 get_warlock_shiny_gif_svg()

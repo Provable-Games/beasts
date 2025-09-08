@@ -6,6 +6,7 @@ pub mod beast_images;
 pub mod beast_png_regular_data;
 pub mod beast_png_shiny_data;
 pub mod beast_gif_regular_data;
+pub mod beast_gif_shiny_data;
 pub mod encoding;
 pub mod interfaces;
 pub mod metadata_generator;

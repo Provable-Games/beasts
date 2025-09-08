@@ -250,45 +250,6 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@format!("{}", beast_attrs.health));
         svg.append(@"</text>");
         svg.append(@"</g>");
-
-        // Add shiny border glow effect if beast is shiny
-        if is_shiny {
-            svg
-                .append(
-                    @"<rect x='4.5' y='4.5' width='241' height='341' rx='9' fill='none' stroke='url(#shiny)' stroke-width='6'/>",
-                );
-            svg.append(@"<circle cx='80' cy='100' r='8' fill='url(#sparkle)' opacity='0.6'>");
-            svg
-                .append(
-                    @"<animate attributeName='opacity' values='0.6;0.9;0.6' dur='1.5s' repeatCount='indefinite'/>",
-                );
-            svg
-                .append(
-                    @"<animateTransform attributeName='transform' type='translate' values='0,0; 50,30; 100,0; 150,50; 200,20; 0,0' dur='8s' repeatCount='indefinite'/>",
-                );
-            svg.append(@"</circle>");
-            svg.append(@"<circle cx='170' cy='200' r='6' fill='url(#sparkle)' opacity='0.7'>");
-            svg
-                .append(
-                    @"<animate attributeName='opacity' values='0.7;1.0;0.7' dur='1.2s' repeatCount='indefinite'/>",
-                );
-            svg
-                .append(
-                    @"<animateTransform attributeName='transform' type='translate' values='0,0; -30,40; -60,0; -90,30; -120,60; 0,0' dur='6s' repeatCount='indefinite'/>",
-                );
-            svg.append(@"</circle>");
-            svg.append(@"<circle cx='125' cy='300' r='5' fill='url(#sparkle)' opacity='0.8'>");
-            svg
-                .append(
-                    @"<animate attributeName='opacity' values='0.8;1.0;0.8' dur='1.8s' repeatCount='indefinite'/>",
-                );
-            svg
-                .append(
-                    @"<animateTransform attributeName='transform' type='translate' values='0,0; 40,-20; 80,10; 120,-30; 160,0; 0,0' dur='10s' repeatCount='indefinite'/>",
-                );
-            svg.append(@"</circle>");
-        }
-
         svg.append(@"</svg>");
         svg
     }
