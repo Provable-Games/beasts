@@ -1,5 +1,6 @@
 use super::beast_manager::BeastManagerTrait;
 use super::beast_svg::BeastSvgTrait;
+use starknet::ContractAddress;
 use super::encoding::bytes_base64_encode;
 use super::pack::PackableBeast;
 use super::utils::felt252_to_byte_array;
@@ -27,8 +28,17 @@ pub struct Attribute {
 #[generate_trait]
 pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
     /// Generates complete metadata JSON for a beast
-    fn generate_metadata(token_id: u256, beast: PackableBeast, rank: u16) -> ByteArray {
-        let components = Self::build_metadata_components(token_id, beast, rank);
+    fn generate_metadata(
+        token_id: u256,
+        beast: PackableBeast,
+        rank: u16,
+        png_provider: ContractAddress,
+        gif_provider: ContractAddress,
+        shiny_gif_provider: ContractAddress,
+    ) -> ByteArray {
+        let components = Self::build_metadata_components(
+            token_id, beast, rank, png_provider, gif_provider, shiny_gif_provider,
+        );
         let json = Self::components_to_json(components);
 
         format!("data:application/json;base64,{}", bytes_base64_encode(json))
@@ -36,7 +46,12 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 
     /// Builds metadata components from beast data
     fn build_metadata_components(
-        token_id: u256, beast: PackableBeast, rank: u16,
+        token_id: u256,
+        beast: PackableBeast,
+        rank: u16,
+        png_provider: ContractAddress,
+        gif_provider: ContractAddress,
+        shiny_gif_provider: ContractAddress,
     ) -> MetadataComponents {
         // Build name
         let mut name: ByteArray = "";
@@ -52,7 +67,15 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 
         // Image
         let svg = BeastSvgTrait::generate_svg(
-            beast.id, prefix_name, suffix_name, beast_name, rank, beast_attrs,
+            beast.id,
+            prefix_name,
+            suffix_name,
+            beast_name,
+            rank,
+            beast_attrs,
+            png_provider,
+            gif_provider,
+            shiny_gif_provider,
         );
         let image = format!("data:image/svg+xml;base64,{}", bytes_base64_encode(svg));
 
@@ -234,7 +257,15 @@ mod tests {
         let beast = PackableBeast {
             id: 2, prefix: 5, suffix: 10, level: 15, health: 142, shiny: 0, animated: 0,
         };
-        let components = MetadataGeneratorTrait::build_metadata_components(123, beast, 1);
+        use starknet::contract_address_const;
+        let components = MetadataGeneratorTrait::build_metadata_components(
+            123,
+            beast,
+            1,
+            contract_address_const::<'png_provider'>(),
+            contract_address_const::<'gif_provider'>(),
+            contract_address_const::<'gif_shiny_provider'>(),
+        );
 
         assert(components.name == "Beast #123", 'Name mismatch');
         assert(

@@ -2,6 +2,10 @@ pub mod beast_definitions;
 pub mod beast_manager;
 pub mod beast_ranking;
 pub mod beast_svg;
+pub mod beast_images;
+pub mod beast_png_regular_data;
+pub mod beast_png_shiny_data;
+pub mod beast_gif_data;
 pub mod encoding;
 pub mod interfaces;
 pub mod metadata_generator;
@@ -101,6 +105,10 @@ pub mod beasts_nft {
         pub minted: Map<felt252, bool>,
         pub minter: ContractAddress,
         pub token_counter: u256,
+        // External data providers
+        pub png_provider: ContractAddress,
+        pub gif_provider: ContractAddress,
+        pub shiny_gif_provider: ContractAddress,
     }
 
     #[event]
@@ -165,10 +173,18 @@ pub mod beasts_nft {
         owner: ContractAddress,
         royalty_receiver: ContractAddress,
         royalty_fraction: u128,
+        png_provider: ContractAddress,
+        gif_provider: ContractAddress,
+        shiny_gif_provider: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self.erc721.initializer(name, symbol, base_uri);
         self.erc2981.initializer(royalty_receiver, royalty_fraction);
+
+        // Store external data provider addresses
+        self.png_provider.write(png_provider);
+        self.gif_provider.write(gif_provider);
+        self.shiny_gif_provider.write(shiny_gif_provider);
 
         InternalTrait::mint_genesis_beasts(ref self, owner);
     }
@@ -313,7 +329,14 @@ pub mod beasts_nft {
             let rank = self.beast_token_ranks.entry(token_id).read();
 
             // Generate metadata using pure Cairo library
-            MetadataGeneratorTrait::generate_metadata(token_id, beast, rank)
+            MetadataGeneratorTrait::generate_metadata(
+                token_id,
+                beast,
+                rank,
+                self.png_provider.read(),
+                self.gif_provider.read(),
+                self.shiny_gif_provider.read(),
+            )
         }
     }
 }
