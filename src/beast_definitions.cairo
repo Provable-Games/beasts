@@ -8,7 +8,7 @@ pub const TIER_4: u8 = 4;
 pub const TIER_5: u8 = 5;
 
 // Types
-pub const TYPE_MAGICAL: felt252 = 'Magical';
+pub const TYPE_MAGIC: felt252 = 'Magic';
 pub const TYPE_HUNTER: felt252 = 'Hunter';
 pub const TYPE_BRUTE: felt252 = 'Brute';
 
@@ -393,7 +393,7 @@ pub fn get_tier(beast: u8) -> u8 {
 pub fn get_type(beast: u8) -> felt252 {
     assert(beast != 0, 'Invalid beast');
     if (beast <= 25) {
-        TYPE_MAGICAL
+        TYPE_MAGIC
     } else if beast <= 50 {
         TYPE_HUNTER
     } else if beast <= 75 {

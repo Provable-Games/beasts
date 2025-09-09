@@ -22,7 +22,7 @@ mod test_felt252_conversion {
         assert(yeti_str == "Yeti", 'Should convert to Yeti');
 
         // Test types
-        let magical = beast_definitions::TYPE_MAGICAL;
+        let magical = beast_definitions::TYPE_MAGIC;
         let magical_str = felt252_to_byte_array(magical);
         println!("Magical as ByteArray: {}", magical_str);
         assert(magical_str == "Magical", 'Should convert to Magical');

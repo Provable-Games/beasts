@@ -23,6 +23,11 @@ pub impl BeastSvgImpl of BeastSvgTrait {
             .append(
                 @"<svg xmlns='http://www.w3.org/2000/svg' width='250' height='350' viewBox='0 0 250 350'>",
             );
+
+        svg
+            .append(
+                @"<animate attributeName='opacity' dur='2.2s' from='1' to='0.999' repeatCount='indefinite'/>",
+            );
         svg.append(@"<defs>");
         svg.append(@"<linearGradient id='gold' x1='0%' y1='0%' x2='100%' y2='100%'>");
         svg.append(@"<stop offset='0%' stop-color='#e5d8b2'/>");
@@ -147,10 +152,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         }
 
         // Specials and name
-        svg
-            .append(
-                @"<text x='125' y='30' text-anchor='middle' style='fill:#b0b0b6;font-size:12px;'>",
-            );
+        svg.append(@"<text x='125' y='30' text-anchor='middle' style='fill:#fff;font-size:10px;'>");
         if prefix_name != 0 {
             svg.append(@"\"");
             let prefix_str = felt252_to_byte_array(prefix_name);
@@ -164,7 +166,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
 
         svg
             .append(
-                @"<text x='125' y='51' text-anchor='middle' style='fill:#fff;font-size:19px;font-weight:700;letter-spacing:.7px'>",
+                @"<text x='125' y='53' text-anchor='middle' style='fill:#fff;font-size:22px;font-weight:700;letter-spacing:.7px'>",
             );
         let beast_name_str = felt252_to_byte_array(beast_name);
         svg.append(@beast_name_str);
@@ -180,7 +182,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         if beast_attrs.animated == 1 {
             svg
                 .append(
-                    @"<image width='780' height='130' background-repeat:no-repeat;background-size:contain;background-position:center;image-rendering:-webkit-optimize-contrast;-ms-interpolation-mode:nearest-neighbor;image-rendering:-moz-crisp-edges;image-rendering:pixelated;' href='",
+                    @"<image x='0' y='0' width='780' height='130' preserveAspectRatio='xMinYMin meet' style='image-rendering:pixelated; image-rendering:-moz-crisp-edges; -ms-interpolation-mode:nearest-neighbor;' href='",
                 );
 
             let beast_image = image_data_provider.get_data_uri(beast_id);
@@ -191,7 +193,10 @@ pub impl BeastSvgImpl of BeastSvgTrait {
                     @"<animate attributeName='opacity' dur='2.2s' from='1' to='0.999' repeatCount='indefinite'/>",
                 );
         } else {
-            svg.append(@"<image width='130' height='130' image-rendering='pixelated' href='");
+            svg
+                .append(
+                    @"<image x='1' y='1' width='128' height='128' style='image-rendering:pixelated; image-rendering:-moz-crisp-edges; -ms-interpolation-mode:nearest-neighbor;' href='",
+                );
             let beast_image = image_data_provider.get_data_uri(beast_id);
             svg.append(@beast_image);
             svg.append(@"'>");
@@ -250,6 +255,21 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@format!("{}", beast_attrs.health));
         svg.append(@"</text>");
         svg.append(@"</g>");
+        if is_shiny {
+            // Animated, colorful border (uses the existing animated #shiny gradient)
+            svg
+                .append(
+                    @"<rect x='4.5' y='4.5' width='241' height='341' rx='9' fill='none' stroke='url(#shiny)' stroke-width='6'/>",
+                );
+        } else {
+            // Solid border in the tier color (same palette used for the top-left emblem)
+            svg
+                .append(
+                    @"<rect x='4.5' y='4.5' width='241' height='341' rx='9' fill='none' stroke='",
+                );
+            svg.append(@get_tier_color(beast_attrs.tier));
+            svg.append(@"' stroke-width='6'/>");
+        }
         svg.append(@"</svg>");
         svg
     }
@@ -259,8 +279,8 @@ fn get_tier_color(tier: u8) -> ByteArray {
     match tier {
         0 => "",
         1 => "#ff8800",
-        2 => "#B634E2",
-        3 => "#6C6CF7",
+        2 => "#8c00bf",
+        3 => "#0000ff",
         4 => "#00ff00",
         5 => "#ffffff",
         _ => "",

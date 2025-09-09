@@ -26,7 +26,7 @@ mod tests {
     fn test_beast_types() {
         // Test beast types
         let warlock_type = beast_definitions::get_type(1);
-        assert(warlock_type == beast_definitions::TYPE_MAGICAL, 'Warlock should be Magical');
+        assert(warlock_type == beast_definitions::TYPE_MAGIC, 'Warlock should be Magical');
 
         let yeti_type = beast_definitions::get_type(68);
         assert(yeti_type == beast_definitions::TYPE_BRUTE, 'Yeti should be Brute');

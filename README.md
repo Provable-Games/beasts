@@ -140,13 +140,21 @@ cp .env.example .env
 # Edit .env with your configuration
 ```
 
+Required in `.env` (no defaults are assumed):
+- `STARKNET_ACCOUNT`, `STARKNET_PRIVATE_KEY`
+- `RPC_URL` (e.g., Sepolia or Mainnet endpoint)
+- `NAME`, `SYMBOL`
+- `OWNER`, `ROYALTY_RECEIVER`, `ROYALTY_FRACTION` (u128, denominator 10,000)
+
 2. Deploy to Starknet:
 
 ```bash
-./scripts/deploy.sh
+bash scripts/deploy.sh
 ```
 
-Deployment artifacts are saved to `deployments/` with the latest deployment symlinked.
+Notes:
+- The script declares and deploys the four image data provider contracts, then deploys the core NFT with their addresses passed to the constructor.
+- The script fails with a descriptive error if any required `.env` value is missing.
 
 ## 🛠️ Development
 

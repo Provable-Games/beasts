@@ -171,7 +171,6 @@ pub mod beasts_nft {
         ref self: ContractState,
         name: ByteArray,
         symbol: ByteArray,
-        base_uri: ByteArray,
         owner: ContractAddress,
         royalty_receiver: ContractAddress,
         royalty_fraction: u128,
@@ -181,7 +180,7 @@ pub mod beasts_nft {
         shiny_gif_provider: ContractAddress,
     ) {
         self.ownable.initializer(owner);
-        self.erc721.initializer(name, symbol, base_uri);
+        self.erc721.initializer(name, symbol, "");
         self.erc2981.initializer(royalty_receiver, royalty_fraction);
 
         // Store external image data dispatchers
