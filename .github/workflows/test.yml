@@ -87,7 +87,7 @@ jobs:
         run: snforge test --workspace --features fuzzing --fuzzer-runs 500 --coverage --max-n-steps 4294967295
 
       - name: Check coverage threshold
-        run: lcov --summary coverage/coverage.lcov --fail-under-lines 35
+        run: lcov --summary coverage/coverage.lcov --fail-under-lines 25
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

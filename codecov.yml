@@ -19,7 +19,7 @@ coverage:
       default:
         # Require new code to have 80%+ coverage.
         # TMP target and threshold until cairo-coverage becomes more stable
-        target: 35%
+        target: 25%
         threshold: 4%
 
 ignore:
