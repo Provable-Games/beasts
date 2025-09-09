@@ -203,6 +203,8 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 #[cfg(test)]
 mod tests {
     use super::{Attribute, MetadataGeneratorTrait, PackableBeast};
+    use super::super::interfaces::{IBeastImageDataProviderDispatcher};
+    use snforge_std::{start_mock_call};
 
     fn find_substring(text: @ByteArray, pattern: @ByteArray) -> bool {
         let text_len = text.len();
@@ -245,14 +247,18 @@ mod tests {
         let beast = PackableBeast {
             id: 2, prefix: 5, suffix: 10, level: 15, health: 142, shiny: 0, animated: 0,
         };
-        use starknet::contract_address_const;
+
+        let mock_data_provider_address = 'data_provider'.try_into().unwrap();
+        let mock_return_data: ByteArray =
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAASFJREFUSIm1VW2uxCAIVE/dI+yt3/vBBu0wfLVZstlQhAFGxTF+IH+frc+HYVc1aj1Al0+wgKeuVjugcGkfXhGJX1r+KT2K0oqkp6KzW1cjst5BXdrlQ6TV35ZDsYJ9BiEUaXAKUTlL01rn9dVVGfcjD7hwGyBkqVX9VKekx23ZkHVmO3PQYDqOaEO6OsHppMV+gsiq/ivUaVlevaM8MhURsoosMckvQN8tM7vNsR28isAyzOmie+CluWE9uKUSRW9P6T0ABnawuRy26sa4tuxXHtG8A0rxqcRSpYiia9ZXCbwNuKH4OUp78Gb6NyhyIUKK8g7s+QH0OH2VIjoqFD0aiCk0iXGqpo327kEXfaQUwQa4I/Nyh1iDIvumDsYhtPIPgYPBCOPyCoAAAAAASUVORK5CYII=";
+
+        start_mock_call(mock_data_provider_address, selector!("get_data_uri"), mock_return_data);
+
+        let beast_image_data_provider_dispatcher = IBeastImageDataProviderDispatcher {
+            contract_address: mock_data_provider_address,
+        };
         let components = MetadataGeneratorTrait::build_metadata_components(
-            123,
-            beast,
-            1,
-            contract_address_const::<'png_provider'>(),
-            contract_address_const::<'gif_provider'>(),
-            contract_address_const::<'gif_shiny_provider'>(),
+            123, beast, 1, beast_image_data_provider_dispatcher,
         );
 
         assert(components.name == "Beast #123", 'Name mismatch');

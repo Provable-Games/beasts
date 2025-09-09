@@ -5,7 +5,6 @@ mod tests {
         IERC721MetadataDispatcher, IERC721MetadataDispatcherTrait,
     };
     use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
-    use starknet::contract_address_const;
 
     #[test]
     fn test_beast_names() {

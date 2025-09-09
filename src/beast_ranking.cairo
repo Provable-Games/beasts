@@ -127,6 +127,15 @@ mod tests {
     use super::super::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait};
 
     fn deploy_contract() -> (IBeastsDispatcher, ContractAddress, ContractAddress, ContractAddress) {
+        let regular_png_provider = declare("beast_png_regular_data").unwrap().contract_class();
+        let (regular_png_provider_address, _) = regular_png_provider.deploy(@array![]).unwrap();
+        let shiny_png_provider = declare("beast_png_shiny_data").unwrap().contract_class();
+        let (shiny_png_provider_address, _) = shiny_png_provider.deploy(@array![]).unwrap();
+        let regular_gif_provider = declare("beast_gif_regular_data").unwrap().contract_class();
+        let (regular_gif_provider_address, _) = regular_gif_provider.deploy(@array![]).unwrap();
+        let shiny_gif_provider = declare("beast_gif_shiny_data").unwrap().contract_class();
+        let (shiny_gif_provider_address, _) = shiny_gif_provider.deploy(@array![]).unwrap();
+
         let contract = declare("beasts_nft").unwrap().contract_class();
         let owner: ContractAddress = 0x123.try_into().unwrap();
         let recipient: ContractAddress = 0x456.try_into().unwrap();
@@ -137,15 +146,17 @@ mod tests {
         let mut constructor_data = array![];
         let name: ByteArray = "Beasts";
         let symbol: ByteArray = "BEAST";
-        let base_uri: ByteArray = "https://api.beasts.game/metadata/";
 
         // Serialize constructor parameters in correct order
         name.serialize(ref constructor_data);
         symbol.serialize(ref constructor_data);
-        base_uri.serialize(ref constructor_data);
         owner.serialize(ref constructor_data);
         royalty_receiver.serialize(ref constructor_data);
         royalty_fraction.serialize(ref constructor_data);
+        regular_png_provider_address.serialize(ref constructor_data);
+        shiny_png_provider_address.serialize(ref constructor_data);
+        regular_gif_provider_address.serialize(ref constructor_data);
+        shiny_gif_provider_address.serialize(ref constructor_data);
 
         let (contract_address, _) = contract.deploy(@constructor_data).unwrap();
         let dispatcher = IBeastsDispatcher { contract_address };
