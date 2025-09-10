@@ -18,20 +18,26 @@
 <table>
 <tr>
 <td align="center">
-
-<img src="assets/examples/warlock-magical.svg" width="250" height="350" alt="Doom Shadow Warlock - Magical Tier 1 Beast">
-
-</td>
-<td align="center">
-
-<img src="assets/examples/dragon-hunter.svg" width="250" height="350" alt="Rage Flame Dragon - Hunter Tier 1 Beast">
+<!-- Not Shiny, Not Animated -->
+<img src="assets/examples/weretiger_not_shiny_not_animated.svg" width="250" height="350" alt="Doom Shadow Warlock - Magical Tier 1 Beast">
 
 </td>
 <td align="center">
-
-<img src="assets/examples/balrog-brute.svg" width="250" height="350" alt="Blood Iron Balrog - Brute Tier 1 Beast">
+<!-- Not Shiny, Animated -->
+<img src="assets/examples/weretiger_not_shiny_animated.svg" width="250" height="350" alt="Blood Iron Balrog - Brute Tier 1 Beast">
 
 </td>
+<td align="center">
+<!-- Shiny, Not Animated -->
+<img src="assets/examples/weretiger_shiny_not_animated.svg" width="250" height="350" alt="Rage Flame Dragon - Hunter Tier 1 Beast">
+
+</td>
+<td align="center">
+<!-- Shiny, Animated -->
+<img src="assets/examples/weretiger_shiny_animated.svg" width="250" height="350" alt="Blood Iron Balrog - Brute Tier 1 Beast">
+
+</td>
+
 </tr>
 </table>
 </div>
@@ -141,6 +147,7 @@ cp .env.example .env
 ```
 
 Required in `.env` (no defaults are assumed):
+
 - `STARKNET_ACCOUNT`, `STARKNET_PRIVATE_KEY`
 - `RPC_URL` (e.g., Sepolia or Mainnet endpoint)
 - `NAME`, `SYMBOL`
@@ -153,6 +160,7 @@ bash scripts/deploy.sh
 ```
 
 Notes:
+
 - The script declares and deploys the four image data provider contracts, then deploys the core NFT with their addresses passed to the constructor.
 - The script fails with a descriptive error if any required `.env` value is missing.
 
