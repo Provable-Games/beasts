@@ -150,7 +150,7 @@
     </g>
   </g>
   <!-- Outer animated rainbow border -->
-  <rect x="4.5" y="4.5" width="241" height="341" rx="9" fill="none" stroke="url(#gold)" stroke-width="4" vector-effect="non-scaling-stroke" />
+  <rect x="4.5" y="4.5" width="241" height="341" rx="9" fill="none" stroke="url(#gold)" stroke-width="4"/>
   <!-- Outer regular gold border -->
   <!-- <rect x='4.5' y='4.5' width='241' height='341' rx='9' fill='none' stroke='url(#gold)' stroke-width='4' /> -->
 </svg>
