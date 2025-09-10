@@ -112,7 +112,7 @@
   <rect x='15' y='58' width='220' height='144' rx='8' fill='#00' />
   <!-- Artwork image placed and clipped; pixelated for retro style -->
   <g transform='translate(61, 65)' clip-path='url(#artClip)'>
-    <image x='1' y='1' width='128' height='128' style='image-rendering:pixelated; image-rendering:-moz-crisp-edges; -ms-interpolation-mode:nearest-neighbor;' href='data:image/gif;base64,R0lGODlhIAAgAPEAAAAAAAAA/wAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQEFAD/ACwAAAAAIAAgAEACl4SPqcsQ9kJ0Uzq4pD0zdahxlPiM5tdkJbKl1xpyKwVf5NuVOvuKp83IzRoxja7l8hw3SGKv5nsCcTYm72fZVaKeGwoT2fmayi7GPM1IXduhmp1UI7NxxdZbN52OslQRDFhFVtVHw3c2NFPhRqdYWCOmNQYTNnZFqXc3MsfYE0RjN2iHVejpxKL55HaV+QniVLlKkppXWwAAIfkEBRQAAgAsAQABAB4AHgAAAouEj6nLEJ0eRKGaal2eVNMncVF4bOLlpGVKihkmmdD2xqHcsaAH7uoYQwWDmtbO9/sdk0Reh4YSlmiY6U1FOtouy1UP2wQLe00fEbmFPRXIYvrKjPKWptZqqlN/2EZ9TseV5CIYMUi3Zve0hcfI5hH45YQTeEcIN/KXqLRAhsUwJKNFqMiC+Ph5CFAAADs=' />
+    <image x='1' y='1' width='128' height='128' style='image-rendering:pixelated; image-rendering:-moz-crisp-edges; -ms-interpolation-mode:nearest-neighbor;' href='data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAAXNSR0IArs4c6QAAAAlQTFRFAAAAAAAAAAD/rmEGTQAAAAN0Uk5TAP//RFDWIQAAAL5JREFUOI2Vk4sShSAIRHH//6PvJIJny6a5PUzxCCtYjI8r/gAkXe9szsB89vcZohbSAQDNm51DiNTwFiKnunEg1TdQngrQCutNItGqOrbMVMBBJICa0hbUesJwC5HdSFCDFVCbLkC9CJ9tjHJQ6RF7UnkQZVjKwrPAAHnHQPGEUKMB1hl1LXNs46rX8cgdakFg6eF5MGCe43I+uk8P2LalKgExb71b93BXxsHyIDFf3Cp3AWDjVU37Wzj8/Lt/R3wFDuZL55YAAAAASUVORK5CYII=' />
   </g>
   <!-- Art frame stroke -->
   <rect x='15' y='58' width='220' height='144' rx='8' fill='none' stroke='#fff' stroke-opacity='.08' stroke-width='2' />

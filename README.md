@@ -19,22 +19,22 @@
 <tr>
 <td align="center">
 <!-- Not Shiny, Not Animated -->
-<img src="assets/examples/weretiger_not_shiny_not_animated.svg" width="250" height="350" alt="Doom Shadow Warlock - Magical Tier 1 Beast">
+<img src="assets/examples/weretiger_not_shiny_not_animated.svg" width="250" height="350">
 
 </td>
 <td align="center">
 <!-- Not Shiny, Animated -->
-<img src="assets/examples/weretiger_not_shiny_animated.svg" width="250" height="350" alt="Blood Iron Balrog - Brute Tier 1 Beast">
+<img src="assets/examples/weretiger_not_shiny_animated.svg" width="250" height="350">
 
 </td>
 <td align="center">
 <!-- Shiny, Not Animated -->
-<img src="assets/examples/weretiger_shiny_not_animated.svg" width="250" height="350" alt="Rage Flame Dragon - Hunter Tier 1 Beast">
+<img src="assets/examples/weretiger_shiny_not_animated.svg" width="250" height="350">
 
 </td>
 <td align="center">
 <!-- Shiny, Animated -->
-<img src="assets/examples/weretiger_shiny_animated.svg" width="250" height="350" alt="Blood Iron Balrog - Brute Tier 1 Beast">
+<img src="assets/examples/weretiger_shiny_animated.svg" width="250" height="350">
 
 </td>
 
