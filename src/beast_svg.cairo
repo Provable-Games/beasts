@@ -198,7 +198,10 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"</text>");
 
         // Beast name
-        svg.append(@"<text x='125' y='51' text-anchor='middle' style='fill:#fff;font-size:30px;letter-spacing:1px'>");
+        svg
+            .append(
+                @"<text x='125' y='51' text-anchor='middle' style='fill:#fff;font-size:30px;letter-spacing:1px'>",
+            );
         let beast_name_str = felt252_to_byte_array(beast_name);
         svg.append(@beast_name_str);
         svg.append(@"</text>");
@@ -213,7 +216,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         // Unified image placement (let provider return PNG or GIF)
         svg
             .append(
-                @"<image x='1' y='1' width='128' height='128' style='image-rendering:pixelated; image-rendering:-moz-crisp-edges; -ms-interpolation-mode:nearest-neighbor;' href='",
+                @"<image x='1' y='1' width='128' height='128' style='image-rendering:-webkit-optimize-contrast;-ms-interpolation-mode:nearest-neighbor;image-rendering:-moz-crisp-edges;image-rendering:pixelated;' href='",
             );
         let beast_image = image_data_provider.get_data_uri(beast_id);
         svg.append(@beast_image);
