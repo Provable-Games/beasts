@@ -2,15 +2,18 @@
 
 <div align="center">
 
-![Beasts Banner](https://img.shields.io/badge/Beasts-Fully%20Onchain%20NFTs-8B0000?style=for-the-badge)
-[![Cairo](https://img.shields.io/badge/Cairo-2.11.4-orange?style=flat-square)](https://github.com/starkware-libs/cairo)
-[![Starknet](https://img.shields.io/badge/Starknet-Mainnet-blue?style=flat-square)](https://starknet.io)
-[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
-[![Coverage](https://img.shields.io/badge/coverage-84.3%25-brightgreen?style=flat-square)](https://codecov.io/gh/Provable-Games/beasts-g2)
-
 </div>
 
-**Beasts** is a fully onchain NFT collection featuring 75 unique monster species that integrate with the [Loot Survivor](https://survivor.realms.world) game ecosystem on Starknet. Each beast is dynamically generated with unique attributes, names, and stunning SVG artwork—all stored and rendered directly from the blockchain.
+**Beasts** is a fully onchain NFT collection featuring 75 unique monster species that integrate with the [Loot Survivor](https://lootsurvivor.io) game ecosystem on Starknet. Each Beast is dynamically generated with unique attributes, names, and artwork—all stored and rendered directly from the blockchain.
+
+## Overview
+
+The Beasts are a collection of digital-native creatures, born onchain and built for battle. With 1,243 variants across 75 species, the fixed supply of 93,225 Beasts balances abundance and scarcity. Beasts carry two sets of traits: visual and combat.
+
+- Visual traits power collecting: Shiny and Animated forms activate pixel-perfect effects. Each Beast has live ranking within its species (1–1,243) that updates as new Beasts are minted; once a species is complete, a King Beast is crowned.
+- Combat traits power play: On mint, a Beast includes level and health. Together with its type and tier, this defines a combat profile compatible with the Loot Survivor system that first brought Beasts into the world.
+- Live, credibly neutral traits such as Adventurers slain, last Adventurer who defeated a Beast, and timestamp of that defeat enable long-term growth systems without hardcoding game logic.
+- Beasts are earned by worthy Adventurers in the dungeons of Loot Survivor using verifiable randomness. Every step is etched onchain for permanent provenance. For collectors, Beasts offer verifiable scarcity and provenance; for players, they unlock endless onchain fun.
 
 ## 🎨 Example Beasts
 
@@ -44,9 +47,9 @@
 
 ## 🚀 Features
 
-- **🎨 Fully Onchain Artwork**: Every beast's SVG is dynamically generated and stored entirely onchain
-- **🎮 Born Onchain**: The Beasts do not simply live onchain, they are born onchain from the Dungeons of Loot Survivor
-- **🔮 Built for Fun**: Each Beast is minted with their original stats: {level, health, specials} and are compatible with the onchain combat system that powers Loot Survivor.
+- **🎨 Fully Onchain Artwork**: Every Beast’s image data and metadata are generated onchain
+- **🎮 Born Onchain**: Beasts emerge from the dungeons of Loot Survivor
+- **⚔️ Battle-Ready**: Each Beast is minted with level and health and is compatible with the Loot Survivor combat system
 - **🏛️ 75 Unique Species**: From mystical Warlocks to fierce Minotaurs, each with distinct visual traits
 - **📊 Tiered Rarity System**: 5 tiers with visual indicators through border colors and effects
 
@@ -54,7 +57,7 @@
 
 ### Prerequisites
 
-- [Scarb](https://docs.swmansion.com/scarb/) 2.11.4
+- [Scarb](https://docs.swmansion.com/scarb/) 2.10.1
 - [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) 0.46.0
 - [Cairo Coverage](https://github.com/software-mansion/cairo-coverage) 0.5.0 (for test coverage)
 
@@ -67,7 +70,7 @@ git clone https://github.com/Provable-Games/beasts.git
 cd beasts
 ```
 
-2. Install dependencies:
+2. Build contracts:
 
 ```bash
 scarb build
@@ -76,7 +79,7 @@ scarb build
 3. Run tests:
 
 ```bash
-scarb test
+snforge test
 ```
 
 ## 🏗️ Architecture
@@ -85,27 +88,30 @@ scarb test
 
 ```
 src/
-├── beasts_nft.cairo          # Main ERC721 contract
-├── pack.cairo                # Efficient attribute packing (51 bits)
-├── beast_definitions.cairo   # 75 beast species definitions
-├── beast_manager.cairo       # Beast validation and management
-├── metadata_generator.cairo  # Onchain JSON metadata generation
-├── beast_svg.cairo          # Dynamic SVG artwork generation
-├── minting_coordinator.cairo # Single and batch minting logic
-└── interfaces.cairo         # External contract interfaces
+├── lib.cairo                  # Entry point; exposes modules and ERC721 contract (beasts_nft)
+├── pack.cairo                 # Attribute packing (id, name parts, level, health, shiny, animated)
+├── beast_definitions.cairo    # 75 species definitions and names
+├── beast_manager.cairo        # Validation and uniqueness hashing
+├── beast_ranking.cairo        # Per-species live ranking + king logic
+├── metadata_generator.cairo   # Onchain JSON metadata generation
+├── beast_svg.cairo            # Dynamic SVG artwork generation
+├── minting_coordinator.cairo  # Single and batch mint prep
+└── interfaces.cairo           # External interfaces (image data providers, systems)
 ```
 
 ### Beast Data Model
 
-Each beast is efficiently packed into 51 bits:
+Each Beast is efficiently packed into 53 bits:
 
 ```cairo
 PackableBeast {
-    id: u8,      // 7 bits - beast species (1-75)
-    prefix: u8,  // 7 bits - name prefix (0-69)
-    suffix: u8,  // 5 bits - name suffix (0-18)
-    level: u16,  // 16 bits - beast level
-    health: u16, // 16 bits - beast health
+    id: u8,       // 7 bits - species (1–75)
+    prefix: u8,   // 7 bits - name prefix
+    suffix: u8,   // 5 bits - name suffix
+    level: u16,   // 16 bits - level
+    health: u16,  // 16 bits - health
+    shiny: u8,    // 1 bit  - visual trait
+    animated: u8, // 1 bit  - visual trait
 }
 ```
 
@@ -133,9 +139,11 @@ Run the comprehensive test suite:
 # Run foundry with coverage
 snforge test --coverage
 
-# Check coverage percentage (must be ≥84.3%)
+# Summarize coverage locally
 lcov --summary coverage/coverage.lcov
 ```
+
+CI enforces formatting and coverage on patches (≥35%); aim for ≥80% overall when feasible.
 
 ## 🚢 Deployment
 
@@ -180,7 +188,7 @@ The project uses GitHub Actions for:
 
 - Linting (scarb fmt --check)
 - Testing with fuzzing
-- Coverage verification (≥80% required)
+- Coverage verification (patch ≥35%)
 
 ## 🤝 Acknowledgments
 
@@ -190,13 +198,12 @@ The project uses GitHub Actions for:
 
 ## 🔗 Links
 
-- [Play Loot Survivor](https://deathmountain.gg/survivor)
-- [Documentation](https://https://survivor-docs.realms.world/)
-- [Discord Community](https://discord.gg/realmsworld)
-- [Twitter](https://twitter.com/lootsurvivor)
+- [Play Loot Survivor](https://lootsurvivor.io)
+- [Discord Community](https://discord.gg/lootsurvivor)
+- [Twitter](https://x.com/lootsurvivor)
 
 ---
 
-<div align="center">
-  <strong>Built with ❤️ on Starknet</strong>
-</div>
+## Acknowledgments
+
+- Beast pixels courtesy of the legends at [1337 Skulls](https://1337skulls.xyz)
