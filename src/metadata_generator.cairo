@@ -372,7 +372,7 @@ mod tests {
         // Set minter
         let minter = contract_address_const::<'minter'>();
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Mint one beast
@@ -401,7 +401,7 @@ mod tests {
         // Set minter
         let minter = contract_address_const::<'minter'>();
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Mint a beast so token exists

@@ -5,8 +5,8 @@ use super::pack::PackableBeast;
 #[starknet::interface]
 pub trait IBeasts<TContractState> {
     // Minter management
-    fn set_minter(ref self: TContractState, minter: ContractAddress);
-    fn get_minter(self: @TContractState) -> ContractAddress;
+    fn set_dungeon_address(ref self: TContractState, address: ContractAddress);
+    fn get_dungeon_address(self: @TContractState) -> ContractAddress;
     fn set_death_mountain_address(ref self: TContractState, death_mountain: ContractAddress);
     fn get_death_mountain_address(self: @TContractState) -> ContractAddress;
 

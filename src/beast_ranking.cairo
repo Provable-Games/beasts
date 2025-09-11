@@ -164,7 +164,7 @@ mod tests {
         let dispatcher = IBeastsDispatcher { contract_address };
 
         start_cheat_caller_address(contract_address, owner);
-        dispatcher.set_minter(minter);
+        dispatcher.set_dungeon_address(minter);
         stop_cheat_caller_address(contract_address);
 
         (dispatcher, contract_address, recipient, minter)

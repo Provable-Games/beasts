@@ -115,7 +115,7 @@ pub mod beasts_nft {
         >, // beast_id -> rank -> token_id (nested map)
         pub beast_counts: Map<u8, u16>, // beast_id -> count of beasts
         pub minted: Map<felt252, bool>,
-        pub minter: ContractAddress,
+        pub dungeon_address: ContractAddress,
         pub token_counter: u256,
         // External data providers
         pub regular_png_provider: IBeastImageDataProviderDispatcher,
@@ -233,13 +233,13 @@ pub mod beasts_nft {
     // IBeasts Implementation
     #[abi(embed_v0)]
     impl BeastsImpl of IBeasts<ContractState> {
-        fn set_minter(ref self: ContractState, minter: ContractAddress) {
+        fn set_dungeon_address(ref self: ContractState, address: ContractAddress) {
             self.ownable.assert_only_owner();
-            self.minter.write(minter);
+            self.dungeon_address.write(address);
         }
 
-        fn get_minter(self: @ContractState) -> ContractAddress {
-            self.minter.read()
+        fn get_dungeon_address(self: @ContractState) -> ContractAddress {
+            self.dungeon_address.read()
         }
 
         fn set_death_mountain_address(ref self: ContractState, death_mountain: ContractAddress) {
@@ -264,9 +264,9 @@ pub mod beasts_nft {
             shiny: u8,
             animated: u8,
         ) -> u256 {
-            // Check minter authorization
+            // Ensure caller is Dungeon
             let caller = starknet::get_caller_address();
-            assert(caller == self.minter.read(), 'Not authorized to mint');
+            assert(caller == self.dungeon_address.read(), 'Not authorized to mint');
 
             // Prepare mint request
             let request = MintRequest { beast_id, prefix, suffix, level, health, shiny, animated };
@@ -461,7 +461,7 @@ pub mod beasts_nft {
             let mut adventurers_killed = 0;
             let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
             if death_mountain_dispatcher.contract_address != Zero::zero() {
-                let death_mountain_address = self.minter.read();
+                let death_mountain_address = self.dungeon_address.read();
                 if death_mountain_address != Zero::zero() {
                     let beast_hash = BeastManagerTrait::get_beast_hash(
                         beast.id, beast.prefix, beast.suffix,

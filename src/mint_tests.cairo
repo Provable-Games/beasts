@@ -66,29 +66,29 @@ mod mint_tests {
     }
 
     #[test]
-    fn test_set_minter() {
+    fn test_set_dungeon_address() {
         let (beasts, _, ownable, owner) = deploy_contract();
         let minter = contract_address_const::<'minter'>();
 
         // Set minter as owner
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Verify minter was set
-        assert(beasts.get_minter() == minter, 'Minter not set correctly');
+        assert(beasts.get_dungeon_address() == minter, 'Minter not set correctly');
     }
 
     #[test]
     #[should_panic(expected: ('Caller is not the owner',))]
-    fn test_set_minter_not_owner() {
+    fn test_set_dungeon_address_not_owner() {
         let (beasts, _, _, _) = deploy_contract();
         let minter = contract_address_const::<'minter'>();
         let random_caller = contract_address_const::<'random'>();
 
         // Try to set minter as non-owner
         start_cheat_caller_address(beasts.contract_address, random_caller);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
     }
 
@@ -100,7 +100,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Mint a beast
@@ -153,7 +153,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Try to mint beast with ID 0
@@ -170,7 +170,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Try to mint beast with ID 76
@@ -188,7 +188,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Mint a beast
@@ -208,7 +208,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Mint same beast ID with different prefix/suffix
@@ -279,7 +279,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Mint some beasts
@@ -303,7 +303,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Mint a beast with specific attributes
@@ -383,7 +383,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Initially, no king beast should exist
@@ -411,7 +411,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         start_cheat_caller_address(beasts.contract_address, minter);
@@ -440,7 +440,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         start_cheat_caller_address(beasts.contract_address, minter);
@@ -468,7 +468,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         start_cheat_caller_address(beasts.contract_address, minter);
@@ -508,7 +508,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         start_cheat_caller_address(beasts.contract_address, minter);
@@ -536,7 +536,7 @@ mod mint_tests {
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_minter(minter);
+        beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         start_cheat_caller_address(beasts.contract_address, minter);
