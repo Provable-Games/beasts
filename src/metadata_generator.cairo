@@ -202,9 +202,13 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 
 #[cfg(test)]
 mod tests {
-    use super::{Attribute, MetadataGeneratorTrait, PackableBeast};
-    use super::super::interfaces::{IBeastImageDataProviderDispatcher};
+    use super::{Attribute, MetadataGeneratorTrait, PackableBeast, BeastSvgTrait};
+    use super::super::interfaces::{
+        IBeastImageDataProviderDispatcher, IBeastImageDataProviderDispatcherTrait,
+    };
+    use super::super::beast_manager::BeastManagerTrait;
     use snforge_std::{start_mock_call};
+    use starknet::ContractAddress;
 
     fn find_substring(text: @ByteArray, pattern: @ByteArray) -> bool {
         let text_len = text.len();
@@ -286,5 +290,89 @@ mod tests {
         assert(find_substring(@json, @"\"attributes\":[{"), 'Should have attributes array');
         assert(find_substring(@json, @"},{"), 'Should have comma between attrs');
         assert(find_substring(@json, @"}]}"), 'Should end properly');
+    }
+
+
+    #[test]
+    #[fork("sepolia")]
+    fn fork_png_provider_returns_data_uri() {
+        // pick an arbitrary valid beast id
+        let beast_id: u8 = 1;
+        let provider = IBeastImageDataProviderDispatcher {
+            contract_address: get_regular_png_provider(),
+        };
+        let uri = provider.get_data_uri(beast_id);
+        assert!(uri.len() != 0, "PNG provider must return data URI");
+    }
+
+    #[test]
+    #[fork("sepolia")]
+    fn fork_gif_provider_returns_data_uri() {
+        let beast_id: u8 = 1;
+        let provider = IBeastImageDataProviderDispatcher {
+            contract_address: get_regular_gif_provider(),
+        };
+        let uri = provider.get_data_uri(beast_id);
+        assert!(uri.len() != 0, "GIF provider must return data URI");
+    }
+
+    #[test]
+    #[fork("sepolia")]
+    fn fork_shiny_png_provider_returns_data_uri() {
+        let beast_id: u8 = 1;
+        let provider = IBeastImageDataProviderDispatcher {
+            contract_address: get_shiny_png_provider(),
+        };
+        let uri = provider.get_data_uri(beast_id);
+        assert!(uri.len() != 0, "Shiny PNG provider must return data URI");
+    }
+
+    #[test]
+    #[fork("sepolia")]
+    fn fork_shiny_gif_provider_returns_data_uri() {
+        let beast_id: u8 = 1;
+        let provider = IBeastImageDataProviderDispatcher {
+            contract_address: get_shiny_gif_provider(),
+        };
+        let uri = provider.get_data_uri(beast_id);
+        assert!(uri.len() != 0, "Shiny GIF provider must return data URI");
+    }
+
+    #[test]
+    #[fork("sepolia")]
+    fn shiny_gif_sample_output() {
+        let beast: PackableBeast = PackableBeast {
+            id: 1, prefix: 1, suffix: 1, level: 1, health: 1, shiny: 1, animated: 1,
+        };
+
+        let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
+        // Get other attributes
+        let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
+
+        let rank = 1;
+
+        let image_data_provider = IBeastImageDataProviderDispatcher {
+            contract_address: get_shiny_gif_provider(),
+        };
+
+        // Image
+        let svg = BeastSvgTrait::generate_svg(
+            beast.id, prefix_name, suffix_name, beast_name, rank, beast_attrs, image_data_provider,
+        );
+
+        println!("{}", svg);
+    }
+
+    fn get_regular_png_provider() -> ContractAddress {
+        0x0292d819758f7cc8f4ef01b019d9688cd53d2ee118b17937f0769cfde45d61d2.try_into().unwrap()
+    }
+    fn get_shiny_png_provider() -> ContractAddress {
+        0x06461aebd8a28d171e2501be111d41bc7d95090c48babbb349bea8a82083c737.try_into().unwrap()
+    }
+    fn get_regular_gif_provider() -> ContractAddress {
+        0x00b5d7d133217766a84b1328daaa5ee1f92df2e9a57794e4aa1e3eb183c5b7b8.try_into().unwrap()
+    }
+    fn get_shiny_gif_provider() -> ContractAddress {
+        0x02d5e40e0234c4e504b9832426ed5377832121ba398ba006f70255ebc67acbc4.try_into().unwrap()
     }
 }

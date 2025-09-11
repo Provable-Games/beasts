@@ -29,3 +29,15 @@ inlining-strategy = "avoid"
 
 [features]
 fuzzing = []
+
+# Allow using the prebuilt snforge plugin and configure forks for testing
+[tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]
+
+[tool.snforge]
+exit_first = true
+
+[[tool.snforge.fork]]
+name = "sepolia"
+url = "https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_8"
+block_id.tag = "latest"
