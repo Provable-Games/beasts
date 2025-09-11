@@ -314,7 +314,7 @@ mod beast_png_regular_data {
         let mut svg: ByteArray = "";
         svg
             .append(
-                @"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAAXNSR0IArs4c6QAAABVQTFRFAAAAAAAAAP8A/4gAjAC/AAD/////XlWhuwAAAAd0Uk5TAP///////6V/pvsAAADfSURBVDiNbVOBFsQgCBL+/6NvpSj2bmsty5BCg9+DrwFngNOINM8MoxZAtex6R4D5Xi+A5cOaRiBXKa/6qNBRuxonGcjEdShT0B3qjgtB8+i/sBKBvpttCmEOh4Vze5Fc8EOjEIQx3MdNIbTL2XaICbIcOAgO8B7YEfqYfxDAvumUoIFirxeNaouDqYhJohFrNJ4wTtL01mXRb5LvOzcaK8JkzUbwCDTDtVjYujjAE+bxgHNorfzZOameVV5sjxiJrbBMtWiOgtCgPMJTVirYxKnNrlUJOoc8pWfrDt4eP2/BBYMauZByAAAAAElFTkSuQmCC",
+                @"data:image/png;base64,R0lGODdhIAAgAIAAAAAAAAD/ACH/C05FVFNDQVBFMi4wAwEAAAAh+QQIFAAAACwAAAAAIAAgAAAClISPqbsBrmCYDyZ7nERUx3cZW+hx2aVRXIdlbSOmk1pZLyrLIMOrZcoLxTw2kfHm6uyMTFqwiLEhYccqM2jyHUfYU9Q6bbRGwG6MRA4nV7NTpetst7fYWREUf4vTeP37BqR1d+UEZnW2VdjHxvghFDUWp4TmEqG41KOoqTZkyclQNjQHh/i1o8YihXiKxNVKZRa7UAAAOw==",
             );
         svg
     }
