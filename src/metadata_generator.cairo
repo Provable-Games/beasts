@@ -592,7 +592,7 @@ mod tests {
     #[fork("sepolia")]
     fn generate_warlock_shiny_static() {
         let beast: PackableBeast = PackableBeast {
-            id: 3, prefix: 2, suffix: 2, level: 20, health: 100, shiny: 1, animated: 0,
+            id: 1, prefix: 2, suffix: 2, level: 20, health: 100, shiny: 1, animated: 0,
         };
 
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);

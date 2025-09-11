@@ -16,12 +16,8 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         image_data_provider: IBeastImageDataProviderDispatcher,
     ) -> ByteArray {
         let is_shiny = beast_attrs.shiny > 0;
-        // Name color reflects tier; shiny uses pastel variant
-        let base_tier_color = get_tier_color(beast_attrs.tier);
-        let shiny_tier_color = get_tier_pastel_color(beast_attrs.tier);
 
         let mut svg: ByteArray = "";
-
         svg
             .append(
                 @"<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='250' height='350' viewBox='0 0 250 350'>",
