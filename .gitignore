@@ -6,8 +6,4 @@ snfoundry_trace/
 snfoundry_cache/
 .env
 accounts/
-debug_raw/
-sample_outputs/
-sample_outputs_v2/
-debug_raw_small/
-sample_outputs_v2 copy/
+.snfoundry_cache/
