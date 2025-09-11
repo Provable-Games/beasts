@@ -19,22 +19,22 @@
 <tr>
 <td align="center">
 <!-- Not Shiny, Not Animated -->
-<img src="assets/examples/weretiger_not_shiny_not_animated.svg" width="250" height="350">
+<img src="assets/examples/warlock_regular_static.svg" width="250" height="350">
 
 </td>
 <td align="center">
 <!-- Not Shiny, Animated -->
-<img src="assets/examples/weretiger_not_shiny_animated.svg" width="250" height="350">
+<img src="assets/examples/warlock_regular_animated.svg" width="250" height="350">
 
 </td>
 <td align="center">
 <!-- Shiny, Not Animated -->
-<img src="assets/examples/weretiger_shiny_not_animated.svg" width="250" height="350">
+<img src="assets/examples/warlock_shiny_static.svg" width="250" height="350">
 
 </td>
 <td align="center">
 <!-- Shiny, Animated -->
-<img src="assets/examples/weretiger_shiny_animated.svg" width="250" height="350">
+<img src="assets/examples/warlock_shiny_animated.svg" width="250" height="350">
 
 </td>
 

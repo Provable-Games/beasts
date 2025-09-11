@@ -342,7 +342,7 @@ mod tests {
     #[fork("sepolia")]
     fn generate_warlock_shiny_animated() {
         let beast: PackableBeast = PackableBeast {
-            id: 1, prefix: 48, suffix: 7, level: 25, health: 100, shiny: 1, animated: 1,
+            id: 1, prefix: 3, suffix: 7, level: 25, health: 100, shiny: 1, animated: 1,
         };
 
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
@@ -367,7 +367,7 @@ mod tests {
     #[fork("sepolia")]
     fn generate_warlock_regular_animated() {
         let beast: PackableBeast = PackableBeast {
-            id: 1, prefix: 1, suffix: 1, level: 25, health: 100, shiny: 0, animated: 1,
+            id: 1, prefix: 6, suffix: 12, level: 25, health: 100, shiny: 0, animated: 1,
         };
 
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
@@ -392,7 +392,7 @@ mod tests {
     #[fork("sepolia")]
     fn generate_warlock_shiny_static() {
         let beast: PackableBeast = PackableBeast {
-            id: 1, prefix: 1, suffix: 1, level: 20, health: 100, shiny: 1, animated: 0,
+            id: 1, prefix: 2, suffix: 2, level: 20, health: 100, shiny: 1, animated: 0,
         };
 
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
@@ -417,7 +417,7 @@ mod tests {
     #[fork("sepolia")]
     fn generate_warlock_regular_static() {
         let beast: PackableBeast = PackableBeast {
-            id: 1, prefix: 1, suffix: 1, level: 25, health: 100, shiny: 0, animated: 0,
+            id: 1, prefix: 3, suffix: 3, level: 25, health: 100, shiny: 0, animated: 0,
         };
 
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
