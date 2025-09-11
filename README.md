@@ -192,9 +192,7 @@ The project uses GitHub Actions for:
 
 ## 🤝 Acknowledgments
 
-- [Loot Survivor](https://github.com/Provable-Games/loot-survivor) - The game that Beasts integrates with
-- [OpenZeppelin Cairo](https://github.com/OpenZeppelin/cairo-contracts) - Security-audited contract components
-- [Starknet](https://starknet.io) - The L2 scaling solution powering Beasts
+- Beast pixels from the legends at [1337 Skulls](https://1337skulls.xyz)
 
 ## 🔗 Links
 
@@ -205,5 +203,3 @@ The project uses GitHub Actions for:
 ---
 
 ## Acknowledgments
-
-- Beast pixels courtesy of the legends at [1337 Skulls](https://1337skulls.xyz)
