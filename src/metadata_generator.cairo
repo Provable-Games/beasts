@@ -374,7 +374,7 @@ mod tests {
         // Get other attributes
         let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
 
-        let rank = 1;
+        let rank = 2;
 
         let image_data_provider = IBeastImageDataProviderDispatcher {
             contract_address: get_regular_gif_provider(),
@@ -392,7 +392,7 @@ mod tests {
     #[fork("sepolia")]
     fn generate_warlock_shiny_static() {
         let beast: PackableBeast = PackableBeast {
-            id: 1, prefix: 2, suffix: 2, level: 20, health: 100, shiny: 1, animated: 0,
+            id: 3, prefix: 2, suffix: 2, level: 20, health: 100, shiny: 1, animated: 0,
         };
 
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
@@ -417,7 +417,7 @@ mod tests {
     #[fork("sepolia")]
     fn generate_warlock_regular_static() {
         let beast: PackableBeast = PackableBeast {
-            id: 1, prefix: 3, suffix: 3, level: 25, health: 100, shiny: 0, animated: 0,
+            id: 4, prefix: 3, suffix: 3, level: 25, health: 100, shiny: 0, animated: 0,
         };
 
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
