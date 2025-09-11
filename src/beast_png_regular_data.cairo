@@ -800,7 +800,7 @@ mod beast_png_regular_data {
         let mut svg: ByteArray = "";
         svg
             .append(
-                @"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAQMAAABJtOi3AAAAAXNSR0IArs4c6QAAAAZQTFRFAAAAAAD/iGVWQgAAAJtJREFUeNoFwaEKwkAAgOH/NjxhFoOCYegEg441URY3n2BhzTJ8gnsBZSBmX+GCgtFHmDajbfGq7eKECX4fALjCKsRTN4j9tIVH2kIZNwjZV0gvBL8/gBAJAUtYzeYlw9cVvF1a4Z3cEkbaIH7vhO7nnjDZNproWAfk8mzIxpuCxbdX4VzWFud2sDi6NojMWqCIAeWDqyLomByAP2WLKQGvD0DkAAAAAElFTkSuQmCC",
+                @"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAQMAAABJtOi3AAAABlBMVEUAAAAAAP+IZVZCAAAAm0lEQVR42gXBoQrCQACA4f82PGGWBQXD0AkGHWuiLG4+gWHNMnyCewFlIGZf4YKC0UeYNqNt8art4oQJfh8AuMIqxFM3iP2khUfWQpk0COkrpBdB4PchQkLIApbTWcngdQVvl1V4J7eEoTaI3zul+7mnjLeNJj7WIbk8GzajdcH826twLiuLcztYHF0bxMZaoEgAFYCrYuiYHIA/ZYspAbnAyoMAAAAASUVORK5CYII=",
             );
         svg
     }
