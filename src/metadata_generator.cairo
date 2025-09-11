@@ -340,7 +340,7 @@ mod tests {
 
     #[test]
     #[fork("sepolia")]
-    fn shiny_gif_sample_output() {
+    fn generate_warlock_shiny_animated() {
         let beast: PackableBeast = PackableBeast {
             id: 1, prefix: 1, suffix: 1, level: 1, health: 1, shiny: 1, animated: 1,
         };
@@ -353,6 +353,81 @@ mod tests {
 
         let image_data_provider = IBeastImageDataProviderDispatcher {
             contract_address: get_shiny_gif_provider(),
+        };
+
+        // Image
+        let svg = BeastSvgTrait::generate_svg(
+            beast.id, prefix_name, suffix_name, beast_name, rank, beast_attrs, image_data_provider,
+        );
+
+        println!("{}", svg);
+    }
+
+    #[test]
+    #[fork("sepolia")]
+    fn generate_warlock_regular_animated() {
+        let beast: PackableBeast = PackableBeast {
+            id: 1, prefix: 1, suffix: 1, level: 1, health: 1, shiny: 0, animated: 1,
+        };
+
+        let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
+        // Get other attributes
+        let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
+
+        let rank = 1;
+
+        let image_data_provider = IBeastImageDataProviderDispatcher {
+            contract_address: get_regular_gif_provider(),
+        };
+
+        // Image
+        let svg = BeastSvgTrait::generate_svg(
+            beast.id, prefix_name, suffix_name, beast_name, rank, beast_attrs, image_data_provider,
+        );
+
+        println!("{}", svg);
+    }
+
+    #[test]
+    #[fork("sepolia")]
+    fn generate_warlock_shiny_static() {
+        let beast: PackableBeast = PackableBeast {
+            id: 1, prefix: 1, suffix: 1, level: 1, health: 1, shiny: 1, animated: 0,
+        };
+
+        let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
+        // Get other attributes
+        let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
+
+        let rank = 1;
+
+        let image_data_provider = IBeastImageDataProviderDispatcher {
+            contract_address: get_shiny_png_provider(),
+        };
+
+        // Image
+        let svg = BeastSvgTrait::generate_svg(
+            beast.id, prefix_name, suffix_name, beast_name, rank, beast_attrs, image_data_provider,
+        );
+
+        println!("{}", svg);
+    }
+
+    #[test]
+    #[fork("sepolia")]
+    fn generate_warlock_regular_static() {
+        let beast: PackableBeast = PackableBeast {
+            id: 1, prefix: 1, suffix: 1, level: 1, health: 1, shiny: 0, animated: 0,
+        };
+
+        let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
+        // Get other attributes
+        let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
+
+        let rank = 1;
+
+        let image_data_provider = IBeastImageDataProviderDispatcher {
+            contract_address: get_regular_png_provider(),
         };
 
         // Image

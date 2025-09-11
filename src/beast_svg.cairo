@@ -69,15 +69,8 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"<stop offset='80%' stop-color='#C073DC'/>");
         svg.append(@"<stop offset='100%' stop-color='#7373FF'/>");
         svg.append(@"</linearGradient>");
-        svg.append(@"<linearGradient id='logo_blue' x1='0%' y1='0%' x2='0%' y2='100%'>");
-        svg.append(@"<stop offset='0%' stop-color='#0000ff'/>");
-        svg.append(@"<stop offset='100%' stop-color='#0000ff'/>");
-        svg.append(@"</linearGradient>");
-        if is_shiny {
-            svg.append(@"<linearGradient id='logo_fill' xlink:href='#logo_pastel_rainbow'/>");
-        } else {
-            svg.append(@"<linearGradient id='logo_fill' xlink:href='#logo_blue'/>");
-        }
+        // Shiny logo uses the pastel rainbow gradient directly; non-shiny will use a solid tier
+        // color.
         svg
             .append(
                 @"<path transform='scale(0.7)' d='M13 11c0-6 9-6 9 0s-9 10.5-9 10.5S4 17 4 11s9-6 9 0Z' stroke-width='3' id='heart' stroke='#ff6b6b' fill='none'/>",
@@ -90,7 +83,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"<path d='M2 14h16l-1.5 4h-13z'/>");
         svg
             .append(
-                @"<path d='m3 14 2-9 3 5 4-5 3 5 2-5 2 9Z' stroke-linejoin='round' stroke-linecap='round'/>",
+                @"<path d='m2 14 2-9 3 5 4-5 3 5 2-5 2 9Z' stroke-linejoin='round' stroke-linecap='round'/>",
             );
         svg.append(@"<circle cx='5' cy='5' r='1.2' fill='#fff3c4'/>");
         svg.append(@"<circle cx='12' cy='5' r='1.2' fill='#fff3c4'/>");
@@ -121,9 +114,9 @@ pub impl BeastSvgImpl of BeastSvgTrait {
 
       .label {
         fill: #c9c9d1;
-        font-size: 12px;
-        letter-spacing: .5px;
-        font-weight: 400
+        font-size: 14px;
+        letter-spacing: 0.5px;
+        font-weight: 500
       }
 
       .valL {
@@ -143,15 +136,23 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         // Background (frame drawn at end for layering)
         svg.append(@"<rect width='250' height='350' rx='12' fill='url(#pin)'/>");
 
-        // Top-left logo matching rarity color (with subtle pulse)
+        // Top-left logo matching rarity/tier color (with subtle pulse)
         svg.append(@"<g transform='translate(15, 15)'>");
         svg.append(@"<g id='logoPulse' transform='scale(0.029)'>");
+        // Compute fill for logo: shiny -> rainbow gradient; non-shiny -> tier color
+        let mut logo_fill: ByteArray = "";
+        if is_shiny {
+            logo_fill.append(@"url(#logo_pastel_rainbow)");
+        } else {
+            let tier_color = get_tier_color(beast_attrs.tier);
+            logo_fill.append(@tier_color);
+        }
         svg
             .append(
                 @"<path fill-rule='evenodd' clip-rule='evenodd' d='M242.9 629.232H69.4V349.536H0V699.071H242.9V629.232ZM312.3 69.9071V0H34.7V69.9071H0V314.582H104.1V384.489H242.9V314.582H347V69.9071H312.3ZM277.6 244.675H208.2V314.582H138.8V244.675H69.4V139.814H138.8V244.675H208.2V139.814H277.6V244.675ZM104.1 594.279H277.6V734.093H0V804H312.3V734.093H347V524.372H173.5V489.418H347V419.511H104.1V594.279Z' fill='",
             );
-        // Use indirection gradient alias for logo fill
-        svg.append(@"url(#logo_fill)'/>");
+        svg.append(@logo_fill);
+        svg.append(@"'/>");
         svg
             .append(
                 @"<animate attributeName='opacity' values='0.6;1;0.6' dur='3s' repeatCount='indefinite'/>",
@@ -261,7 +262,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"<text x='35' y='46' text-anchor='middle' class='valL'>");
         svg.append(@format!("{}", beast_attrs.power));
         svg.append(@"</text>");
-        svg.append(@"<g transform='translate(82,30) scale(1)'>");
+        svg.append(@"<g transform='translate(82,31.15) scale(1)'>");
         svg.append(@"<use href='#bolt' pointer-events='none'/>");
         svg.append(@"</g>");
         svg.append(@"</g>");
@@ -272,7 +273,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         svg.append(@"<text x='35' y='46' text-anchor='middle' class='valL'>");
         svg.append(@format!("{}", beast_attrs.health));
         svg.append(@"</text>");
-        svg.append(@"<g transform='translate(82,30) scale(0.75)'>");
+        svg.append(@"<g transform='translate(77.3,32.744) scale(0.75)'>");
         svg.append(@"<use href='#heart' pointer-events='none'/>");
         svg.append(@"</g>");
         svg.append(@"</g>");
