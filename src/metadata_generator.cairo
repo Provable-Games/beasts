@@ -638,6 +638,31 @@ mod tests {
         println!("{}", svg);
     }
 
+    #[test]
+    #[fork("sepolia")]
+    fn generate_werewolf_shiny_static() {
+        let beast: PackableBeast = PackableBeast {
+            id: 12, prefix: 3, suffix: 3, level: 25, health: 100, shiny: 1, animated: 0,
+        };
+
+        let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
+        // Get other attributes
+        let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
+
+        let rank = 1;
+
+        let image_data_provider = IBeastImageDataProviderDispatcher {
+            contract_address: get_regular_png_provider(),
+        };
+
+        // Image
+        let svg = BeastSvgTrait::generate_svg(
+            beast.id, prefix_name, suffix_name, beast_name, rank, beast_attrs, image_data_provider,
+        );
+
+        println!("{}", svg);
+    }
+
     fn get_regular_png_provider() -> ContractAddress {
         0x0292d819758f7cc8f4ef01b019d9688cd53d2ee118b17937f0769cfde45d61d2.try_into().unwrap()
     }
