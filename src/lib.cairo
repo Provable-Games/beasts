@@ -16,6 +16,7 @@ pub mod utils;
 
 #[starknet::contract]
 pub mod beasts_nft {
+    use core::num::traits::{Zero};
     use openzeppelin_access::ownable::OwnableComponent;
     use openzeppelin_introspection::src5::SRC5Component;
     use openzeppelin_token::erc721::interface::IERC721Metadata;
@@ -31,7 +32,10 @@ pub mod beasts_nft {
     };
     use super::beast_manager::{BeastManagerTrait, BeastResult};
     use super::beast_ranking::BeastRankingManagerTrait;
-    use super::interfaces::{IBeasts, IBeastImageDataProviderDispatcher};
+    use super::interfaces::{
+        IBeasts, IBeastImageDataProviderDispatcher, IBeastSystemsDispatcher,
+        IBeastSystemsDispatcherTrait,
+    };
     use super::metadata_generator::MetadataGeneratorTrait;
     use super::minting_coordinator::{MintRequest, MintingCoordinatorTrait};
     use super::pack::PackableBeast;
@@ -111,6 +115,7 @@ pub mod beasts_nft {
         pub shiny_png_provider: IBeastImageDataProviderDispatcher,
         pub regular_gif_provider: IBeastImageDataProviderDispatcher,
         pub shiny_gif_provider: IBeastImageDataProviderDispatcher,
+        pub death_mountain_dispatcher: IBeastSystemsDispatcher,
     }
 
     #[event]
@@ -178,6 +183,7 @@ pub mod beasts_nft {
         shiny_png_provider: ContractAddress,
         regular_gif_provider: ContractAddress,
         shiny_gif_provider: ContractAddress,
+        death_mountain_address: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self.erc721.initializer(name, symbol, "");
@@ -201,6 +207,12 @@ pub mod beasts_nft {
         self.shiny_png_provider.write(shiny_png_provider);
         self.regular_gif_provider.write(regular_gif_provider);
         self.shiny_gif_provider.write(shiny_gif_provider);
+
+        if death_mountain_address != Zero::zero() {
+            self
+                .death_mountain_dispatcher
+                .write(IBeastSystemsDispatcher { contract_address: death_mountain_address });
+        }
 
         InternalTrait::mint_genesis_beasts(ref self, owner);
     }
@@ -344,8 +356,29 @@ pub mod beasts_nft {
             let beast = self.beasts.entry(token_id).read();
             let rank = self.beast_token_ranks.entry(token_id).read();
 
-            let mut image_data_provider = self.regular_gif_provider.read();
+            // Get additional data from death mountain
+            let mut last_killed_timestamp = 0;
+            let mut last_killed_by_adventurer = 0;
+            let mut adventurers_killed = 0;
+            let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
+            if death_mountain_dispatcher.contract_address != Zero::zero() {
+                let death_mountain_address = self.minter.read();
+                if death_mountain_address != Zero::zero() {
+                    let beast_hash = BeastManagerTrait::get_beast_hash(
+                        beast.id, beast.prefix, beast.suffix,
+                    );
+                    let collectable_entity = death_mountain_dispatcher
+                        .get_collectable(death_mountain_address, beast_hash, 0);
+                    let entity_stats = death_mountain_dispatcher
+                        .get_entity_stats(death_mountain_address, beast_hash);
 
+                    last_killed_timestamp = collectable_entity.timestamp;
+                    last_killed_by_adventurer = collectable_entity.killed_by;
+                    adventurers_killed = entity_stats.adventurers_killed;
+                }
+            }
+
+            let mut image_data_provider = self.regular_gif_provider.read();
             if beast.animated == 0 {
                 if beast.shiny == 1 {
                     image_data_provider = self.shiny_png_provider.read();
@@ -359,7 +392,15 @@ pub mod beasts_nft {
             }
 
             // Generate metadata using pure Cairo library
-            MetadataGeneratorTrait::generate_metadata(token_id, beast, rank, image_data_provider)
+            MetadataGeneratorTrait::generate_metadata(
+                token_id,
+                beast,
+                rank,
+                image_data_provider,
+                adventurers_killed,
+                last_killed_by_adventurer,
+                last_killed_timestamp,
+            )
         }
     }
 }

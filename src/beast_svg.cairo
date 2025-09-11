@@ -16,6 +16,14 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         image_data_provider: IBeastImageDataProviderDispatcher,
     ) -> ByteArray {
         let is_shiny = beast_attrs.shiny > 0;
+        // Name color reflects tier; shiny uses pastel variant
+        let base_tier_color = get_tier_color(beast_attrs.tier);
+        let shiny_tier_color = get_tier_pastel_color(beast_attrs.tier);
+        let name_color = if is_shiny {
+            shiny_tier_color
+        } else {
+            base_tier_color
+        };
 
         let mut svg: ByteArray = "";
 
@@ -198,10 +206,10 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         }
         svg.append(@"</text>");
 
-        svg
-            .append(
-                @"<text x='125' y='50' text-anchor='middle' style='fill:#fff;font-size:30px;letter-spacing:1px'>",
-            );
+        // Beast name colored by tier
+        svg.append(@"<text x='125' y='51' text-anchor='middle' style='fill:");
+        svg.append(@name_color);
+        svg.append(@";font-size:30px;letter-spacing:1px'>");
         let beast_name_str = felt252_to_byte_array(beast_name);
         svg.append(@beast_name_str);
         svg.append(@"</text>");
@@ -296,12 +304,30 @@ pub impl BeastSvgImpl of BeastSvgTrait {
 
 fn get_tier_color(tier: u8) -> ByteArray {
     match tier {
-        0 => "",
+        0 => "#ffffff",
         1 => "#ff8800",
         2 => "#8c00bf",
         3 => "#0000ff",
         4 => "#00ff00",
         5 => "#ffffff",
-        _ => "",
+        _ => "#ffffff",
+    }
+}
+
+fn get_tier_pastel_color(tier: u8) -> ByteArray {
+    match tier {
+        0 => "#ffffff",
+        // Exact 45% blend toward white based on base tier palette
+        // T1 (orange #ff8800)  -> #ffbe73 (255,190,115)
+        1 => "#ffbe73",
+        // T2 (purple #8c00bf)  -> #c073dc (192,115,220)
+        2 => "#c073dc",
+        // T3 (blue #0000ff)    -> #7373ff (115,115,255)
+        3 => "#7373ff",
+        // T4 (green #00ff00)   -> #73ff73 (115,255,115)
+        4 => "#73ff73",
+        // T5 (white #ffffff)   -> #ffffff
+        5 => "#ffffff",
+        _ => "#ffffff",
     }
 }

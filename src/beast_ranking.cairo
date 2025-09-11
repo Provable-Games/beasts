@@ -157,6 +157,7 @@ mod tests {
         shiny_png_provider_address.serialize(ref constructor_data);
         regular_gif_provider_address.serialize(ref constructor_data);
         shiny_gif_provider_address.serialize(ref constructor_data);
+        0.serialize(ref constructor_data);
 
         let (contract_address, _) = contract.deploy(@constructor_data).unwrap();
         let dispatcher = IBeastsDispatcher { contract_address };

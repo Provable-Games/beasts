@@ -33,9 +33,18 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         beast: PackableBeast,
         rank: u16,
         image_data_provider: IBeastImageDataProviderDispatcher,
+        adventurers_killed: u64,
+        last_killed_by_adventurer: u64,
+        last_killed_timestamp: u64,
     ) -> ByteArray {
         let components = Self::build_metadata_components(
-            token_id, beast, rank, image_data_provider,
+            token_id,
+            beast,
+            rank,
+            image_data_provider,
+            adventurers_killed,
+            last_killed_by_adventurer,
+            last_killed_timestamp,
         );
         let json = Self::components_to_json(components);
 
@@ -48,6 +57,9 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         beast: PackableBeast,
         rank: u16,
         image_data_provider: IBeastImageDataProviderDispatcher,
+        adventurers_killed: u64,
+        last_killed_by_adventurer: u64,
+        last_killed_timestamp: u64,
     ) -> MetadataComponents {
         // Build name
         let mut name: ByteArray = "";
@@ -55,7 +67,10 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         name.append(@format!("{}", token_id));
 
         // Description
-        let description = "A fearsome beast from the Loot Survivor universe";
+        let description =
+            "A collection of digital native creatures born onchain and built for battle! The Beast collection features 75 species, each with 1,243, for a total fixed supply of 93,225 unique Beasts. Beasts are generated and stored fully onchain as dynamic, self-rendered SVG with embedded pixel art, preserving pixel-perfect fidelity for as long as their host network exists. 
+            Each Beast has a rich set of traits, including two visual rarity traits which are randomly generated based on verifiable randomness as part of the discovery process Shiny and Animated. 
+            Both are implemented with bespoke onchain pixel assets, including true onchain animation for Animated variants. Names are assembled from a shared lexicon of prefixes and suffixes to create memorable identities, and every (species, prefix, suffix) combination is unique when minted. This is generative art braided with play: the minting algorithm is informed by the intuition, decisions, and deaths of adventurers exploring the Dungeons of Loot Survivor, fusing provenance with gameplay. Collectors will appreciate the permanence, scarcity, and craft. Visuals are layered directly from the chain into a composed card: the Beast's name and optional epithet, tier and type panels, level, health, and computed power, with a shimmering rainbow rim for shiny variants and a gold frame for regular ones. Rank is displayed per species, with a crown for rank 1 or a trophy and rank number otherwise. The earliest 75 discoveries are marked as Genesis. Those looking to play with the Beasts will appreciate that each token mints with original, game-relevant stats - Tier, Type, Health, and Level - and integrates cleanly with fully onchain combat systems. Beyond those static stats, Beasts also accrue living traits drawn from onchain play: which Adventurers they have slain, and the Adventurer who last defeated them. These evolving, verifiable histories form credibly neutral data primitives that any game, application, or worldbuilder can depend on. Minting is not a fixed-price sale; it's a fully onchain game loop. Beasts are discovered through Loot Survivor, and entry is paid in Dungeon Tickets issued predictably over time by a time-weighted automated market maker. Proceeds from ticket sales flow to a community treasury, aligning incentives and providing a sustainable base to fund future development of both Loot Survivor and the Beasts. Under the hood, the Beasts contracts focus on efficiency, openness, and composability. Each Beast's identity and stats are tightly packed for storage without sacrificing expressiveness. Per-species leaderboards compute rank by power (derived from level and tier) with health as a tiebreaker, so competitiveness has a concrete, verifiable meaning. The metadata is fully generated in Cairo and returned as base64-encoded JSON with a base64-encoded SVG image - no external servers, no broken links, just durable, inspectable bytes. Royalty information is standardized via ERC-2981, and voting power is enabled via ERC-721Votes to support community governance as the project evolves. In short: Beasts unite permanence and play. They are a fixed-supply, fully onchain bestiary whose art, identity, and history live on the network itself; a generative collection whose emergence is intertwined with the choices of adventurers; and a set of open, credibly neutral primitives designed for builders to remix, extend, and battle with - today and hundreds of years from now.";
         // Get beast names
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
         // Get other attributes
@@ -122,6 +137,34 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         let mut rank_value: ByteArray = "";
         rank_value.append(@format!("{}", rank));
         attributes.append(Attribute { trait_type: "Rank", value: rank_value });
+
+        // Adventurers killed attribute
+        let mut adventurers_killed_value: ByteArray = "";
+        adventurers_killed_value.append(@format!("{}", adventurers_killed));
+        attributes
+            .append(
+                Attribute { trait_type: "Adventurers Killed", value: adventurers_killed_value },
+            );
+
+        // Last killed by adventurer attribute
+        let mut last_killed_by_adventurer_value: ByteArray = "";
+        last_killed_by_adventurer_value.append(@format!("{}", last_killed_by_adventurer));
+        attributes
+            .append(
+                Attribute {
+                    trait_type: "Last Killed By Adventurer", value: last_killed_by_adventurer_value,
+                },
+            );
+
+        // Last killed timestamp attribute
+        let mut last_killed_timestamp_value: ByteArray = "";
+        last_killed_timestamp_value.append(@format!("{}", last_killed_timestamp));
+        attributes
+            .append(
+                Attribute {
+                    trait_type: "Last Killed Timestamp", value: last_killed_timestamp_value,
+                },
+            );
 
         // Shiny attribute
         let mut shiny_value: ByteArray = "";
@@ -252,6 +295,10 @@ mod tests {
             id: 2, prefix: 5, suffix: 10, level: 25, health: 100, shiny: 0, animated: 0,
         };
 
+        let adventurers_killed = 10;
+        let last_killed_by_adventurer = 1002;
+        let last_killed_timestamp = 1715558400;
+
         let mock_data_provider_address = 'data_provider'.try_into().unwrap();
         let mock_return_data: ByteArray =
             "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAASFJREFUSIm1VW2uxCAIVE/dI+yt3/vBBu0wfLVZstlQhAFGxTF+IH+frc+HYVc1aj1Al0+wgKeuVjugcGkfXhGJX1r+KT2K0oqkp6KzW1cjst5BXdrlQ6TV35ZDsYJ9BiEUaXAKUTlL01rn9dVVGfcjD7hwGyBkqVX9VKekx23ZkHVmO3PQYDqOaEO6OsHppMV+gsiq/ivUaVlevaM8MhURsoosMckvQN8tM7vNsR28isAyzOmie+CluWE9uKUSRW9P6T0ABnawuRy26sa4tuxXHtG8A0rxqcRSpYiia9ZXCbwNuKH4OUp78Gb6NyhyIUKK8g7s+QH0OH2VIjoqFD0aiCk0iXGqpo327kEXfaQUwQa4I/Nyh1iDIvumDsYhtPIPgYPBCOPyCoAAAAAASUVORK5CYII=";
@@ -262,15 +309,43 @@ mod tests {
             contract_address: mock_data_provider_address,
         };
         let components = MetadataGeneratorTrait::build_metadata_components(
-            123, beast, 1, beast_image_data_provider_dispatcher,
+            123,
+            beast,
+            1,
+            beast_image_data_provider_dispatcher,
+            adventurers_killed,
+            last_killed_by_adventurer,
+            last_killed_timestamp,
         );
 
         assert(components.name == "Beast #123", 'Name mismatch');
-        assert(
-            components.description == "A fearsome beast from the Loot Survivor universe",
-            'Description mismatch',
+        assert(components.attributes.len() == 15, 'Should have 15 attributes');
+        assert!(components.attributes.at(0).trait_type == @"Beast", "Should have Beast trait");
+        assert!(components.attributes.at(1).trait_type == @"Type", "Should have Type trait");
+        assert!(components.attributes.at(2).trait_type == @"Tier", "Should have Tier trait");
+        assert!(components.attributes.at(3).trait_type == @"Prefix", "Should have Prefix trait");
+        assert!(components.attributes.at(4).trait_type == @"Suffix", "Should have Suffix trait");
+        assert!(components.attributes.at(5).trait_type == @"Level", "Should have Level trait");
+        assert!(components.attributes.at(6).trait_type == @"Health", "Should have Health trait");
+        assert!(components.attributes.at(7).trait_type == @"Power", "Should have Power trait");
+        assert!(components.attributes.at(8).trait_type == @"Rank", "Should have Rank trait");
+        assert!(
+            components.attributes.at(9).trait_type == @"Adventurers Killed",
+            "Should have Adventurers Killed trait",
         );
-        assert(components.attributes.len() == 12, 'Should have 12 attributes');
+        assert!(
+            components.attributes.at(10).trait_type == @"Last Killed By Adventurer",
+            "Should have Last Killed By Adventurer trait",
+        );
+        assert!(
+            components.attributes.at(11).trait_type == @"Last Killed Timestamp",
+            "Should have Last Killed Timestamp trait",
+        );
+        assert!(components.attributes.at(12).trait_type == @"Shiny", "Should have Shiny trait");
+        assert!(
+            components.attributes.at(13).trait_type == @"Animated", "Should have Animated trait",
+        );
+        assert!(components.attributes.at(14).trait_type == @"Genesis", "Should have Genesis trait");
     }
 
     #[test]
