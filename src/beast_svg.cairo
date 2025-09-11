@@ -19,11 +19,6 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         // Name color reflects tier; shiny uses pastel variant
         let base_tier_color = get_tier_color(beast_attrs.tier);
         let shiny_tier_color = get_tier_pastel_color(beast_attrs.tier);
-        let name_color = if is_shiny {
-            shiny_tier_color
-        } else {
-            base_tier_color
-        };
 
         let mut svg: ByteArray = "";
 
@@ -206,10 +201,8 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         }
         svg.append(@"</text>");
 
-        // Beast name colored by tier
-        svg.append(@"<text x='125' y='51' text-anchor='middle' style='fill:");
-        svg.append(@name_color);
-        svg.append(@";font-size:30px;letter-spacing:1px'>");
+        // Beast name
+        svg.append(@"<text x='125' y='51' text-anchor='middle' style='fill:#fff;font-size:30px;letter-spacing:1px'>");
         let beast_name_str = felt252_to_byte_array(beast_name);
         svg.append(@beast_name_str);
         svg.append(@"</text>");

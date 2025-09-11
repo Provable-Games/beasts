@@ -7,6 +7,8 @@ pub trait IBeasts<TContractState> {
     // Minter management
     fn set_minter(ref self: TContractState, minter: ContractAddress);
     fn get_minter(self: @TContractState) -> ContractAddress;
+    fn set_death_mountain_address(ref self: TContractState, death_mountain: ContractAddress);
+    fn get_death_mountain_address(self: @TContractState) -> ContractAddress;
 
     // Minting functions
     fn mint(
@@ -28,6 +30,11 @@ pub trait IBeasts<TContractState> {
 
     // Beast ranking queries
     fn get_beast_rank(self: @TContractState, token_id: u256) -> u16;
+    fn get_kill_count(self: @TContractState, token_id: u256) -> u64;
+    fn get_adventurer_killed(self: @TContractState, token_id: u256, index: u64) -> u64;
+    fn get_last_killed_timestamp(self: @TContractState, token_id: u256) -> u64;
+    fn get_last_killed_by(self: @TContractState, token_id: u256) -> u64;
+    fn get_adventurers_killed(self: @TContractState, token_id: u256) -> u64;
 }
 
 
@@ -76,6 +83,11 @@ pub trait IBeastSystems<T> {
         special3_rnd: u8,
     ) -> Beast;
     fn get_beast_hash(self: @T, id: u8, prefix: u8, suffix: u8) -> felt252;
+}
+
+#[starknet::interface]
+pub trait IBeastsAnimation<TContractState> {
+    fn animation_url(self: @TContractState, token_id: u256) -> ByteArray;
 }
 
 #[derive(Drop, Copy, Serde, PartialEq)]

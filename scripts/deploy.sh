@@ -94,7 +94,7 @@ declare_and_deploy() {
     exit 1
   fi
 
-  sleep 9
+  sleep 3
   echo "Deploying $label... (class_hash=$class_hash)" >&2
   deploy_output=$(starkli deploy --watch --account "$STARKNET_ACCOUNT" --private-key "$STARKNET_PRIVATE_KEY" --rpc "$RPC_URL" "$class_hash" 2>&1 || true)
   echo "$deploy_output" >&2
@@ -113,13 +113,13 @@ declare_and_deploy() {
 
 # 1) Declare + deploy image data provider contracts
 REGULAR_PNG_PROVIDER=$(declare_and_deploy target/dev/beasts_nft_beast_png_regular_data.contract_class.json "beast_png_regular_data")
-sleep 9
+sleep 3
 SHINY_PNG_PROVIDER=$(declare_and_deploy target/dev/beasts_nft_beast_png_shiny_data.contract_class.json "beast_png_shiny_data")
-sleep 9
+sleep 3
 REGULAR_GIF_PROVIDER=$(declare_and_deploy target/dev/beasts_nft_beast_gif_regular_data.contract_class.json "beast_gif_regular_data")
-sleep 9
+sleep 3
 SHINY_GIF_PROVIDER=$(declare_and_deploy target/dev/beasts_nft_beast_gif_shiny_data.contract_class.json "beast_gif_shiny_data")
-sleep 9
+sleep 3
 
 echo "Regular PNG provider: $REGULAR_PNG_PROVIDER"
 echo "Shiny   PNG provider: $SHINY_PNG_PROVIDER"
@@ -146,7 +146,7 @@ if [ -z "$CLASS_HASH" ]; then
     exit 1
 fi
 
-sleep 9
+sleep 3
 echo "Deploying beasts_nft..."
 # Compose the exact deploy command (private key intentionally omitted for safety)
 NFT_DEPLOY_CMD="starkli deploy --watch --account \"$STARKNET_ACCOUNT\" --rpc \"$RPC_URL\" \"$CLASS_HASH\" \\

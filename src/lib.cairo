@@ -14,6 +14,13 @@ pub mod minting_coordinator;
 pub mod pack;
 pub mod utils;
 
+// Minimal view interface to expose `animation_url` alongside `token_uri`.
+// This mirrors the output of `token_uri` so marketplaces can use it for rich views.
+#[starknet::interface]
+pub trait IBeastsAnimation<TContractState> {
+    fn animation_url(self: @TContractState, token_id: u256) -> ByteArray;
+}
+
 #[starknet::contract]
 pub mod beasts_nft {
     use core::num::traits::{Zero};
@@ -34,7 +41,7 @@ pub mod beasts_nft {
     use super::beast_ranking::BeastRankingManagerTrait;
     use super::interfaces::{
         IBeasts, IBeastImageDataProviderDispatcher, IBeastSystemsDispatcher,
-        IBeastSystemsDispatcherTrait,
+        IBeastSystemsDispatcherTrait, IBeastsAnimation,
     };
     use super::metadata_generator::MetadataGeneratorTrait;
     use super::minting_coordinator::{MintRequest, MintingCoordinatorTrait};
@@ -235,6 +242,17 @@ pub mod beasts_nft {
             self.minter.read()
         }
 
+        fn set_death_mountain_address(ref self: ContractState, death_mountain: ContractAddress) {
+            self.ownable.assert_only_owner();
+            self
+                .death_mountain_dispatcher
+                .write(IBeastSystemsDispatcher { contract_address: death_mountain });
+        }
+
+        fn get_death_mountain_address(self: @ContractState) -> ContractAddress {
+            self.death_mountain_dispatcher.read().contract_address
+        }
+
         fn mint(
             ref self: ContractState,
             to: ContractAddress,
@@ -303,6 +321,83 @@ pub mod beasts_nft {
         fn get_beast_rank(self: @ContractState, token_id: u256) -> u16 {
             BeastRankingManagerTrait::get_beast_rank(self, token_id)
         }
+
+        fn get_kill_count(self: @ContractState, token_id: u256) -> u64 {
+            let beast = self.beasts.entry(token_id).read();
+            let beast_hash = BeastManagerTrait::get_beast_hash(
+                beast.id, beast.prefix, beast.suffix,
+            );
+            let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
+            if death_mountain_dispatcher.contract_address != Zero::zero() {
+                let entity_stats = death_mountain_dispatcher
+                    .get_entity_stats(death_mountain_dispatcher.contract_address, beast_hash);
+                entity_stats.adventurers_killed
+            } else {
+                0
+            }
+        }
+
+        fn get_adventurer_killed(self: @ContractState, token_id: u256, index: u64) -> u64 {
+            let beast = self.beasts.entry(token_id).read();
+            let beast_hash = BeastManagerTrait::get_beast_hash(
+                beast.id, beast.prefix, beast.suffix,
+            );
+            let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
+            if death_mountain_dispatcher.contract_address != Zero::zero() {
+                let adventurer_killed = death_mountain_dispatcher
+                    .get_adventurer_killed(
+                        death_mountain_dispatcher.contract_address, beast_hash, index,
+                    );
+                adventurer_killed.adventurer_id
+            } else {
+                0
+            }
+        }
+
+        fn get_last_killed_timestamp(self: @ContractState, token_id: u256) -> u64 {
+            let beast = self.beasts.entry(token_id).read();
+            let beast_hash = BeastManagerTrait::get_beast_hash(
+                beast.id, beast.prefix, beast.suffix,
+            );
+            let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
+            if death_mountain_dispatcher.contract_address != Zero::zero() {
+                let collectable_entity = death_mountain_dispatcher
+                    .get_collectable(death_mountain_dispatcher.contract_address, beast_hash, 0);
+                collectable_entity.timestamp
+            } else {
+                0
+            }
+        }
+
+        fn get_last_killed_by(self: @ContractState, token_id: u256) -> u64 {
+            let beast = self.beasts.entry(token_id).read();
+            let beast_hash = BeastManagerTrait::get_beast_hash(
+                beast.id, beast.prefix, beast.suffix,
+            );
+            let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
+            if death_mountain_dispatcher.contract_address != Zero::zero() {
+                let collectable_entity = death_mountain_dispatcher
+                    .get_collectable(death_mountain_dispatcher.contract_address, beast_hash, 0);
+                collectable_entity.killed_by
+            } else {
+                0
+            }
+        }
+
+        fn get_adventurers_killed(self: @ContractState, token_id: u256) -> u64 {
+            let beast = self.beasts.entry(token_id).read();
+            let beast_hash = BeastManagerTrait::get_beast_hash(
+                beast.id, beast.prefix, beast.suffix,
+            );
+            let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
+            if death_mountain_dispatcher.contract_address != Zero::zero() {
+                death_mountain_dispatcher
+                    .get_entity_stats(death_mountain_dispatcher.contract_address, beast_hash)
+                    .adventurers_killed
+            } else {
+                0
+            }
+        }
     }
 
     // Internal implementations
@@ -342,23 +437,14 @@ pub mod beasts_nft {
             );
             self.token_counter.write(new_supply);
         }
-    }
 
-    // Custom ERC721Metadata Implementation
-    #[abi(embed_v0)]
-    impl ERC721Metadata of IERC721Metadata<ContractState> {
-        fn name(self: @ContractState) -> ByteArray {
-            self.erc721.name()
-        }
-
-        fn symbol(self: @ContractState) -> ByteArray {
-            self.erc721.symbol()
-        }
-
-        fn token_uri(self: @ContractState, token_id: u256) -> ByteArray {
+        /// Internal helper to build the onchain metadata URI for a token.
+        /// Consolidates shared logic used by `token_uri` and `animation_url`.
+        fn build_metadata_uri(self: @ContractState, token_id: u256) -> ByteArray {
+            // Ensure token exists
             self.erc721._require_owned(token_id);
 
-            // If terminal timestamp is set and passed, disallow token_uri
+            // If terminal timestamp is set and passed, disallow metadata
             let terminal_ts = self.terminal_timestamp.read();
             if terminal_ts != 0_u64 {
                 let now = starknet::get_block_timestamp();
@@ -391,6 +477,7 @@ pub mod beasts_nft {
                 }
             }
 
+            // Choose image provider based on beast flags
             let mut image_data_provider = self.regular_gif_provider.read();
             if beast.animated == 0 {
                 if beast.shiny == 1 {
@@ -414,6 +501,30 @@ pub mod beasts_nft {
                 last_killed_by_adventurer,
                 last_killed_timestamp,
             )
+        }
+    }
+
+    // Custom ERC721Metadata Implementation
+    #[abi(embed_v0)]
+    impl ERC721Metadata of IERC721Metadata<ContractState> {
+        fn name(self: @ContractState) -> ByteArray {
+            self.erc721.name()
+        }
+
+        fn symbol(self: @ContractState) -> ByteArray {
+            self.erc721.symbol()
+        }
+
+        fn token_uri(self: @ContractState, token_id: u256) -> ByteArray {
+            InternalTrait::build_metadata_uri(self, token_id)
+        }
+    }
+
+    // Expose `animation_url` that mirrors `token_uri` for better viewer compatibility
+    #[abi(embed_v0)]
+    impl BeastsAnimation of IBeastsAnimation<ContractState> {
+        fn animation_url(self: @ContractState, token_id: u256) -> ByteArray {
+            InternalTrait::build_metadata_uri(self, token_id)
         }
     }
 }

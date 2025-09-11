@@ -68,8 +68,8 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 
         // Description
         let description =
-            "The Beasts are a collection of digital-native creatures, born onchain and built for battle.
-
+            "The Beasts are a collection of digital native creatures, born onchain and built for battle.
+            
             With 1,243 variants across 75 species, the fixed supply of 93,225 Beasts strikes a balance between abundance and scarcity: ample supply for onchain fun, paired with distinctive visual and non-visual traits that give collectors endless reasons to obsess over this rich collection.
 
             Beasts carry two sets of traits: visual and combat.
