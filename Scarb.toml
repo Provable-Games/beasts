@@ -41,3 +41,8 @@ exit_first = true
 name = "sepolia"
 url = "https://api.cartridge.gg/x/starknet/sepolia/rpc/v0_8"
 block_id.tag = "latest"
+
+[[tool.snforge.fork]]
+name = "mainnet"
+url = "https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_8"
+block_id.tag = "latest"

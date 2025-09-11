@@ -387,7 +387,7 @@ mod tests {
     }
 
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     #[should_panic(expected: ('Terminal: token_uri disabled',))]
     fn token_uri_panics_after_terminal_time() {
         // Mock provider (won't be used because call should revert before)
@@ -494,7 +494,7 @@ mod tests {
 
 
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn fork_png_provider_returns_data_uri() {
         // pick an arbitrary valid beast id
         let beast_id: u8 = 1;
@@ -506,7 +506,7 @@ mod tests {
     }
 
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn fork_gif_provider_returns_data_uri() {
         let beast_id: u8 = 1;
         let provider = IBeastImageDataProviderDispatcher {
@@ -517,7 +517,7 @@ mod tests {
     }
 
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn fork_shiny_png_provider_returns_data_uri() {
         let beast_id: u8 = 1;
         let provider = IBeastImageDataProviderDispatcher {
@@ -528,7 +528,7 @@ mod tests {
     }
 
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn fork_shiny_gif_provider_returns_data_uri() {
         let beast_id: u8 = 1;
         let provider = IBeastImageDataProviderDispatcher {
@@ -539,7 +539,7 @@ mod tests {
     }
 
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_warlock_shiny_animated() {
         let beast: PackableBeast = PackableBeast {
             id: 1, prefix: 3, suffix: 7, level: 25, health: 100, shiny: 1, animated: 1,
@@ -564,7 +564,7 @@ mod tests {
     }
 
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_warlock_regular_animated() {
         let beast: PackableBeast = PackableBeast {
             id: 1, prefix: 6, suffix: 12, level: 25, health: 100, shiny: 0, animated: 1,
@@ -589,7 +589,7 @@ mod tests {
     }
 
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_warlock_shiny_static() {
         let beast: PackableBeast = PackableBeast {
             id: 1, prefix: 2, suffix: 2, level: 20, health: 100, shiny: 1, animated: 0,
@@ -614,7 +614,7 @@ mod tests {
     }
 
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_warlock_regular_static() {
         let beast: PackableBeast = PackableBeast {
             id: 1, prefix: 3, suffix: 3, level: 25, health: 100, shiny: 0, animated: 0,
@@ -681,1643 +681,1642 @@ mod tests {
 
     // 2: Typhon
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_typhon_shiny_animated() {
         print_svg_for(2, 1, 1);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_typhon_regular_animated() {
         print_svg_for(2, 0, 1);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_typhon_shiny_static() {
         print_svg_for(2, 1, 0);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_typhon_regular_static() {
         print_svg_for(2, 0, 0);
     }
 
     // 3: Jiangshi
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_jiangshi_shiny_animated() {
         print_svg_for(3, 1, 1);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_jiangshi_regular_animated() {
         print_svg_for(3, 0, 1);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_jiangshi_shiny_static() {
         print_svg_for(3, 1, 0);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_jiangshi_regular_static() {
         print_svg_for(3, 0, 0);
     }
 
     // 4: Anansi
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_anansi_shiny_animated() {
         print_svg_for(4, 1, 1);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_anansi_regular_animated() {
         print_svg_for(4, 0, 1);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_anansi_shiny_static() {
         print_svg_for(4, 1, 0);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_anansi_regular_static() {
         print_svg_for(4, 0, 0);
     }
 
     // 5: Basilisk
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_basilisk_shiny_animated() {
         print_svg_for(5, 1, 1);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_basilisk_regular_animated() {
         print_svg_for(5, 0, 1);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_basilisk_shiny_static() {
         print_svg_for(5, 1, 0);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_basilisk_regular_static() {
         print_svg_for(5, 0, 0);
     }
 
     // 6: Gorgon
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_gorgon_shiny_animated() {
         print_svg_for(6, 1, 1);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_gorgon_regular_animated() {
         print_svg_for(6, 0, 1);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_gorgon_shiny_static() {
         print_svg_for(6, 1, 0);
     }
     #[test]
-    #[fork("sepolia")]
+    #[fork("mainnet")]
     fn generate_gorgon_regular_static() {
         print_svg_for(6, 0, 0);
     }
 
-    // 7: Kitsune
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kitsune_shiny_animated() {
-        print_svg_for(7, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kitsune_regular_animated() {
-        print_svg_for(7, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kitsune_shiny_static() {
-        print_svg_for(7, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kitsune_regular_static() {
-        print_svg_for(7, 0, 0);
-    }
-
-    // 8: Lich
-    #[test]
-    #[fork("sepolia")]
-    fn generate_lich_shiny_animated() {
-        print_svg_for(8, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_lich_regular_animated() {
-        print_svg_for(8, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_lich_shiny_static() {
-        print_svg_for(8, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_lich_regular_static() {
-        print_svg_for(8, 0, 0);
-    }
-
-    // 9: Chimera
-    #[test]
-    #[fork("sepolia")]
-    fn generate_chimera_shiny_animated() {
-        print_svg_for(9, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_chimera_regular_animated() {
-        print_svg_for(9, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_chimera_shiny_static() {
-        print_svg_for(9, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_chimera_regular_static() {
-        print_svg_for(9, 0, 0);
-    }
-
-    // 10: Wendigo
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wendigo_shiny_animated() {
-        print_svg_for(10, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wendigo_regular_animated() {
-        print_svg_for(10, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wendigo_shiny_static() {
-        print_svg_for(10, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wendigo_regular_static() {
-        print_svg_for(10, 0, 0);
-    }
-
-    // 11: Rakshasa
-    #[test]
-    #[fork("sepolia")]
-    fn generate_rakshasa_shiny_animated() {
-        print_svg_for(11, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_rakshasa_regular_animated() {
-        print_svg_for(11, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_rakshasa_shiny_static() {
-        print_svg_for(11, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_rakshasa_regular_static() {
-        print_svg_for(11, 0, 0);
-    }
-
-    // 12: Werewolf
-    #[test]
-    #[fork("sepolia")]
-    fn generate_werewolf_shiny_animated() {
-        print_svg_for(12, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_werewolf_regular_animated() {
-        print_svg_for(12, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_werewolf_shiny_static() {
-        print_svg_for(12, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_werewolf_regular_static() {
-        print_svg_for(12, 0, 0);
-    }
-
-    // 13: Banshee
-    #[test]
-    #[fork("sepolia")]
-    fn generate_banshee_shiny_animated() {
-        print_svg_for(13, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_banshee_regular_animated() {
-        print_svg_for(13, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_banshee_shiny_static() {
-        print_svg_for(13, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_banshee_regular_static() {
-        print_svg_for(13, 0, 0);
-    }
-
-    // 14: Draugr
-    #[test]
-    #[fork("sepolia")]
-    fn generate_draugr_shiny_animated() {
-        print_svg_for(14, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_draugr_regular_animated() {
-        print_svg_for(14, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_draugr_shiny_static() {
-        print_svg_for(14, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_draugr_regular_static() {
-        print_svg_for(14, 0, 0);
-    }
-
-    // 15: Vampire
-    #[test]
-    #[fork("sepolia")]
-    fn generate_vampire_shiny_animated() {
-        print_svg_for(15, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_vampire_regular_animated() {
-        print_svg_for(15, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_vampire_shiny_static() {
-        print_svg_for(15, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_vampire_regular_static() {
-        print_svg_for(15, 0, 0);
-    }
-
-    // 16: Goblin
-    #[test]
-    #[fork("sepolia")]
-    fn generate_goblin_shiny_animated() {
-        print_svg_for(16, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_goblin_regular_animated() {
-        print_svg_for(16, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_goblin_shiny_static() {
-        print_svg_for(16, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_goblin_regular_static() {
-        print_svg_for(16, 0, 0);
-    }
-
-    // 17: Ghoul
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ghoul_shiny_animated() {
-        print_svg_for(17, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ghoul_regular_animated() {
-        print_svg_for(17, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ghoul_shiny_static() {
-        print_svg_for(17, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ghoul_regular_static() {
-        print_svg_for(17, 0, 0);
-    }
-
-    // 18: Wraith
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wraith_shiny_animated() {
-        print_svg_for(18, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wraith_regular_animated() {
-        print_svg_for(18, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wraith_shiny_static() {
-        print_svg_for(18, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wraith_regular_static() {
-        print_svg_for(18, 0, 0);
-    }
-
-    // 19: Sprite
-    #[test]
-    #[fork("sepolia")]
-    fn generate_sprite_shiny_animated() {
-        print_svg_for(19, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_sprite_regular_animated() {
-        print_svg_for(19, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_sprite_shiny_static() {
-        print_svg_for(19, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_sprite_regular_static() {
-        print_svg_for(19, 0, 0);
-    }
-
-    // 20: Kappa
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kappa_shiny_animated() {
-        print_svg_for(20, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kappa_regular_animated() {
-        print_svg_for(20, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kappa_shiny_static() {
-        print_svg_for(20, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kappa_regular_static() {
-        print_svg_for(20, 0, 0);
-    }
-
-    // 21: Fairy
-    #[test]
-    #[fork("sepolia")]
-    fn generate_fairy_shiny_animated() {
-        print_svg_for(21, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_fairy_regular_animated() {
-        print_svg_for(21, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_fairy_shiny_static() {
-        print_svg_for(21, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_fairy_regular_static() {
-        print_svg_for(21, 0, 0);
-    }
-
-    // 22: Leprechaun
-    #[test]
-    #[fork("sepolia")]
-    fn generate_leprechaun_shiny_animated() {
-        print_svg_for(22, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_leprechaun_regular_animated() {
-        print_svg_for(22, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_leprechaun_shiny_static() {
-        print_svg_for(22, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_leprechaun_regular_static() {
-        print_svg_for(22, 0, 0);
-    }
-
-    // 23: Kelpie
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kelpie_shiny_animated() {
-        print_svg_for(23, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kelpie_regular_animated() {
-        print_svg_for(23, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kelpie_shiny_static() {
-        print_svg_for(23, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kelpie_regular_static() {
-        print_svg_for(23, 0, 0);
-    }
-
-    // 24: Pixie
-    #[test]
-    #[fork("sepolia")]
-    fn generate_pixie_shiny_animated() {
-        print_svg_for(24, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_pixie_regular_animated() {
-        print_svg_for(24, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_pixie_shiny_static() {
-        print_svg_for(24, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_pixie_regular_static() {
-        print_svg_for(24, 0, 0);
-    }
-
-    // 25: Gnome
-    #[test]
-    #[fork("sepolia")]
-    fn generate_gnome_shiny_animated() {
-        print_svg_for(25, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_gnome_regular_animated() {
-        print_svg_for(25, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_gnome_shiny_static() {
-        print_svg_for(25, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_gnome_regular_static() {
-        print_svg_for(25, 0, 0);
-    }
-
-    // 26: Griffin
-    #[test]
-    #[fork("sepolia")]
-    fn generate_griffin_shiny_animated() {
-        print_svg_for(26, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_griffin_regular_animated() {
-        print_svg_for(26, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_griffin_shiny_static() {
-        print_svg_for(26, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_griffin_regular_static() {
-        print_svg_for(26, 0, 0);
-    }
-
-    // 27: Manticore
-    #[test]
-    #[fork("sepolia")]
-    fn generate_manticore_shiny_animated() {
-        print_svg_for(27, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_manticore_regular_animated() {
-        print_svg_for(27, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_manticore_shiny_static() {
-        print_svg_for(27, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_manticore_regular_static() {
-        print_svg_for(27, 0, 0);
-    }
-
-    // 28: Phoenix
-    #[test]
-    #[fork("sepolia")]
-    fn generate_phoenix_shiny_animated() {
-        print_svg_for(28, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_phoenix_regular_animated() {
-        print_svg_for(28, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_phoenix_shiny_static() {
-        print_svg_for(28, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_phoenix_regular_static() {
-        print_svg_for(28, 0, 0);
-    }
-
-    // 29: Dragon
-    #[test]
-    #[fork("sepolia")]
-    fn generate_dragon_shiny_animated() {
-        print_svg_for(29, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_dragon_regular_animated() {
-        print_svg_for(29, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_dragon_shiny_static() {
-        print_svg_for(29, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_dragon_regular_static() {
-        print_svg_for(29, 0, 0);
-    }
-
-    // 30: Minotaur
-    #[test]
-    #[fork("sepolia")]
-    fn generate_minotaur_shiny_animated() {
-        print_svg_for(30, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_minotaur_regular_animated() {
-        print_svg_for(30, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_minotaur_shiny_static() {
-        print_svg_for(30, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_minotaur_regular_static() {
-        print_svg_for(30, 0, 0);
-    }
-
-    // 31: Qilin
-    #[test]
-    #[fork("sepolia")]
-    fn generate_qilin_shiny_animated() {
-        print_svg_for(31, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_qilin_regular_animated() {
-        print_svg_for(31, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_qilin_shiny_static() {
-        print_svg_for(31, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_qilin_regular_static() {
-        print_svg_for(31, 0, 0);
-    }
-
-    // 32: Ammit
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ammit_shiny_animated() {
-        print_svg_for(32, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ammit_regular_animated() {
-        print_svg_for(32, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ammit_shiny_static() {
-        print_svg_for(32, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ammit_regular_static() {
-        print_svg_for(32, 0, 0);
-    }
-
-    // 33: Nue
-    #[test]
-    #[fork("sepolia")]
-    fn generate_nue_shiny_animated() {
-        print_svg_for(33, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_nue_regular_animated() {
-        print_svg_for(33, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_nue_shiny_static() {
-        print_svg_for(33, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_nue_regular_static() {
-        print_svg_for(33, 0, 0);
-    }
-
-    // 34: Skinwalker
-    #[test]
-    #[fork("sepolia")]
-    fn generate_skinwalker_shiny_animated() {
-        print_svg_for(34, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_skinwalker_regular_animated() {
-        print_svg_for(34, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_skinwalker_shiny_static() {
-        print_svg_for(34, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_skinwalker_regular_static() {
-        print_svg_for(34, 0, 0);
-    }
-
-    // 35: Chupacabra
-    #[test]
-    #[fork("sepolia")]
-    fn generate_chupacabra_shiny_animated() {
-        print_svg_for(35, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_chupacabra_regular_animated() {
-        print_svg_for(35, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_chupacabra_shiny_static() {
-        print_svg_for(35, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_chupacabra_regular_static() {
-        print_svg_for(35, 0, 0);
-    }
-
-    // 36: Weretiger
-    #[test]
-    #[fork("sepolia")]
-    fn generate_weretiger_shiny_animated() {
-        print_svg_for(36, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_weretiger_regular_animated() {
-        print_svg_for(36, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_weretiger_shiny_static() {
-        print_svg_for(36, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_weretiger_regular_static() {
-        print_svg_for(36, 0, 0);
-    }
-
-    // 37: Wyvern
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wyvern_shiny_animated() {
-        print_svg_for(37, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wyvern_regular_animated() {
-        print_svg_for(37, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wyvern_shiny_static() {
-        print_svg_for(37, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wyvern_regular_static() {
-        print_svg_for(37, 0, 0);
-    }
-
-    // 38: Roc
-    #[test]
-    #[fork("sepolia")]
-    fn generate_roc_shiny_animated() {
-        print_svg_for(38, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_roc_regular_animated() {
-        print_svg_for(38, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_roc_shiny_static() {
-        print_svg_for(38, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_roc_regular_static() {
-        print_svg_for(38, 0, 0);
-    }
-
-    // 39: Harpy
-    #[test]
-    #[fork("sepolia")]
-    fn generate_harpy_shiny_animated() {
-        print_svg_for(39, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_harpy_regular_animated() {
-        print_svg_for(39, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_harpy_shiny_static() {
-        print_svg_for(39, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_harpy_regular_static() {
-        print_svg_for(39, 0, 0);
-    }
-
-    // 40: Pegasus
-    #[test]
-    #[fork("sepolia")]
-    fn generate_pegasus_shiny_animated() {
-        print_svg_for(40, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_pegasus_regular_animated() {
-        print_svg_for(40, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_pegasus_shiny_static() {
-        print_svg_for(40, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_pegasus_regular_static() {
-        print_svg_for(40, 0, 0);
-    }
-
-    // 41: Hippogriff
-    #[test]
-    #[fork("sepolia")]
-    fn generate_hippogriff_shiny_animated() {
-        print_svg_for(41, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_hippogriff_regular_animated() {
-        print_svg_for(41, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_hippogriff_shiny_static() {
-        print_svg_for(41, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_hippogriff_regular_static() {
-        print_svg_for(41, 0, 0);
-    }
-
-    // 42: Fenrir
-    #[test]
-    #[fork("sepolia")]
-    fn generate_fenrir_shiny_animated() {
-        print_svg_for(42, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_fenrir_regular_animated() {
-        print_svg_for(42, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_fenrir_shiny_static() {
-        print_svg_for(42, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_fenrir_regular_static() {
-        print_svg_for(42, 0, 0);
-    }
-
-    // 43: Jaguar
-    #[test]
-    #[fork("sepolia")]
-    fn generate_jaguar_shiny_animated() {
-        print_svg_for(43, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_jaguar_regular_animated() {
-        print_svg_for(43, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_jaguar_shiny_static() {
-        print_svg_for(43, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_jaguar_regular_static() {
-        print_svg_for(43, 0, 0);
-    }
-
-    // 44: Satori
-    #[test]
-    #[fork("sepolia")]
-    fn generate_satori_shiny_animated() {
-        print_svg_for(44, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_satori_regular_animated() {
-        print_svg_for(44, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_satori_shiny_static() {
-        print_svg_for(44, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_satori_regular_static() {
-        print_svg_for(44, 0, 0);
-    }
-
-    // 45: Direwolf
-    #[test]
-    #[fork("sepolia")]
-    fn generate_direwolf_shiny_animated() {
-        print_svg_for(45, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_direwolf_regular_animated() {
-        print_svg_for(45, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_direwolf_shiny_static() {
-        print_svg_for(45, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_direwolf_regular_static() {
-        print_svg_for(45, 0, 0);
-    }
-
-    // 46: Bear
-    #[test]
-    #[fork("sepolia")]
-    fn generate_bear_shiny_animated() {
-        print_svg_for(46, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_bear_regular_animated() {
-        print_svg_for(46, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_bear_shiny_static() {
-        print_svg_for(46, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_bear_regular_static() {
-        print_svg_for(46, 0, 0);
-    }
-
-    // 47: Wolf
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wolf_shiny_animated() {
-        print_svg_for(47, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wolf_regular_animated() {
-        print_svg_for(47, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wolf_shiny_static() {
-        print_svg_for(47, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_wolf_regular_static() {
-        print_svg_for(47, 0, 0);
-    }
-
-    // 48: Mantis
-    #[test]
-    #[fork("sepolia")]
-    fn generate_mantis_shiny_animated() {
-        print_svg_for(48, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_mantis_regular_animated() {
-        print_svg_for(48, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_mantis_shiny_static() {
-        print_svg_for(48, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_mantis_regular_static() {
-        print_svg_for(48, 0, 0);
-    }
-
-    // 49: Spider
-    #[test]
-    #[fork("sepolia")]
-    fn generate_spider_shiny_animated() {
-        print_svg_for(49, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_spider_regular_animated() {
-        print_svg_for(49, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_spider_shiny_static() {
-        print_svg_for(49, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_spider_regular_static() {
-        print_svg_for(49, 0, 0);
-    }
-
-    // 50: Rat
-    #[test]
-    #[fork("sepolia")]
-    fn generate_rat_shiny_animated() {
-        print_svg_for(50, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_rat_regular_animated() {
-        print_svg_for(50, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_rat_shiny_static() {
-        print_svg_for(50, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_rat_regular_static() {
-        print_svg_for(50, 0, 0);
-    }
-
-    // 51: Kraken
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kraken_shiny_animated() {
-        print_svg_for(51, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kraken_regular_animated() {
-        print_svg_for(51, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kraken_shiny_static() {
-        print_svg_for(51, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_kraken_regular_static() {
-        print_svg_for(51, 0, 0);
-    }
-
-    // 52: Colossus
-    #[test]
-    #[fork("sepolia")]
-    fn generate_colossus_shiny_animated() {
-        print_svg_for(52, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_colossus_regular_animated() {
-        print_svg_for(52, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_colossus_shiny_static() {
-        print_svg_for(52, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_colossus_regular_static() {
-        print_svg_for(52, 0, 0);
-    }
-
-    // 53: Balrog
-    #[test]
-    #[fork("sepolia")]
-    fn generate_balrog_shiny_animated() {
-        print_svg_for(53, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_balrog_regular_animated() {
-        print_svg_for(53, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_balrog_shiny_static() {
-        print_svg_for(53, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_balrog_regular_static() {
-        print_svg_for(53, 0, 0);
-    }
-
-    // 54: Leviathan
-    #[test]
-    #[fork("sepolia")]
-    fn generate_leviathan_shiny_animated() {
-        print_svg_for(54, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_leviathan_regular_animated() {
-        print_svg_for(54, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_leviathan_shiny_static() {
-        print_svg_for(54, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_leviathan_regular_static() {
-        print_svg_for(54, 0, 0);
-    }
-
-    // 55: Tarrasque
-    #[test]
-    #[fork("sepolia")]
-    fn generate_tarrasque_shiny_animated() {
-        print_svg_for(55, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_tarrasque_regular_animated() {
-        print_svg_for(55, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_tarrasque_shiny_static() {
-        print_svg_for(55, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_tarrasque_regular_static() {
-        print_svg_for(55, 0, 0);
-    }
-
-    // 56: Titan
-    #[test]
-    #[fork("sepolia")]
-    fn generate_titan_shiny_animated() {
-        print_svg_for(56, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_titan_regular_animated() {
-        print_svg_for(56, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_titan_shiny_static() {
-        print_svg_for(56, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_titan_regular_static() {
-        print_svg_for(56, 0, 0);
-    }
-
-    // 57: Nephilim
-    #[test]
-    #[fork("sepolia")]
-    fn generate_nephilim_shiny_animated() {
-        print_svg_for(57, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_nephilim_regular_animated() {
-        print_svg_for(57, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_nephilim_shiny_static() {
-        print_svg_for(57, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_nephilim_regular_static() {
-        print_svg_for(57, 0, 0);
-    }
-
-    // 58: Behemoth
-    #[test]
-    #[fork("sepolia")]
-    fn generate_behemoth_shiny_animated() {
-        print_svg_for(58, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_behemoth_regular_animated() {
-        print_svg_for(58, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_behemoth_shiny_static() {
-        print_svg_for(58, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_behemoth_regular_static() {
-        print_svg_for(58, 0, 0);
-    }
-
-    // 59: Hydra
-    #[test]
-    #[fork("sepolia")]
-    fn generate_hydra_shiny_animated() {
-        print_svg_for(59, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_hydra_regular_animated() {
-        print_svg_for(59, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_hydra_shiny_static() {
-        print_svg_for(59, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_hydra_regular_static() {
-        print_svg_for(59, 0, 0);
-    }
-
-    // 60: Juggernaut
-    #[test]
-    #[fork("sepolia")]
-    fn generate_juggernaut_shiny_animated() {
-        print_svg_for(60, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_juggernaut_regular_animated() {
-        print_svg_for(60, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_juggernaut_shiny_static() {
-        print_svg_for(60, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_juggernaut_regular_static() {
-        print_svg_for(60, 0, 0);
-    }
-
-    // 61: Oni
-    #[test]
-    #[fork("sepolia")]
-    fn generate_oni_shiny_animated() {
-        print_svg_for(61, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_oni_regular_animated() {
-        print_svg_for(61, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_oni_shiny_static() {
-        print_svg_for(61, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_oni_regular_static() {
-        print_svg_for(61, 0, 0);
-    }
-
-    // 62: Jotunn
-    #[test]
-    #[fork("sepolia")]
-    fn generate_jotunn_shiny_animated() {
-        print_svg_for(62, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_jotunn_regular_animated() {
-        print_svg_for(62, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_jotunn_shiny_static() {
-        print_svg_for(62, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_jotunn_regular_static() {
-        print_svg_for(62, 0, 0);
-    }
-
-    // 63: Ettin
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ettin_shiny_animated() {
-        print_svg_for(63, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ettin_regular_animated() {
-        print_svg_for(63, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ettin_shiny_static() {
-        print_svg_for(63, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ettin_regular_static() {
-        print_svg_for(63, 0, 0);
-    }
-
-    // 64: Cyclops
-    #[test]
-    #[fork("sepolia")]
-    fn generate_cyclops_shiny_animated() {
-        print_svg_for(64, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_cyclops_regular_animated() {
-        print_svg_for(64, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_cyclops_shiny_static() {
-        print_svg_for(64, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_cyclops_regular_static() {
-        print_svg_for(64, 0, 0);
-    }
-
-    // 65: Giant
-    #[test]
-    #[fork("sepolia")]
-    fn generate_giant_shiny_animated() {
-        print_svg_for(65, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_giant_regular_animated() {
-        print_svg_for(65, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_giant_shiny_static() {
-        print_svg_for(65, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_giant_regular_static() {
-        print_svg_for(65, 0, 0);
-    }
-
-    // 66: Nemean Lion
-    #[test]
-    #[fork("sepolia")]
-    fn generate_nemean_lion_shiny_animated() {
-        print_svg_for(66, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_nemean_lion_regular_animated() {
-        print_svg_for(66, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_nemean_lion_shiny_static() {
-        print_svg_for(66, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_nemean_lion_regular_static() {
-        print_svg_for(66, 0, 0);
-    }
-
-    // 67: Berserker
-    #[test]
-    #[fork("sepolia")]
-    fn generate_berserker_shiny_animated() {
-        print_svg_for(67, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_berserker_regular_animated() {
-        print_svg_for(67, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_berserker_shiny_static() {
-        print_svg_for(67, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_berserker_regular_static() {
-        print_svg_for(67, 0, 0);
-    }
-
-    // 68: Yeti
-    #[test]
-    #[fork("sepolia")]
-    fn generate_yeti_shiny_animated() {
-        print_svg_for(68, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_yeti_regular_animated() {
-        print_svg_for(68, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_yeti_shiny_static() {
-        print_svg_for(68, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_yeti_regular_static() {
-        print_svg_for(68, 0, 0);
-    }
-
-    // 69: Golem
-    #[test]
-    #[fork("sepolia")]
-    fn generate_golem_shiny_animated() {
-        print_svg_for(69, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_golem_regular_animated() {
-        print_svg_for(69, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_golem_shiny_static() {
-        print_svg_for(69, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_golem_regular_static() {
-        print_svg_for(69, 0, 0);
-    }
-
-    // 70: Ent
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ent_shiny_animated() {
-        print_svg_for(70, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ent_regular_animated() {
-        print_svg_for(70, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ent_shiny_static() {
-        print_svg_for(70, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ent_regular_static() {
-        print_svg_for(70, 0, 0);
-    }
-
-    // 71: Troll
-    #[test]
-    #[fork("sepolia")]
-    fn generate_troll_shiny_animated() {
-        print_svg_for(71, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_troll_regular_animated() {
-        print_svg_for(71, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_troll_shiny_static() {
-        print_svg_for(71, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_troll_regular_static() {
-        print_svg_for(71, 0, 0);
-    }
-
-    // 72: Bigfoot
-    #[test]
-    #[fork("sepolia")]
-    fn generate_bigfoot_shiny_animated() {
-        print_svg_for(72, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_bigfoot_regular_animated() {
-        print_svg_for(72, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_bigfoot_shiny_static() {
-        print_svg_for(72, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_bigfoot_regular_static() {
-        print_svg_for(72, 0, 0);
-    }
-
-    // 73: Ogre
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ogre_shiny_animated() {
-        print_svg_for(73, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ogre_regular_animated() {
-        print_svg_for(73, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ogre_shiny_static() {
-        print_svg_for(73, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_ogre_regular_static() {
-        print_svg_for(73, 0, 0);
-    }
-
-    // 74: Orc
-    #[test]
-    #[fork("sepolia")]
-    fn generate_orc_shiny_animated() {
-        print_svg_for(74, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_orc_regular_animated() {
-        print_svg_for(74, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_orc_shiny_static() {
-        print_svg_for(74, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_orc_regular_static() {
-        print_svg_for(74, 0, 0);
-    }
-
-    // 75: Skeleton
-    #[test]
-    #[fork("sepolia")]
-    fn generate_skeleton_shiny_animated() {
-        print_svg_for(75, 1, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_skeleton_regular_animated() {
-        print_svg_for(75, 0, 1);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_skeleton_shiny_static() {
-        print_svg_for(75, 1, 0);
-    }
-    #[test]
-    #[fork("sepolia")]
-    fn generate_skeleton_regular_static() {
-        print_svg_for(75, 0, 0);
-    }
-
+    // // 7: Kitsune
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kitsune_shiny_animated() {
+    //     print_svg_for(7, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kitsune_regular_animated() {
+    //     print_svg_for(7, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kitsune_shiny_static() {
+    //     print_svg_for(7, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kitsune_regular_static() {
+    //     print_svg_for(7, 0, 0);
+    // }
+
+    // // 8: Lich
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_lich_shiny_animated() {
+    //     print_svg_for(8, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_lich_regular_animated() {
+    //     print_svg_for(8, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_lich_shiny_static() {
+    //     print_svg_for(8, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_lich_regular_static() {
+    //     print_svg_for(8, 0, 0);
+    // }
+
+    // // 9: Chimera
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_chimera_shiny_animated() {
+    //     print_svg_for(9, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_chimera_regular_animated() {
+    //     print_svg_for(9, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_chimera_shiny_static() {
+    //     print_svg_for(9, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_chimera_regular_static() {
+    //     print_svg_for(9, 0, 0);
+    // }
+
+    // // 10: Wendigo
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wendigo_shiny_animated() {
+    //     print_svg_for(10, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wendigo_regular_animated() {
+    //     print_svg_for(10, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wendigo_shiny_static() {
+    //     print_svg_for(10, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wendigo_regular_static() {
+    //     print_svg_for(10, 0, 0);
+    // }
+
+    // // 11: Rakshasa
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_rakshasa_shiny_animated() {
+    //     print_svg_for(11, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_rakshasa_regular_animated() {
+    //     print_svg_for(11, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_rakshasa_shiny_static() {
+    //     print_svg_for(11, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_rakshasa_regular_static() {
+    //     print_svg_for(11, 0, 0);
+    // }
+
+    // // 12: Werewolf
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_werewolf_shiny_animated() {
+    //     print_svg_for(12, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_werewolf_regular_animated() {
+    //     print_svg_for(12, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_werewolf_shiny_static() {
+    //     print_svg_for(12, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_werewolf_regular_static() {
+    //     print_svg_for(12, 0, 0);
+    // }
+
+    // // 13: Banshee
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_banshee_shiny_animated() {
+    //     print_svg_for(13, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_banshee_regular_animated() {
+    //     print_svg_for(13, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_banshee_shiny_static() {
+    //     print_svg_for(13, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_banshee_regular_static() {
+    //     print_svg_for(13, 0, 0);
+    // }
+
+    // // 14: Draugr
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_draugr_shiny_animated() {
+    //     print_svg_for(14, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_draugr_regular_animated() {
+    //     print_svg_for(14, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_draugr_shiny_static() {
+    //     print_svg_for(14, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_draugr_regular_static() {
+    //     print_svg_for(14, 0, 0);
+    // }
+
+    // // 15: Vampire
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_vampire_shiny_animated() {
+    //     print_svg_for(15, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_vampire_regular_animated() {
+    //     print_svg_for(15, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_vampire_shiny_static() {
+    //     print_svg_for(15, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_vampire_regular_static() {
+    //     print_svg_for(15, 0, 0);
+    // }
+
+    // // 16: Goblin
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_goblin_shiny_animated() {
+    //     print_svg_for(16, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_goblin_regular_animated() {
+    //     print_svg_for(16, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_goblin_shiny_static() {
+    //     print_svg_for(16, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_goblin_regular_static() {
+    //     print_svg_for(16, 0, 0);
+    // }
+
+    // // 17: Ghoul
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ghoul_shiny_animated() {
+    //     print_svg_for(17, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ghoul_regular_animated() {
+    //     print_svg_for(17, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ghoul_shiny_static() {
+    //     print_svg_for(17, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ghoul_regular_static() {
+    //     print_svg_for(17, 0, 0);
+    // }
+
+    // // 18: Wraith
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wraith_shiny_animated() {
+    //     print_svg_for(18, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wraith_regular_animated() {
+    //     print_svg_for(18, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wraith_shiny_static() {
+    //     print_svg_for(18, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wraith_regular_static() {
+    //     print_svg_for(18, 0, 0);
+    // }
+
+    // // 19: Sprite
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_sprite_shiny_animated() {
+    //     print_svg_for(19, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_sprite_regular_animated() {
+    //     print_svg_for(19, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_sprite_shiny_static() {
+    //     print_svg_for(19, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_sprite_regular_static() {
+    //     print_svg_for(19, 0, 0);
+    // }
+
+    // // 20: Kappa
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kappa_shiny_animated() {
+    //     print_svg_for(20, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kappa_regular_animated() {
+    //     print_svg_for(20, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kappa_shiny_static() {
+    //     print_svg_for(20, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kappa_regular_static() {
+    //     print_svg_for(20, 0, 0);
+    // }
+
+    // // 21: Fairy
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_fairy_shiny_animated() {
+    //     print_svg_for(21, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_fairy_regular_animated() {
+    //     print_svg_for(21, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_fairy_shiny_static() {
+    //     print_svg_for(21, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_fairy_regular_static() {
+    //     print_svg_for(21, 0, 0);
+    // }
+
+    // // 22: Leprechaun
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_leprechaun_shiny_animated() {
+    //     print_svg_for(22, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_leprechaun_regular_animated() {
+    //     print_svg_for(22, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_leprechaun_shiny_static() {
+    //     print_svg_for(22, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_leprechaun_regular_static() {
+    //     print_svg_for(22, 0, 0);
+    // }
+
+    // // 23: Kelpie
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kelpie_shiny_animated() {
+    //     print_svg_for(23, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kelpie_regular_animated() {
+    //     print_svg_for(23, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kelpie_shiny_static() {
+    //     print_svg_for(23, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kelpie_regular_static() {
+    //     print_svg_for(23, 0, 0);
+    // }
+
+    // // 24: Pixie
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_pixie_shiny_animated() {
+    //     print_svg_for(24, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_pixie_regular_animated() {
+    //     print_svg_for(24, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_pixie_shiny_static() {
+    //     print_svg_for(24, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_pixie_regular_static() {
+    //     print_svg_for(24, 0, 0);
+    // }
+
+    // // 25: Gnome
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_gnome_shiny_animated() {
+    //     print_svg_for(25, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_gnome_regular_animated() {
+    //     print_svg_for(25, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_gnome_shiny_static() {
+    //     print_svg_for(25, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_gnome_regular_static() {
+    //     print_svg_for(25, 0, 0);
+    // }
+
+    // // 26: Griffin
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_griffin_shiny_animated() {
+    //     print_svg_for(26, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_griffin_regular_animated() {
+    //     print_svg_for(26, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_griffin_shiny_static() {
+    //     print_svg_for(26, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_griffin_regular_static() {
+    //     print_svg_for(26, 0, 0);
+    // }
+
+    // // 27: Manticore
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_manticore_shiny_animated() {
+    //     print_svg_for(27, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_manticore_regular_animated() {
+    //     print_svg_for(27, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_manticore_shiny_static() {
+    //     print_svg_for(27, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_manticore_regular_static() {
+    //     print_svg_for(27, 0, 0);
+    // }
+
+    // // 28: Phoenix
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_phoenix_shiny_animated() {
+    //     print_svg_for(28, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_phoenix_regular_animated() {
+    //     print_svg_for(28, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_phoenix_shiny_static() {
+    //     print_svg_for(28, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_phoenix_regular_static() {
+    //     print_svg_for(28, 0, 0);
+    // }
+
+    // // 29: Dragon
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_dragon_shiny_animated() {
+    //     print_svg_for(29, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_dragon_regular_animated() {
+    //     print_svg_for(29, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_dragon_shiny_static() {
+    //     print_svg_for(29, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_dragon_regular_static() {
+    //     print_svg_for(29, 0, 0);
+    // }
+
+    // // 30: Minotaur
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_minotaur_shiny_animated() {
+    //     print_svg_for(30, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_minotaur_regular_animated() {
+    //     print_svg_for(30, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_minotaur_shiny_static() {
+    //     print_svg_for(30, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_minotaur_regular_static() {
+    //     print_svg_for(30, 0, 0);
+    // }
+
+    // // 31: Qilin
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_qilin_shiny_animated() {
+    //     print_svg_for(31, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_qilin_regular_animated() {
+    //     print_svg_for(31, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_qilin_shiny_static() {
+    //     print_svg_for(31, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_qilin_regular_static() {
+    //     print_svg_for(31, 0, 0);
+    // }
+
+    // // 32: Ammit
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ammit_shiny_animated() {
+    //     print_svg_for(32, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ammit_regular_animated() {
+    //     print_svg_for(32, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ammit_shiny_static() {
+    //     print_svg_for(32, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ammit_regular_static() {
+    //     print_svg_for(32, 0, 0);
+    // }
+
+    // // 33: Nue
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_nue_shiny_animated() {
+    //     print_svg_for(33, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_nue_regular_animated() {
+    //     print_svg_for(33, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_nue_shiny_static() {
+    //     print_svg_for(33, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_nue_regular_static() {
+    //     print_svg_for(33, 0, 0);
+    // }
+
+    // // 34: Skinwalker
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_skinwalker_shiny_animated() {
+    //     print_svg_for(34, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_skinwalker_regular_animated() {
+    //     print_svg_for(34, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_skinwalker_shiny_static() {
+    //     print_svg_for(34, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_skinwalker_regular_static() {
+    //     print_svg_for(34, 0, 0);
+    // }
+
+    // // 35: Chupacabra
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_chupacabra_shiny_animated() {
+    //     print_svg_for(35, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_chupacabra_regular_animated() {
+    //     print_svg_for(35, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_chupacabra_shiny_static() {
+    //     print_svg_for(35, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_chupacabra_regular_static() {
+    //     print_svg_for(35, 0, 0);
+    // }
+
+    // // 36: Weretiger
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_weretiger_shiny_animated() {
+    //     print_svg_for(36, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_weretiger_regular_animated() {
+    //     print_svg_for(36, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_weretiger_shiny_static() {
+    //     print_svg_for(36, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_weretiger_regular_static() {
+    //     print_svg_for(36, 0, 0);
+    // }
+
+    // // 37: Wyvern
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wyvern_shiny_animated() {
+    //     print_svg_for(37, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wyvern_regular_animated() {
+    //     print_svg_for(37, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wyvern_shiny_static() {
+    //     print_svg_for(37, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wyvern_regular_static() {
+    //     print_svg_for(37, 0, 0);
+    // }
+
+    // // 38: Roc
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_roc_shiny_animated() {
+    //     print_svg_for(38, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_roc_regular_animated() {
+    //     print_svg_for(38, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_roc_shiny_static() {
+    //     print_svg_for(38, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_roc_regular_static() {
+    //     print_svg_for(38, 0, 0);
+    // }
+
+    // // 39: Harpy
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_harpy_shiny_animated() {
+    //     print_svg_for(39, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_harpy_regular_animated() {
+    //     print_svg_for(39, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_harpy_shiny_static() {
+    //     print_svg_for(39, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_harpy_regular_static() {
+    //     print_svg_for(39, 0, 0);
+    // }
+
+    // // 40: Pegasus
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_pegasus_shiny_animated() {
+    //     print_svg_for(40, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_pegasus_regular_animated() {
+    //     print_svg_for(40, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_pegasus_shiny_static() {
+    //     print_svg_for(40, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_pegasus_regular_static() {
+    //     print_svg_for(40, 0, 0);
+    // }
+
+    // // 41: Hippogriff
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_hippogriff_shiny_animated() {
+    //     print_svg_for(41, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_hippogriff_regular_animated() {
+    //     print_svg_for(41, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_hippogriff_shiny_static() {
+    //     print_svg_for(41, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_hippogriff_regular_static() {
+    //     print_svg_for(41, 0, 0);
+    // }
+
+    // // 42: Fenrir
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_fenrir_shiny_animated() {
+    //     print_svg_for(42, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_fenrir_regular_animated() {
+    //     print_svg_for(42, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_fenrir_shiny_static() {
+    //     print_svg_for(42, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_fenrir_regular_static() {
+    //     print_svg_for(42, 0, 0);
+    // }
+
+    // // 43: Jaguar
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_jaguar_shiny_animated() {
+    //     print_svg_for(43, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_jaguar_regular_animated() {
+    //     print_svg_for(43, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_jaguar_shiny_static() {
+    //     print_svg_for(43, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_jaguar_regular_static() {
+    //     print_svg_for(43, 0, 0);
+    // }
+
+    // // 44: Satori
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_satori_shiny_animated() {
+    //     print_svg_for(44, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_satori_regular_animated() {
+    //     print_svg_for(44, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_satori_shiny_static() {
+    //     print_svg_for(44, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_satori_regular_static() {
+    //     print_svg_for(44, 0, 0);
+    // }
+
+    // // 45: Direwolf
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_direwolf_shiny_animated() {
+    //     print_svg_for(45, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_direwolf_regular_animated() {
+    //     print_svg_for(45, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_direwolf_shiny_static() {
+    //     print_svg_for(45, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_direwolf_regular_static() {
+    //     print_svg_for(45, 0, 0);
+    // }
+
+    // // 46: Bear
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_bear_shiny_animated() {
+    //     print_svg_for(46, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_bear_regular_animated() {
+    //     print_svg_for(46, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_bear_shiny_static() {
+    //     print_svg_for(46, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_bear_regular_static() {
+    //     print_svg_for(46, 0, 0);
+    // }
+
+    // // 47: Wolf
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wolf_shiny_animated() {
+    //     print_svg_for(47, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wolf_regular_animated() {
+    //     print_svg_for(47, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wolf_shiny_static() {
+    //     print_svg_for(47, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_wolf_regular_static() {
+    //     print_svg_for(47, 0, 0);
+    // }
+
+    // // 48: Mantis
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_mantis_shiny_animated() {
+    //     print_svg_for(48, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_mantis_regular_animated() {
+    //     print_svg_for(48, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_mantis_shiny_static() {
+    //     print_svg_for(48, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_mantis_regular_static() {
+    //     print_svg_for(48, 0, 0);
+    // }
+
+    // // 49: Spider
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_spider_shiny_animated() {
+    //     print_svg_for(49, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_spider_regular_animated() {
+    //     print_svg_for(49, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_spider_shiny_static() {
+    //     print_svg_for(49, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_spider_regular_static() {
+    //     print_svg_for(49, 0, 0);
+    // }
+
+    // // 50: Rat
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_rat_shiny_animated() {
+    //     print_svg_for(50, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_rat_regular_animated() {
+    //     print_svg_for(50, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_rat_shiny_static() {
+    //     print_svg_for(50, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_rat_regular_static() {
+    //     print_svg_for(50, 0, 0);
+    // }
+
+    // // 51: Kraken
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kraken_shiny_animated() {
+    //     print_svg_for(51, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kraken_regular_animated() {
+    //     print_svg_for(51, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kraken_shiny_static() {
+    //     print_svg_for(51, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_kraken_regular_static() {
+    //     print_svg_for(51, 0, 0);
+    // }
+
+    // // 52: Colossus
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_colossus_shiny_animated() {
+    //     print_svg_for(52, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_colossus_regular_animated() {
+    //     print_svg_for(52, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_colossus_shiny_static() {
+    //     print_svg_for(52, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_colossus_regular_static() {
+    //     print_svg_for(52, 0, 0);
+    // }
+
+    // // 53: Balrog
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_balrog_shiny_animated() {
+    //     print_svg_for(53, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_balrog_regular_animated() {
+    //     print_svg_for(53, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_balrog_shiny_static() {
+    //     print_svg_for(53, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_balrog_regular_static() {
+    //     print_svg_for(53, 0, 0);
+    // }
+
+    // // 54: Leviathan
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_leviathan_shiny_animated() {
+    //     print_svg_for(54, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_leviathan_regular_animated() {
+    //     print_svg_for(54, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_leviathan_shiny_static() {
+    //     print_svg_for(54, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_leviathan_regular_static() {
+    //     print_svg_for(54, 0, 0);
+    // }
+
+    // // 55: Tarrasque
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_tarrasque_shiny_animated() {
+    //     print_svg_for(55, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_tarrasque_regular_animated() {
+    //     print_svg_for(55, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_tarrasque_shiny_static() {
+    //     print_svg_for(55, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_tarrasque_regular_static() {
+    //     print_svg_for(55, 0, 0);
+    // }
+
+    // // 56: Titan
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_titan_shiny_animated() {
+    //     print_svg_for(56, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_titan_regular_animated() {
+    //     print_svg_for(56, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_titan_shiny_static() {
+    //     print_svg_for(56, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_titan_regular_static() {
+    //     print_svg_for(56, 0, 0);
+    // }
+
+    // // 57: Nephilim
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_nephilim_shiny_animated() {
+    //     print_svg_for(57, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_nephilim_regular_animated() {
+    //     print_svg_for(57, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_nephilim_shiny_static() {
+    //     print_svg_for(57, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_nephilim_regular_static() {
+    //     print_svg_for(57, 0, 0);
+    // }
+
+    // // 58: Behemoth
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_behemoth_shiny_animated() {
+    //     print_svg_for(58, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_behemoth_regular_animated() {
+    //     print_svg_for(58, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_behemoth_shiny_static() {
+    //     print_svg_for(58, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_behemoth_regular_static() {
+    //     print_svg_for(58, 0, 0);
+    // }
+
+    // // 59: Hydra
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_hydra_shiny_animated() {
+    //     print_svg_for(59, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_hydra_regular_animated() {
+    //     print_svg_for(59, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_hydra_shiny_static() {
+    //     print_svg_for(59, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_hydra_regular_static() {
+    //     print_svg_for(59, 0, 0);
+    // }
+
+    // // 60: Juggernaut
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_juggernaut_shiny_animated() {
+    //     print_svg_for(60, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_juggernaut_regular_animated() {
+    //     print_svg_for(60, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_juggernaut_shiny_static() {
+    //     print_svg_for(60, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_juggernaut_regular_static() {
+    //     print_svg_for(60, 0, 0);
+    // }
+
+    // // 61: Oni
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_oni_shiny_animated() {
+    //     print_svg_for(61, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_oni_regular_animated() {
+    //     print_svg_for(61, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_oni_shiny_static() {
+    //     print_svg_for(61, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_oni_regular_static() {
+    //     print_svg_for(61, 0, 0);
+    // }
+
+    // // 62: Jotunn
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_jotunn_shiny_animated() {
+    //     print_svg_for(62, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_jotunn_regular_animated() {
+    //     print_svg_for(62, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_jotunn_shiny_static() {
+    //     print_svg_for(62, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_jotunn_regular_static() {
+    //     print_svg_for(62, 0, 0);
+    // }
+
+    // // 63: Ettin
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ettin_shiny_animated() {
+    //     print_svg_for(63, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ettin_regular_animated() {
+    //     print_svg_for(63, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ettin_shiny_static() {
+    //     print_svg_for(63, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ettin_regular_static() {
+    //     print_svg_for(63, 0, 0);
+    // }
+
+    // // 64: Cyclops
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_cyclops_shiny_animated() {
+    //     print_svg_for(64, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_cyclops_regular_animated() {
+    //     print_svg_for(64, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_cyclops_shiny_static() {
+    //     print_svg_for(64, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_cyclops_regular_static() {
+    //     print_svg_for(64, 0, 0);
+    // }
+
+    // // 65: Giant
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_giant_shiny_animated() {
+    //     print_svg_for(65, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_giant_regular_animated() {
+    //     print_svg_for(65, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_giant_shiny_static() {
+    //     print_svg_for(65, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_giant_regular_static() {
+    //     print_svg_for(65, 0, 0);
+    // }
+
+    // // 66: Nemean Lion
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_nemean_lion_shiny_animated() {
+    //     print_svg_for(66, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_nemean_lion_regular_animated() {
+    //     print_svg_for(66, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_nemean_lion_shiny_static() {
+    //     print_svg_for(66, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_nemean_lion_regular_static() {
+    //     print_svg_for(66, 0, 0);
+    // }
+
+    // // 67: Berserker
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_berserker_shiny_animated() {
+    //     print_svg_for(67, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_berserker_regular_animated() {
+    //     print_svg_for(67, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_berserker_shiny_static() {
+    //     print_svg_for(67, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_berserker_regular_static() {
+    //     print_svg_for(67, 0, 0);
+    // }
+
+    // // 68: Yeti
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_yeti_shiny_animated() {
+    //     print_svg_for(68, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_yeti_regular_animated() {
+    //     print_svg_for(68, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_yeti_shiny_static() {
+    //     print_svg_for(68, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_yeti_regular_static() {
+    //     print_svg_for(68, 0, 0);
+    // }
+
+    // // 69: Golem
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_golem_shiny_animated() {
+    //     print_svg_for(69, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_golem_regular_animated() {
+    //     print_svg_for(69, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_golem_shiny_static() {
+    //     print_svg_for(69, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_golem_regular_static() {
+    //     print_svg_for(69, 0, 0);
+    // }
+
+    // // 70: Ent
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ent_shiny_animated() {
+    //     print_svg_for(70, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ent_regular_animated() {
+    //     print_svg_for(70, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ent_shiny_static() {
+    //     print_svg_for(70, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ent_regular_static() {
+    //     print_svg_for(70, 0, 0);
+    // }
+
+    // // 71: Troll
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_troll_shiny_animated() {
+    //     print_svg_for(71, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_troll_regular_animated() {
+    //     print_svg_for(71, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_troll_shiny_static() {
+    //     print_svg_for(71, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_troll_regular_static() {
+    //     print_svg_for(71, 0, 0);
+    // }
+
+    // // 72: Bigfoot
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_bigfoot_shiny_animated() {
+    //     print_svg_for(72, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_bigfoot_regular_animated() {
+    //     print_svg_for(72, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_bigfoot_shiny_static() {
+    //     print_svg_for(72, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_bigfoot_regular_static() {
+    //     print_svg_for(72, 0, 0);
+    // }
+
+    // // 73: Ogre
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ogre_shiny_animated() {
+    //     print_svg_for(73, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ogre_regular_animated() {
+    //     print_svg_for(73, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ogre_shiny_static() {
+    //     print_svg_for(73, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_ogre_regular_static() {
+    //     print_svg_for(73, 0, 0);
+    // }
+
+    // // 74: Orc
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_orc_shiny_animated() {
+    //     print_svg_for(74, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_orc_regular_animated() {
+    //     print_svg_for(74, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_orc_shiny_static() {
+    //     print_svg_for(74, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_orc_regular_static() {
+    //     print_svg_for(74, 0, 0);
+    // }
+
+    // // 75: Skeleton
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_skeleton_shiny_animated() {
+    //     print_svg_for(75, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_skeleton_regular_animated() {
+    //     print_svg_for(75, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_skeleton_shiny_static() {
+    //     print_svg_for(75, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_skeleton_regular_static() {
+    //     print_svg_for(75, 0, 0);
+    // }
 
     fn get_regular_png_provider() -> ContractAddress {
-        0x0292d819758f7cc8f4ef01b019d9688cd53d2ee118b17937f0769cfde45d61d2.try_into().unwrap()
+        0x023445094e81c8c52b2a1577866eb4d72fd5cb4e239a44cd8d13b85e5ac5756e.try_into().unwrap()
     }
     fn get_shiny_png_provider() -> ContractAddress {
-        0x06461aebd8a28d171e2501be111d41bc7d95090c48babbb349bea8a82083c737.try_into().unwrap()
+        0x034f55c6d1cbc500938c8bf13c5aa20c1d8eb1c937f7211a026d6d7179504f2b.try_into().unwrap()
     }
     fn get_regular_gif_provider() -> ContractAddress {
-        0x00b5d7d133217766a84b1328daaa5ee1f92df2e9a57794e4aa1e3eb183c5b7b8.try_into().unwrap()
+        0x04f7640b1fde95327da0e07d69a59249e144d2f644f1a605b4667316681b5e9f.try_into().unwrap()
     }
     fn get_shiny_gif_provider() -> ContractAddress {
-        0x02d5e40e0234c4e504b9832426ed5377832121ba398ba006f70255ebc67acbc4.try_into().unwrap()
+        0x04d7ffd8cbb013f9b2dd186acc839665faf885d3e2a27693637690b73feedca6.try_into().unwrap()
     }
 }
