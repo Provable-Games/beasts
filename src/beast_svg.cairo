@@ -213,16 +213,19 @@ pub impl BeastSvgImpl of BeastSvgTrait {
         // Artwork background frame area
         svg.append(@"<rect x='15' y='58' width='220' height='144' rx='8' fill='#000'/>");
         svg.append(@"<g transform='translate(61, 65)' clip-path='url(#artClip)'>");
-        // Unified image placement (let provider return PNG or GIF)
+        // Use foreignObject + HTML <img> for crisper scaling on iOS Safari
         svg
             .append(
-                @"<image x='1' y='1' width='128' height='128' style='image-rendering:-webkit-optimize-contrast;-ms-interpolation-mode:nearest-neighbor;image-rendering:-moz-crisp-edges;image-rendering:pixelated;' href='",
+                @"<foreignObject x='1' y='1' width='128' height='128'><xhtml:img xmlns:xhtml='http://www.w3.org/1999/xhtml' src='",
             );
         let beast_image = image_data_provider.get_data_uri(beast_id);
         svg.append(@beast_image);
-        svg.append(@"'>");
+        svg
+            .append(
+                @"' style='width:100%;height:100%;image-rendering:-webkit-optimize-contrast;-ms-interpolation-mode:nearest-neighbor;image-rendering:-moz-crisp-edges;image-rendering:pixelated;'/></foreignObject>",
+            );
 
-        svg.append(@"</image></g>");
+        svg.append(@"</g>");
         // Art frame stroke
         svg
             .append(
