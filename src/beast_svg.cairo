@@ -126,7 +126,7 @@ pub impl BeastSvgImpl of BeastSvgTrait {
       }
 
       text {
-        font-family: 'VT323', monospace;;
+        font-family: 'VT323', monospace;
       }
 
     </style>",

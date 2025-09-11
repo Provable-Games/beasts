@@ -7,3 +7,4 @@ snfoundry_cache/
 .env
 accounts/
 .snfoundry_cache/
+coverage/
