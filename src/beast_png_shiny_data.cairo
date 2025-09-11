@@ -648,7 +648,7 @@ mod beast_png_shiny_data {
         let mut svg: ByteArray = "";
         svg
             .append(
-                @"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAXVBMVEUAAAB/c/mK/3OMc/SYc+6g/3Olc+ixc+O3/3O+c93Ic87N/3PSc77cc63k/3Pnc5zxc4v6/3P7c3r/enP/hnP/knP/n3P/q3P/t3P/wnP/zXP/13P/4nP/7HP/93Ow8UUdAAABBUlEQVQ4T5VK4XqCQAyrg+GUKQKbCO58/8dckvYO5w++b0maJr0z+wfeXg8veAc38QFuobW2Lblds3C2s+SFQZbR99bTolmkfLCHVNqDBcagnJKl8pw8Jsnyy487gQzT+A12B7VoLPdcYpaFbfGwCo1DzDOGmlUjsfjpBt3kRaqC9hRDJ+M2TTS16zVMEzWL+AbdfBXqQnyBUgSnToFxlGdTHf3oGKCBe+DCkE+4ULQIl9IcXfe0O4p0I04a8MQUVU3d7JMCAe9qfhSOR4wHX1Hhvg+SgjYXA/ygw15i8JUPe5FoQA+NQhO7PNS11f6jBkwlDoHKqqqKAOa1Yrczcu1/6zZ+ASpDEzcLQWHBAAAAAElFTkSuQmCC",
+                @"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAXVBMVEUAAADcc63Sc77Ic86+c92xc+Pxc4vnc5z7c3r/enP/hnP/knO3/3P/n3PN/3OK/3P/q3P/t3P/13P/zXP/wnP/7HOg/3P/4nN/c/mMc/SYc+7/93P6/3Pk/3Olc+iCukfpAAAA4klEQVR42o2T21bCUBBD0wJaRaUoKlrx/z/T7VzWsOYB2Mkk6XmvbmC300U+zPVp6Jwnc+xYXsmLGaxqFSck6sQRsQkFP0h19RhTC14WH5UUdt5xDOiP8IlieQILO6+gTr3pDefKqIaDalocqgR7dfaoSrM68+xvUc/KKviq3Kqq2BoyHsUh8KxFwIMfjqBwHEzC00SJKOwJ7uoiCcwhuLfzaNN7yOAsh4EEWzBqHEcfisJ5sFoJCQgrzNHBei3E4MAnKNlshGzhf9T4NdlIZXW+7VBW5wvkyuocj3J5Xf/3/wC22A26qn/gEgAAAABJRU5ErkJggg==",
             );
         svg
     }
