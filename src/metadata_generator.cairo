@@ -72,14 +72,14 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
             
             With 1,243 variants across 75 species, the fixed supply of 93,225 Beasts strikes a balance between abundance and scarcity: ample supply for onchain fun, paired with distinctive visual and non-visual traits that give collectors endless reasons to obsess over this rich collection.
 
-            Beasts carry two sets of traits: visual and combat.
-            Visual traits make collecting exciting, with Shiny and Animated forms that activate unique, pixel-perfect effects. Each Beast also features live traits, such as a built-in ranking system that places every Beast between 1 and 1,243 based on its power relative to others of its species. Rankings update automatically with each newly minted Beast until all 1,243 of that species are collected, at which point a King Beast is crowned.
+            Beasts carry two sets of traits: visual and combat. Visual traits make collecting exciting, with Shiny and Animated forms that activate unique, pixel-perfect effects. Each Beast also features live traits, such as a built-in ranking system that places every Beast between 1 and 1,243 based on its power relative to others of its species. Rankings update automatically with each newly minted Beast until all 1,243 of that species are collected, at which point a King Beast is crowned.
 
             When collected, a Beast is minted with its level and health. Combined with its type and tier, these traits define a combat profile that allows Beasts to canonically battle onchain using the same combat system that first brought them into the world - Loot Survivor. Beasts also evolve through live traits such as the number of Adventurers they have slain, the last Adventurer who defeated them, and the timestamp of that defeat. These provide long-term, credibly neutral building blocks for future systems of growth and leveling, intentionally omitted from the base layer to support and promote emergence.
 
             Beasts are not purchased, they are earned by worthy Adventurers in the dungeons of Loot Survivor, a fully onchain game powered by verifiable randomness. The story of every Beast begins not at its mint, but with the Adventurer who braved the dungeon. It is the combination of decisions and chance that ultimately leads to the creation of each Beast. Every step of that journey is etched onto an incorruptible, indestructible ledger, ensuring those stories remain accessible as long as the network exists.
 
-            For collectors, Beasts offer a generative art collection with verifiable scarcity, issuance, and provenance. For players, Beasts deliver endless opportunities for onchain fun.
+            For collectors, Beasts offer a generative art collection with verifiable scarcity, issuance, and provenance. 
+            For players, Beasts deliver endless and timeless opportunities for onchain fun.
 
             Beast artwork courtesy of the legends at 1337 Skulls (:5ku11u73:)";
         // Get beast names

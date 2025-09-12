@@ -361,12 +361,17 @@ pub mod beasts_nft {
             );
             let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
             if death_mountain_dispatcher.contract_address != Zero::zero() {
-                let collectable_entity = death_mountain_dispatcher
-                    .get_collectable(death_mountain_dispatcher.contract_address, beast_hash, 0);
-                collectable_entity.timestamp
-            } else {
-                0
+                let num_deaths = death_mountain_dispatcher
+                    .get_collectable_count(death_mountain_dispatcher.contract_address, beast_hash);
+                if num_deaths > 0 {
+                    let collectable_entity = death_mountain_dispatcher
+                        .get_collectable(
+                            death_mountain_dispatcher.contract_address, beast_hash, num_deaths - 1,
+                        );
+                    return collectable_entity.timestamp;
+                }
             }
+            return 0;
         }
 
         fn get_last_killed_by(self: @ContractState, token_id: u256) -> u64 {
@@ -376,12 +381,17 @@ pub mod beasts_nft {
             );
             let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
             if death_mountain_dispatcher.contract_address != Zero::zero() {
-                let collectable_entity = death_mountain_dispatcher
-                    .get_collectable(death_mountain_dispatcher.contract_address, beast_hash, 0);
-                collectable_entity.killed_by
-            } else {
-                0
+                let num_deaths = death_mountain_dispatcher
+                    .get_collectable_count(death_mountain_dispatcher.contract_address, beast_hash);
+                if num_deaths > 0 {
+                    let collectable_entity = death_mountain_dispatcher
+                        .get_collectable(
+                            death_mountain_dispatcher.contract_address, beast_hash, num_deaths - 1,
+                        );
+                    return collectable_entity.killed_by;
+                }
             }
+            return 0;
         }
 
         fn get_adventurers_killed(self: @ContractState, token_id: u256) -> u64 {
@@ -466,13 +476,20 @@ pub mod beasts_nft {
                     let beast_hash = BeastManagerTrait::get_beast_hash(
                         beast.id, beast.prefix, beast.suffix,
                     );
-                    let collectable_entity = death_mountain_dispatcher
-                        .get_collectable(death_mountain_address, beast_hash, 0);
+                    let num_deaths = death_mountain_dispatcher
+                        .get_collectable_count(
+                            death_mountain_dispatcher.contract_address, beast_hash,
+                        );
+                    if num_deaths > 0 {
+                        let collectable_entity = death_mountain_dispatcher
+                            .get_collectable(death_mountain_address, beast_hash, num_deaths - 1);
+                        last_killed_timestamp = collectable_entity.timestamp;
+                        last_killed_by_adventurer = collectable_entity.killed_by;
+                    }
+
                     let entity_stats = death_mountain_dispatcher
                         .get_entity_stats(death_mountain_address, beast_hash);
 
-                    last_killed_timestamp = collectable_entity.timestamp;
-                    last_killed_by_adventurer = collectable_entity.killed_by;
                     adventurers_killed = entity_stats.adventurers_killed;
                 }
             }
@@ -491,7 +508,7 @@ pub mod beasts_nft {
                 }
             }
 
-            // Generate metadata using pure Cairo library
+            // Generate metadata
             MetadataGeneratorTrait::generate_metadata(
                 token_id,
                 beast,
