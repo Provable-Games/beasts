@@ -679,115 +679,140 @@ mod tests {
     // Naming: generate_<beast>_<regular|shiny>_<static|animated>
     // IDs map to beasts as defined in beast_definitions.cairo
 
-    // 2: Typhon
-    #[test]
-    #[fork("mainnet")]
-    fn generate_typhon_shiny_animated() {
-        print_svg_for(2, 1, 1);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_typhon_regular_animated() {
-        print_svg_for(2, 0, 1);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_typhon_shiny_static() {
-        print_svg_for(2, 1, 0);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_typhon_regular_static() {
-        print_svg_for(2, 0, 0);
-    }
+    // 1: Warlock
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_warlock_shiny_animated() {
+    //     print_svg_for(1, 1, 1);
+    // }
 
-    // 3: Jiangshi
-    #[test]
-    #[fork("mainnet")]
-    fn generate_jiangshi_shiny_animated() {
-        print_svg_for(3, 1, 1);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_jiangshi_regular_animated() {
-        print_svg_for(3, 0, 1);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_jiangshi_shiny_static() {
-        print_svg_for(3, 1, 0);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_jiangshi_regular_static() {
-        print_svg_for(3, 0, 0);
-    }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_warlock_regular_animated() {
+    //     print_svg_for(1, 0, 1);
+    // }
 
-    // 4: Anansi
-    #[test]
-    #[fork("mainnet")]
-    fn generate_anansi_shiny_animated() {
-        print_svg_for(4, 1, 1);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_anansi_regular_animated() {
-        print_svg_for(4, 0, 1);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_anansi_shiny_static() {
-        print_svg_for(4, 1, 0);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_anansi_regular_static() {
-        print_svg_for(4, 0, 0);
-    }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_warlock_shiny_static() {
+    //     print_svg_for(1, 1, 0);
+    // }
 
-    // 5: Basilisk
-    #[test]
-    #[fork("mainnet")]
-    fn generate_basilisk_shiny_animated() {
-        print_svg_for(5, 1, 1);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_basilisk_regular_animated() {
-        print_svg_for(5, 0, 1);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_basilisk_shiny_static() {
-        print_svg_for(5, 1, 0);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_basilisk_regular_static() {
-        print_svg_for(5, 0, 0);
-    }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_warlock_regular_static() {
+    //     print_svg_for(1, 0, 0);
+    // }
 
-    // 6: Gorgon
-    #[test]
-    #[fork("mainnet")]
-    fn generate_gorgon_shiny_animated() {
-        print_svg_for(6, 1, 1);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_gorgon_regular_animated() {
-        print_svg_for(6, 0, 1);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_gorgon_shiny_static() {
-        print_svg_for(6, 1, 0);
-    }
-    #[test]
-    #[fork("mainnet")]
-    fn generate_gorgon_regular_static() {
-        print_svg_for(6, 0, 0);
-    }
+    // // 2: Typhon
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_typhon_shiny_animated() {
+    //     print_svg_for(2, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_typhon_regular_animated() {
+    //     print_svg_for(2, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_typhon_shiny_static() {
+    //     print_svg_for(2, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_typhon_regular_static() {
+    //     print_svg_for(2, 0, 0);
+    // }
+
+    // // 3: Jiangshi
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_jiangshi_shiny_animated() {
+    //     print_svg_for(3, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_jiangshi_regular_animated() {
+    //     print_svg_for(3, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_jiangshi_shiny_static() {
+    //     print_svg_for(3, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_jiangshi_regular_static() {
+    //     print_svg_for(3, 0, 0);
+    // }
+
+    // // 4: Anansi
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_anansi_shiny_animated() {
+    //     print_svg_for(4, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_anansi_regular_animated() {
+    //     print_svg_for(4, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_anansi_shiny_static() {
+    //     print_svg_for(4, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_anansi_regular_static() {
+    //     print_svg_for(4, 0, 0);
+    // }
+
+    // // 5: Basilisk
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_basilisk_shiny_animated() {
+    //     print_svg_for(5, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_basilisk_regular_animated() {
+    //     print_svg_for(5, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_basilisk_shiny_static() {
+    //     print_svg_for(5, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_basilisk_regular_static() {
+    //     print_svg_for(5, 0, 0);
+    // }
+
+    // // 6: Gorgon
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_gorgon_shiny_animated() {
+    //     print_svg_for(6, 1, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_gorgon_regular_animated() {
+    //     print_svg_for(6, 0, 1);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_gorgon_shiny_static() {
+    //     print_svg_for(6, 1, 0);
+    // }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn generate_gorgon_regular_static() {
+    //     print_svg_for(6, 0, 0);
+    // }
 
     // // 7: Kitsune
     // #[test]
