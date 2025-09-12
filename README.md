@@ -205,6 +205,10 @@ The project uses GitHub Actions for:
 - [Play Loot Survivor](https://lootsurvivor.io)
 - [Discord Community](https://discord.gg/lootsurvivor)
 - [Twitter](https://x.com/lootsurvivor)
+- [Regular PNG URI](https://voyager.online/contract/0x07bcd91940f5a2640437c764815b6a8a173f09fff991420b691713bebd82f7bf)
+- [Shiny PNG URI](https://voyager.online/contract/0x03bdFdEeA997CA7C7b1d66590a541FC559cE5A742e0162fE98Fe371E70709444)
+- [Regular GIF URI](https://voyager.online/contract/0x012F11AD850839d27351Bbf49858A3180AdB1C30d9942423FD089F5740776293)
+- [Shiny GIF URI](https://voyager.online/contract/0x0700f224e6fcb344c27f29e62687333b589b3be39a2c026ede5968bf53b6bb2a)
 
 ---
 
