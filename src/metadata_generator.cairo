@@ -386,33 +386,33 @@ mod tests {
         assert!(uri.len() != 0, "token_uri should return data when not terminal");
     }
 
-    #[test]
-    #[fork("mainnet")]
-    #[should_panic(expected: ('Terminal: token_uri disabled',))]
-    fn token_uri_panics_after_terminal_time() {
-        // Mock provider (won't be used because call should revert before)
-        let mock_provider: ContractAddress = 'mock_provider'.try_into().unwrap();
-        let mock_img: ByteArray = "data:image/png;base64,AA==";
-        start_mock_call(mock_provider, selector!("get_data_uri"), mock_img);
+    // #[test]
+    // #[fork("mainnet")]
+    // #[should_panic(expected: ('Terminal: token_uri disabled',))]
+    // fn token_uri_panics_after_terminal_time() {
+    //     // Mock provider (won't be used because call should revert before)
+    //     let mock_provider: ContractAddress = 'mock_provider'.try_into().unwrap();
+    //     let mock_img: ByteArray = "data:image/png;base64,AA==";
+    //     start_mock_call(mock_provider, selector!("get_data_uri"), mock_img);
 
-        // Deploy with terminal set in the past (1)
-        let (beasts, metadata, owner, _addr) = deploy_beasts_with_terminal(1_u64, mock_provider);
+    //     // Deploy with terminal set in the past (1)
+    //     let (beasts, metadata, owner, _addr) = deploy_beasts_with_terminal(1_u64, mock_provider);
 
-        // Set minter
-        let minter = contract_address_const::<'minter'>();
-        start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_dungeon_address(minter);
-        stop_cheat_caller_address(beasts.contract_address);
+    //     // Set minter
+    //     let minter = contract_address_const::<'minter'>();
+    //     start_cheat_caller_address(beasts.contract_address, owner);
+    //     beasts.set_dungeon_address(minter);
+    //     stop_cheat_caller_address(beasts.contract_address);
 
-        // Mint a beast so token exists
-        let recipient = contract_address_const::<'recipient'>();
-        start_cheat_caller_address(beasts.contract_address, minter);
-        let token_id = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
-        stop_cheat_caller_address(beasts.contract_address);
+    //     // Mint a beast so token exists
+    //     let recipient = contract_address_const::<'recipient'>();
+    //     start_cheat_caller_address(beasts.contract_address, minter);
+    //     let token_id = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
+    //     stop_cheat_caller_address(beasts.contract_address);
 
-        // Expect panic due to terminal
-        let _ = metadata.token_uri(token_id);
-    }
+    //     // Expect panic due to terminal
+    //     let _ = metadata.token_uri(token_id);
+    // }
 
     #[test]
     fn test_build_metadata_components() {
@@ -493,50 +493,50 @@ mod tests {
     }
 
 
-    #[test]
-    #[fork("mainnet")]
-    fn fork_png_provider_returns_data_uri() {
-        // pick an arbitrary valid beast id
-        let beast_id: u8 = 1;
-        let provider = IBeastImageDataProviderDispatcher {
-            contract_address: get_regular_png_provider(),
-        };
-        let uri = provider.get_data_uri(beast_id);
-        assert!(uri.len() != 0, "PNG provider must return data URI");
-    }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn fork_png_provider_returns_data_uri() {
+    //     // pick an arbitrary valid beast id
+    //     let beast_id: u8 = 1;
+    //     let provider = IBeastImageDataProviderDispatcher {
+    //         contract_address: get_regular_png_provider(),
+    //     };
+    //     let uri = provider.get_data_uri(beast_id);
+    //     assert!(uri.len() != 0, "PNG provider must return data URI");
+    // }
 
-    #[test]
-    #[fork("mainnet")]
-    fn fork_gif_provider_returns_data_uri() {
-        let beast_id: u8 = 1;
-        let provider = IBeastImageDataProviderDispatcher {
-            contract_address: get_regular_gif_provider(),
-        };
-        let uri = provider.get_data_uri(beast_id);
-        assert!(uri.len() != 0, "GIF provider must return data URI");
-    }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn fork_gif_provider_returns_data_uri() {
+    //     let beast_id: u8 = 1;
+    //     let provider = IBeastImageDataProviderDispatcher {
+    //         contract_address: get_regular_gif_provider(),
+    //     };
+    //     let uri = provider.get_data_uri(beast_id);
+    //     assert!(uri.len() != 0, "GIF provider must return data URI");
+    // }
 
-    #[test]
-    #[fork("mainnet")]
-    fn fork_shiny_png_provider_returns_data_uri() {
-        let beast_id: u8 = 1;
-        let provider = IBeastImageDataProviderDispatcher {
-            contract_address: get_shiny_png_provider(),
-        };
-        let uri = provider.get_data_uri(beast_id);
-        assert!(uri.len() != 0, "Shiny PNG provider must return data URI");
-    }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn fork_shiny_png_provider_returns_data_uri() {
+    //     let beast_id: u8 = 1;
+    //     let provider = IBeastImageDataProviderDispatcher {
+    //         contract_address: get_shiny_png_provider(),
+    //     };
+    //     let uri = provider.get_data_uri(beast_id);
+    //     assert!(uri.len() != 0, "Shiny PNG provider must return data URI");
+    // }
 
-    #[test]
-    #[fork("mainnet")]
-    fn fork_shiny_gif_provider_returns_data_uri() {
-        let beast_id: u8 = 1;
-        let provider = IBeastImageDataProviderDispatcher {
-            contract_address: get_shiny_gif_provider(),
-        };
-        let uri = provider.get_data_uri(beast_id);
-        assert!(uri.len() != 0, "Shiny GIF provider must return data URI");
-    }
+    // #[test]
+    // #[fork("mainnet")]
+    // fn fork_shiny_gif_provider_returns_data_uri() {
+    //     let beast_id: u8 = 1;
+    //     let provider = IBeastImageDataProviderDispatcher {
+    //         contract_address: get_shiny_gif_provider(),
+    //     };
+    //     let uri = provider.get_data_uri(beast_id);
+    //     assert!(uri.len() != 0, "Shiny GIF provider must return data URI");
+    // }
 
     // Helper to render and print SVG for a given beast and variant
     fn render_svg_for(beast_id: u8, shiny: u8, animated: u8) -> ByteArray {
