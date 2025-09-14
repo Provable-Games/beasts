@@ -35,7 +35,7 @@ pub mod beasts_nft {
 
     use starknet::ContractAddress;
     use starknet::storage::{
-        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess, Vec,
     };
     use super::beast_manager::{BeastManagerTrait, BeastResult};
     use super::beast_ranking::BeastRankingManagerTrait;
@@ -114,6 +114,9 @@ pub mod beasts_nft {
             u8, Map<u16, u256>,
         >, // beast_id -> rank -> token_id (nested map)
         pub beast_counts: Map<u8, u16>, // beast_id -> count of beasts
+        pub beast_update_count: Map<u8, u16>, // beast_id -> count of updates
+        pub beast_last_update_timestamp: Map<u256, u64>, // token_id -> timestamp of last update
+        pub stale_beasts: Vec<u8>, // beast_ids that need to be updated
         pub minted: Map<felt252, bool>,
         pub dungeon_address: ContractAddress,
         pub token_counter: u256,
@@ -126,6 +129,13 @@ pub mod beasts_nft {
         // If non-zero, contract becomes terminal after this timestamp
         pub terminal_timestamp: u64,
     }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct MetadataUpdate {
+        #[key]
+        pub token_id: u256,
+    }
+
 
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -142,6 +152,7 @@ pub mod beasts_nft {
         ERC2981Event: ERC2981Component::Event,
         #[flat]
         NoncesEvent: NoncesComponent::Event,
+        MetadataUpdate: MetadataUpdate,
     }
 
     /// Required for hash computation.
@@ -303,6 +314,64 @@ pub mod beasts_nft {
             }
         }
 
+        fn refresh_metadata(ref self: ContractState, beast_id: u8) {
+            let mut count = self.beast_update_count.entry(beast_id).read();
+            assert(count != 0, 'Metadata up to date');
+
+            loop {
+                let token_id = self.beast_species_lists.entry(beast_id).entry(count).read();
+                if token_id != 0 {
+                    self.emit(MetadataUpdate { token_id });
+                    count += 1;
+                } else {
+                    self.beast_update_count.entry(beast_id).write(0);
+                    break;
+                }
+            }
+        }
+
+        fn refresh_dungeon_stats(ref self: ContractState, token_id: u256) {
+            let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
+            assert(
+                death_mountain_dispatcher.contract_address != Zero::zero(),
+                'Death mountain not set',
+            );
+
+            let beast = self.beasts.entry(token_id).read();
+            let beast_hash = BeastManagerTrait::get_beast_hash(
+                beast.id, beast.prefix, beast.suffix,
+            );
+
+            let num_deaths = death_mountain_dispatcher
+                .get_collectable_count(death_mountain_dispatcher.contract_address, beast_hash);
+            let collectable_entity_timestamp = death_mountain_dispatcher
+                .get_collectable(
+                    death_mountain_dispatcher.contract_address, beast_hash, num_deaths - 1,
+                )
+                .timestamp;
+
+            let kill_count = death_mountain_dispatcher
+                .get_entity_stats(death_mountain_dispatcher.contract_address, beast_hash)
+                .adventurers_killed;
+            let adventurer_killed_timestamp = if kill_count > 0 {
+                death_mountain_dispatcher
+                    .get_adventurer_killed(
+                        death_mountain_dispatcher.contract_address, beast_hash, kill_count - 1,
+                    )
+                    .timestamp
+            } else {
+                0
+            };
+
+            let last_updated = self.beast_last_update_timestamp.entry(token_id).read();
+            assert(
+                collectable_entity_timestamp > last_updated
+                    || adventurer_killed_timestamp > last_updated,
+                'Beast up to date',
+            );
+            self.emit(MetadataUpdate { token_id });
+            self.beast_last_update_timestamp.entry(token_id).write(starknet::get_block_timestamp());
+        }
 
         fn get_beast(self: @ContractState, token_id: u256) -> PackableBeast {
             self.erc721._require_owned(token_id);

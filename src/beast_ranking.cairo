@@ -2,6 +2,8 @@ use starknet::storage::{
     StorageMapReadAccess, StorageMapWriteAccess, StoragePathEntry, StoragePointerReadAccess,
     StoragePointerWriteAccess,
 };
+use starknet::syscalls::emit_event_syscall;
+use core::result::ResultTrait;
 use super::beast_manager::BeastManagerTrait;
 use super::pack::PackableBeast;
 
@@ -84,6 +86,14 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
     ) {
         // Shift from the end to avoid overwriting
         let mut current_rank = count;
+        let mut count = 0;
+
+        let update_count = current_rank - from_rank;
+        if update_count >= 800 {
+            self.beast_update_count.entry(beast_id).write(update_count - 800);
+            self.stale_beasts.push(beast_id);
+        }
+
         loop {
             if current_rank < from_rank {
                 break;
@@ -97,6 +107,15 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
 
                 // Clear old position
                 self.beast_species_lists.entry(beast_id).entry(current_rank).write(0);
+
+                // Emit metadata update using syscall
+                if (current_rank - from_rank) < 800 {
+                    let keys = array!['MetadataUpdate'];
+                    let data = array![token_id.try_into().unwrap()];
+                    emit_event_syscall(keys.span(), data.span()).unwrap();
+                }
+
+                count += 1;
             }
 
             if current_rank == 0 {

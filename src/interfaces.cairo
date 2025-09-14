@@ -23,6 +23,10 @@ pub trait IBeasts<TContractState> {
         animated: u8,
     ) -> u256;
 
+    // Metadata functions
+    fn refresh_metadata(ref self: TContractState, beast_id: u8);
+    fn refresh_dungeon_stats(ref self: TContractState, token_id: u256);
+
     // Beast queries
     fn get_beast(self: @TContractState, token_id: u256) -> PackableBeast;
     fn is_minted(self: @TContractState, beast_id: u8, prefix: u8, suffix: u8) -> bool;
@@ -112,6 +116,7 @@ pub struct AdventurerKilled {
     pub entity_hash: felt252,
     pub kill_index: u64,
     pub adventurer_id: u64,
+    pub timestamp: u64,
 }
 
 #[derive(Copy, Drop, Serde)]
