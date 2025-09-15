@@ -335,7 +335,7 @@ pub mod beasts_nft {
                     .entry(beast_id)
                     .entry(bookmark_number)
                     .read();
-                
+
                 self.emit(MetadataUpdate { token_id });
                 bookmark_number += 1;
             };
