@@ -2,8 +2,6 @@ use starknet::storage::{
     StorageMapReadAccess, StorageMapWriteAccess, StoragePathEntry, StoragePointerReadAccess,
     StoragePointerWriteAccess,
 };
-use starknet::syscalls::emit_event_syscall;
-use core::result::ResultTrait;
 use super::beast_manager::BeastManagerTrait;
 use super::pack::PackableBeast;
 
@@ -17,7 +15,7 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
     /// Uses binary search on species-specific sorted lists to avoid massive loops
     fn calculate_and_store_rank(
         ref self: super::beasts_nft::ContractState, beast: PackableBeast, token_id: u256,
-    ) {
+    ) -> u16 {
         let beast_id = beast.id;
         let power = BeastManagerTrait::get_beast_power(beast);
         let health = beast.health;
@@ -39,6 +37,7 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
         self.beast_species_lists.entry(beast_id).entry(insertion_rank).write(token_id);
         self.beast_token_ranks.write(token_id, insertion_rank);
         self.beast_counts.write(beast_id, current_count + 1);
+        insertion_rank
     }
 
     /// Uses binary search to find insertion rank within species-specific list
@@ -88,12 +87,6 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
     ) {
         // Shift from the end to avoid overwriting
         let mut current_rank = count;
-        let mut count = 0;
-
-        let update_count = current_rank - from_rank;
-        if update_count >= 650 {
-            self.beast_update_count.entry(beast_id).write(update_count - 650);
-        }
 
         loop {
             if current_rank < from_rank {
@@ -101,27 +94,11 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
             }
 
             let token_id = self.beast_species_lists.entry(beast_id).entry(current_rank).read();
-            if token_id != 0 {
-                // Move entry down one rank
-                self.beast_species_lists.entry(beast_id).entry(current_rank + 1).write(token_id);
-                self.beast_token_ranks.write(token_id, current_rank + 1);
 
-                // Clear old position
-                self.beast_species_lists.entry(beast_id).entry(current_rank).write(0);
+            // Move entry down one rank
+            self.beast_species_lists.entry(beast_id).entry(current_rank + 1).write(token_id);
+            self.beast_token_ranks.write(token_id, current_rank + 1);
 
-                // Emit metadata update using syscall
-                if (current_rank - from_rank) < 650 {
-                    let keys = array!['MetadataUpdate'];
-                    let data = array![token_id.try_into().unwrap()];
-                    emit_event_syscall(keys.span(), data.span()).unwrap();
-                }
-
-                count += 1;
-            }
-
-            if current_rank == 0 {
-                break;
-            }
             current_rank -= 1;
         };
     }

@@ -21,7 +21,7 @@ pub trait IBeasts<TContractState> {
         health: u16,
         shiny: u8,
         animated: u8,
-    ) -> u256;
+    ) -> (u256, u16, bool);
 
     // Metadata functions
     fn refresh_metadata(ref self: TContractState, beast_id: u8);
@@ -34,11 +34,20 @@ pub trait IBeasts<TContractState> {
 
     // Beast ranking queries
     fn get_beast_rank(self: @TContractState, token_id: u256) -> u16;
+    fn get_token_id_at_rank(self: @TContractState, beast_id: u8, rank: u16) -> u256;
+    fn get_species_count(self: @TContractState, beast_id: u8) -> u16;
     fn get_kill_count(self: @TContractState, token_id: u256) -> u64;
+    fn get_beast_metadata_bookmark(self: @TContractState, beast_id: u8) -> u16;
+    fn get_last_manual_metadata_refresh(self: @TContractState, token_id: u256) -> u64;
     fn get_adventurer_killed(self: @TContractState, token_id: u256, index: u64) -> u64;
     fn get_last_killed_timestamp(self: @TContractState, token_id: u256) -> u64;
     fn get_last_killed_by(self: @TContractState, token_id: u256) -> u64;
     fn get_adventurers_killed(self: @TContractState, token_id: u256) -> u64;
+    fn get_regular_png_provider(self: @TContractState) -> ContractAddress;
+    fn get_regular_gif_provider(self: @TContractState) -> ContractAddress;
+    fn get_shiny_png_provider(self: @TContractState) -> ContractAddress;
+    fn get_shiny_gif_provider(self: @TContractState) -> ContractAddress;
+    fn get_terminal_time(self: @TContractState) -> u64;
 }
 
 

@@ -382,7 +382,7 @@ mod tests {
         // Mint one beast
         let recipient = contract_address_const::<'recipient'>();
         start_cheat_caller_address(beasts.contract_address, minter);
-        let token_id = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
+        let (token_id, _, _) = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Should not panic and should return non-empty URI
@@ -412,7 +412,7 @@ mod tests {
         // Mint a beast so token exists
         let recipient = contract_address_const::<'recipient'>();
         start_cheat_caller_address(beasts.contract_address, minter);
-        let token_id = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
+        let (token_id, _, _) = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Expect panic due to terminal
