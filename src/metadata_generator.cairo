@@ -456,8 +456,6 @@ mod tests {
             last_killed_timestamp,
         );
 
-        println!("{}", components.name);
-
         assert(components.name == "\"Behemoth Shadow\" Typhon", 'Name mismatch');
         assert(components.attributes.len() == 17, 'Should have 17 attributes');
         assert!(
