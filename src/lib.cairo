@@ -114,6 +114,8 @@ pub mod beasts_nft {
             u8, Map<u16, u256>,
         >, // beast_id -> rank -> token_id (nested map)
         pub beast_counts: Map<u8, u16>, // beast_id -> count of beasts
+        pub beast_metadata_refresh_bookmark: Map<u8, u16>, // beast_id -> count of updates
+        pub last_manual_metadata_refresh: Map<u256, u64>, // token_id -> timestamp of last update
         pub minted: Map<felt252, bool>,
         pub dungeon_address: ContractAddress,
         pub token_counter: u256,
@@ -125,6 +127,12 @@ pub mod beasts_nft {
         pub death_mountain_dispatcher: IBeastSystemsDispatcher,
         // If non-zero, contract becomes terminal after this timestamp
         pub terminal_timestamp: u64,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct MetadataUpdate {
+        #[key]
+        pub token_id: u256,
     }
 
     #[event]
@@ -142,6 +150,7 @@ pub mod beasts_nft {
         ERC2981Event: ERC2981Component::Event,
         #[flat]
         NoncesEvent: NoncesComponent::Event,
+        MetadataUpdate: MetadataUpdate,
     }
 
     /// Required for hash computation.
@@ -263,7 +272,7 @@ pub mod beasts_nft {
             health: u16,
             shiny: u8,
             animated: u8,
-        ) -> u256 {
+        ) -> (u256, u16, bool) {
             // Ensure caller is Dungeon
             let caller = starknet::get_caller_address();
             assert(caller == self.dungeon_address.read(), 'Not authorized to mint');
@@ -273,7 +282,8 @@ pub mod beasts_nft {
             let next_token_id = self.token_counter.read() + 1;
 
             // Validate and prepare mint data
-            match MintingCoordinatorTrait::prepare_mint(request, next_token_id) {
+            let (token_id, insertion_rank) =
+                match MintingCoordinatorTrait::prepare_mint(request, next_token_id) {
                 BeastResult::Ok(mint_data) => {
                     // Check for duplicates
                     assert(!self.minted.entry(mint_data.hash).read(), 'Beast already minted');
@@ -288,21 +298,98 @@ pub mod beasts_nft {
                     self.beasts.entry(mint_data.token_id).write(mint_data.beast);
 
                     // Calculate and store beast rank for tokenURI
-                    BeastRankingManagerTrait::calculate_and_store_rank(
+                    let insertion_rank = BeastRankingManagerTrait::calculate_and_store_rank(
                         ref self, mint_data.beast, mint_data.token_id,
                     );
 
                     // Mint NFT
                     self.erc721.mint(to, mint_data.token_id);
-                    mint_data.token_id
+                    (mint_data.token_id, insertion_rank)
                 },
                 BeastResult::Err(e) => {
                     core::panic_with_felt252(e);
-                    0
+                    (0, 0)
                 },
-            }
+            };
+
+            let bookmark_set = InternalTrait::generate_metadata_update_events(
+                ref self, beast_id, insertion_rank,
+            );
+
+            (token_id, insertion_rank, bookmark_set)
         }
 
+        fn refresh_metadata(ref self: ContractState, beast_id: u8) {
+            let mut bookmark_number = self.beast_metadata_refresh_bookmark.entry(beast_id).read();
+
+            assert(bookmark_number > 0, 'No stale beasts');
+
+            let total_beasts = self.beast_counts.entry(beast_id).read();
+            loop {
+                if bookmark_number > total_beasts {
+                    break;
+                }
+
+                let token_id = self
+                    .beast_species_lists
+                    .entry(beast_id)
+                    .entry(bookmark_number)
+                    .read();
+
+                self.emit(MetadataUpdate { token_id });
+                bookmark_number += 1;
+            };
+
+            self.beast_metadata_refresh_bookmark.entry(beast_id).write(0);
+        }
+
+        fn refresh_dungeon_stats(ref self: ContractState, token_id: u256) {
+            let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
+            assert(
+                death_mountain_dispatcher.contract_address != Zero::zero(),
+                'Death mountain not set',
+            );
+
+            let beast = self.beasts.entry(token_id).read();
+            assert(beast.id != 0, 'Beast does not exist');
+
+            let beast_hash = BeastManagerTrait::get_beast_hash(
+                beast.id, beast.prefix, beast.suffix,
+            );
+
+            let num_deaths = death_mountain_dispatcher
+                .get_collectable_count(death_mountain_dispatcher.contract_address, beast_hash);
+            let collectable_entity_timestamp = death_mountain_dispatcher
+                .get_collectable(
+                    death_mountain_dispatcher.contract_address, beast_hash, num_deaths - 1,
+                )
+                .timestamp;
+
+            let kill_count = death_mountain_dispatcher
+                .get_entity_stats(death_mountain_dispatcher.contract_address, beast_hash)
+                .adventurers_killed;
+            let adventurer_killed_timestamp = if kill_count > 0 {
+                death_mountain_dispatcher
+                    .get_adventurer_killed(
+                        death_mountain_dispatcher.contract_address, beast_hash, kill_count - 1,
+                    )
+                    .timestamp
+            } else {
+                0
+            };
+
+            let last_updated = self.last_manual_metadata_refresh.entry(token_id).read();
+            assert(
+                collectable_entity_timestamp > last_updated
+                    || adventurer_killed_timestamp > last_updated,
+                'Beast up to date',
+            );
+            self.emit(MetadataUpdate { token_id });
+            self
+                .last_manual_metadata_refresh
+                .entry(token_id)
+                .write(starknet::get_block_timestamp());
+        }
 
         fn get_beast(self: @ContractState, token_id: u256) -> PackableBeast {
             self.erc721._require_owned(token_id);
@@ -407,6 +494,42 @@ pub mod beasts_nft {
             } else {
                 0
             }
+        }
+
+        fn get_regular_png_provider(self: @ContractState) -> ContractAddress {
+            self.regular_png_provider.read().contract_address
+        }
+
+        fn get_regular_gif_provider(self: @ContractState) -> ContractAddress {
+            self.regular_gif_provider.read().contract_address
+        }
+
+        fn get_shiny_png_provider(self: @ContractState) -> ContractAddress {
+            self.shiny_png_provider.read().contract_address
+        }
+
+        fn get_shiny_gif_provider(self: @ContractState) -> ContractAddress {
+            self.shiny_gif_provider.read().contract_address
+        }
+
+        fn get_terminal_time(self: @ContractState) -> u64 {
+            self.terminal_timestamp.read()
+        }
+
+        fn get_token_id_at_rank(self: @ContractState, beast_id: u8, rank: u16) -> u256 {
+            self.beast_species_lists.entry(beast_id).entry(rank).read()
+        }
+
+        fn get_species_count(self: @ContractState, beast_id: u8) -> u16 {
+            self.beast_counts.entry(beast_id).read()
+        }
+
+        fn get_beast_metadata_bookmark(self: @ContractState, beast_id: u8) -> u16 {
+            self.beast_metadata_refresh_bookmark.entry(beast_id).read()
+        }
+
+        fn get_last_manual_metadata_refresh(self: @ContractState, token_id: u256) -> u64 {
+            self.last_manual_metadata_refresh.entry(token_id).read()
         }
     }
 
@@ -518,6 +641,37 @@ pub mod beasts_nft {
                 last_killed_by_adventurer,
                 last_killed_timestamp,
             )
+        }
+
+        fn generate_metadata_update_events(
+            ref self: ContractState, beast_id: u8, insertion_rank: u16,
+        ) -> bool {
+            let total_beasts = self.beast_counts.entry(beast_id).read();
+            let mut bookmark_set = false;
+            if total_beasts > 650 {
+                let distance_to_last = total_beasts - insertion_rank;
+                if distance_to_last >= 650 {
+                    self
+                        .beast_metadata_refresh_bookmark
+                        .entry(beast_id)
+                        .write(insertion_rank + 650);
+                    bookmark_set = true;
+                }
+            }
+
+            // emit metadata update calls from insertion rank till total beasts or insertion rank +
+            // 650
+            let mut count = insertion_rank + 1;
+            while count < total_beasts {
+                if count >= insertion_rank + 650 {
+                    break;
+                }
+                let token_id = self.beast_species_lists.entry(beast_id).entry(count).read();
+                self.emit(MetadataUpdate { token_id });
+                count += 1;
+            };
+
+            bookmark_set
         }
     }
 

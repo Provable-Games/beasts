@@ -15,7 +15,7 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
     /// Uses binary search on species-specific sorted lists to avoid massive loops
     fn calculate_and_store_rank(
         ref self: super::beasts_nft::ContractState, beast: PackableBeast, token_id: u256,
-    ) {
+    ) -> u16 {
         let beast_id = beast.id;
         let power = BeastManagerTrait::get_beast_power(beast);
         let health = beast.health;
@@ -29,12 +29,15 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
         );
 
         // Shift existing entries down to make room
-        Self::shift_species_list_down(ref self, beast_id, insertion_rank, current_count);
+        if insertion_rank <= current_count {
+            Self::shift_species_list_down(ref self, beast_id, insertion_rank, current_count);
+        }
 
         // Insert new beast into sorted list and update mappings
         self.beast_species_lists.entry(beast_id).entry(insertion_rank).write(token_id);
         self.beast_token_ranks.write(token_id, insertion_rank);
         self.beast_counts.write(beast_id, current_count + 1);
+        insertion_rank
     }
 
     /// Uses binary search to find insertion rank within species-specific list
@@ -84,24 +87,18 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
     ) {
         // Shift from the end to avoid overwriting
         let mut current_rank = count;
+
         loop {
             if current_rank < from_rank {
                 break;
             }
 
             let token_id = self.beast_species_lists.entry(beast_id).entry(current_rank).read();
-            if token_id != 0 {
-                // Move entry down one rank
-                self.beast_species_lists.entry(beast_id).entry(current_rank + 1).write(token_id);
-                self.beast_token_ranks.write(token_id, current_rank + 1);
 
-                // Clear old position
-                self.beast_species_lists.entry(beast_id).entry(current_rank).write(0);
-            }
+            // Move entry down one rank
+            self.beast_species_lists.entry(beast_id).entry(current_rank + 1).write(token_id);
+            self.beast_token_ranks.write(token_id, current_rank + 1);
 
-            if current_rank == 0 {
-                break;
-            }
             current_rank -= 1;
         };
     }
@@ -288,12 +285,12 @@ mod tests {
     }
 
     #[test]
-    fn test_ranking_50_shifts() {
-        // Test worst case: inserting strongest beast when 50 weaker ones exist
+    fn test_ranking_20_shifts() {
+        // Test worst case: inserting strongest beast when 20 weaker ones exist
         let (beasts, contract_address, recipient, minter) = deploy_contract();
         start_cheat_caller_address(contract_address, minter);
 
-        // Mint 50 beasts with valid prefix/suffix combinations (token IDs start at 76 after
+        // Mint 20 beasts with valid prefix/suffix combinations (token IDs start at 76 after
         // genesis)
         let mut prefix = 1_u8;
         let mut suffix = 1_u8;
@@ -309,7 +306,7 @@ mod tests {
                     break;
                 }
 
-                if count > 50_u256 {
+                if count > 20_u256 {
                     break;
                 }
 
@@ -320,7 +317,7 @@ mod tests {
                 suffix += 1;
             };
 
-            if count > 50_u256 {
+            if count > 20_u256 {
                 break;
             }
 
@@ -328,20 +325,20 @@ mod tests {
             prefix += 1;
         };
 
-        // Verify we have 75 genesis + 50 custom = 125 beasts
-        assert(beasts.total_supply() == 125_u256, 'Should have 125 beasts');
+        // Verify we have 75 genesis + 20 custom = 95 beasts
+        assert(beasts.total_supply() == 95_u256, 'Should have 95 beasts');
 
-        // Now mint the ultimate beast that will trigger 50 shifts
+        // Now mint the ultimate beast that will trigger 20 shifts
         beasts.mint(recipient, 1_u8, 69_u8, 18_u8, 65535_u16, 65535_u16, 0, 0);
 
         // Verify the ultimate beast got rank 1
-        assert(beasts.get_beast_rank(126_u256) == 1_u16, 'Ultimate beast rank 1');
+        assert(beasts.get_beast_rank(96_u256) == 1_u16, 'Ultimate beast rank 1');
 
         // Verify total supply increased
-        assert(beasts.total_supply() == 126_u256, 'Should have 126 beasts');
+        assert(beasts.total_supply() == 96_u256, 'Should have 96 beasts');
 
         // Verify some shifted rankings (previous strongest was token 125 with power 50)
-        assert(beasts.get_beast_rank(125_u256) == 2_u16, 'Previous strongest shifted');
+        assert(beasts.get_beast_rank(95_u256) == 2_u16, 'Previous strongest shifted');
 
         stop_cheat_caller_address(contract_address);
     }

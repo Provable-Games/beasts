@@ -61,11 +61,6 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         last_killed_by_adventurer: u64,
         last_killed_timestamp: u64,
     ) -> MetadataComponents {
-        // Build name
-        let mut name: ByteArray = "";
-        name.append(@"Beast #");
-        name.append(@format!("{}", token_id));
-
         // Description
         let description =
             "The Beasts are a collection of digital native creatures, born onchain and built for battle.
@@ -84,6 +79,14 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
             Beast artwork courtesy of the legends at 1337 Skulls (:5ku11u73:)";
         // Get beast names
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
+
+        // Build name
+        let mut name: ByteArray = "";
+        let prefix_name_str = felt252_to_byte_array(prefix_name);
+        let suffix_name_str = felt252_to_byte_array(suffix_name);
+        let beast_name_str = felt252_to_byte_array(beast_name);
+        name.append(@format!("\"{} {}\" {}", prefix_name_str, suffix_name_str, beast_name_str));
+
         // Get other attributes
         let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
 
@@ -96,10 +99,15 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         // Build attributes
         let mut attributes = array![];
 
+        // Token ID attribute
+        let mut token_id_value: ByteArray = "";
+        token_id_value.append(@format!("{}", token_id));
+        attributes.append(Attribute { trait_type: "Token ID", value: token_id_value });
+
         // Beast ID attribute
         let mut id_value: ByteArray = "";
         id_value.append(@format!("{}", beast.id));
-        attributes.append(Attribute { trait_type: "ID", value: id_value });
+        attributes.append(Attribute { trait_type: "Beast ID", value: id_value });
 
         // Beast name attribute
         attributes
@@ -382,7 +390,7 @@ mod tests {
         // Mint one beast
         let recipient = contract_address_const::<'recipient'>();
         start_cheat_caller_address(beasts.contract_address, minter);
-        let token_id = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
+        let (token_id, _, _) = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Should not panic and should return non-empty URI
@@ -412,7 +420,7 @@ mod tests {
         // Mint a beast so token exists
         let recipient = contract_address_const::<'recipient'>();
         start_cheat_caller_address(beasts.contract_address, minter);
-        let token_id = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
+        let (token_id, _, _) = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Expect panic due to terminal
@@ -420,7 +428,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_build_metadata_components() {
         let beast = PackableBeast {
             id: 2, prefix: 5, suffix: 10, level: 25, health: 100, shiny: 0, animated: 0,
@@ -449,34 +456,40 @@ mod tests {
             last_killed_timestamp,
         );
 
-        assert(components.name == "Beast #123", 'Name mismatch');
-        assert(components.attributes.len() == 15, 'Should have 15 attributes');
-        assert!(components.attributes.at(0).trait_type == @"Beast", "Should have Beast trait");
-        assert!(components.attributes.at(1).trait_type == @"Type", "Should have Type trait");
-        assert!(components.attributes.at(2).trait_type == @"Tier", "Should have Tier trait");
-        assert!(components.attributes.at(3).trait_type == @"Prefix", "Should have Prefix trait");
-        assert!(components.attributes.at(4).trait_type == @"Suffix", "Should have Suffix trait");
-        assert!(components.attributes.at(5).trait_type == @"Level", "Should have Level trait");
-        assert!(components.attributes.at(6).trait_type == @"Health", "Should have Health trait");
-        assert!(components.attributes.at(7).trait_type == @"Power", "Should have Power trait");
-        assert!(components.attributes.at(8).trait_type == @"Rank", "Should have Rank trait");
+        assert(components.name == "\"Behemoth Shadow\" Typhon", 'Name mismatch');
+        assert(components.attributes.len() == 17, 'Should have 17 attributes');
         assert!(
-            components.attributes.at(9).trait_type == @"Adventurers Killed",
+            components.attributes.at(0).trait_type == @"Token ID", "Should have Token ID trait",
+        );
+        assert!(
+            components.attributes.at(1).trait_type == @"Beast ID", "Should have Beast ID trait",
+        );
+        assert!(components.attributes.at(2).trait_type == @"Beast", "Should have Beast trait");
+        assert!(components.attributes.at(3).trait_type == @"Type", "Should have Type trait");
+        assert!(components.attributes.at(4).trait_type == @"Tier", "Should have Tier trait");
+        assert!(components.attributes.at(5).trait_type == @"Prefix", "Should have Prefix trait");
+        assert!(components.attributes.at(6).trait_type == @"Suffix", "Should have Suffix trait");
+        assert!(components.attributes.at(7).trait_type == @"Level", "Should have Level trait");
+        assert!(components.attributes.at(8).trait_type == @"Health", "Should have Health trait");
+        assert!(components.attributes.at(9).trait_type == @"Power", "Should have Power trait");
+        assert!(components.attributes.at(10).trait_type == @"Rank", "Should have Rank trait");
+        assert!(
+            components.attributes.at(11).trait_type == @"Adventurers Killed",
             "Should have Adventurers Killed trait",
         );
         assert!(
-            components.attributes.at(10).trait_type == @"Last Killed By Adventurer",
+            components.attributes.at(12).trait_type == @"Last Killed By",
             "Should have Last Killed By Adventurer trait",
         );
         assert!(
-            components.attributes.at(11).trait_type == @"Last Killed Timestamp",
+            components.attributes.at(13).trait_type == @"Last Death Timestamp",
             "Should have Last Killed Timestamp trait",
         );
-        assert!(components.attributes.at(12).trait_type == @"Shiny", "Should have Shiny trait");
+        assert!(components.attributes.at(14).trait_type == @"Shiny", "Should have Shiny trait");
         assert!(
-            components.attributes.at(13).trait_type == @"Animated", "Should have Animated trait",
+            components.attributes.at(15).trait_type == @"Animated", "Should have Animated trait",
         );
-        assert!(components.attributes.at(14).trait_type == @"Genesis", "Should have Genesis trait");
+        assert!(components.attributes.at(16).trait_type == @"Genesis", "Should have Genesis trait");
     }
 
     #[test]
@@ -550,7 +563,7 @@ mod tests {
     // Helper to render and print SVG for a given beast and variant
     fn render_svg_for(beast_id: u8, shiny: u8, animated: u8) -> ByteArray {
         let beast: PackableBeast = PackableBeast {
-            id: beast_id, prefix: 0, suffix: 0, level: 25, health: 100, shiny, animated,
+            id: beast_id, prefix: 1, suffix: 1, level: 25, health: 100, shiny, animated,
         };
 
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
