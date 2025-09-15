@@ -351,6 +351,8 @@ pub mod beasts_nft {
             );
 
             let beast = self.beasts.entry(token_id).read();
+            assert(beast.id != 0, 'Beast does not exist');
+
             let beast_hash = BeastManagerTrait::get_beast_hash(
                 beast.id, beast.prefix, beast.suffix,
             );
