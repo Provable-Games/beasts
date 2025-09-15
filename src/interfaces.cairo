@@ -24,7 +24,7 @@ pub trait IBeasts<TContractState> {
     ) -> u256;
 
     // Metadata functions
-    fn refresh_metadata(ref self: TContractState, beast_id: u8);
+    fn refresh_metadata(ref self: TContractState);
     fn refresh_dungeon_stats(ref self: TContractState, token_id: u256);
 
     // Beast queries

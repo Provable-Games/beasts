@@ -35,7 +35,8 @@ pub mod beasts_nft {
 
     use starknet::ContractAddress;
     use starknet::storage::{
-        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess, Vec,
+        Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess,
+        StoragePointerWriteAccess, Vec,
     };
     use super::beast_manager::{BeastManagerTrait, BeastResult};
     use super::beast_ranking::BeastRankingManagerTrait;
@@ -184,6 +185,11 @@ pub mod beasts_nft {
             // id exists which is necessary for mints
             let previous_owner = self._owner_of(token_id);
             contract_state.erc721_votes.transfer_voting_units(previous_owner, to, 1);
+
+            // Update metadata for stale beasts
+            if contract_state.stale_beasts.len() > 0 {
+                contract_state._refresh_metadata();
+            }
         }
     }
 
@@ -314,20 +320,8 @@ pub mod beasts_nft {
             }
         }
 
-        fn refresh_metadata(ref self: ContractState, beast_id: u8) {
-            let mut count = self.beast_update_count.entry(beast_id).read();
-            assert(count != 0, 'Metadata up to date');
-
-            loop {
-                let token_id = self.beast_species_lists.entry(beast_id).entry(count).read();
-                if token_id != 0 {
-                    self.emit(MetadataUpdate { token_id });
-                    count += 1;
-                } else {
-                    self.beast_update_count.entry(beast_id).write(0);
-                    break;
-                }
-            }
+        fn refresh_metadata(ref self: ContractState) {
+            self._refresh_metadata();
         }
 
         fn refresh_dungeon_stats(ref self: ContractState, token_id: u256) {
@@ -587,6 +581,28 @@ pub mod beasts_nft {
                 last_killed_by_adventurer,
                 last_killed_timestamp,
             )
+        }
+
+        fn _refresh_metadata(ref self: ContractState) {
+            // let beast_id = self.stale_beasts.pop().unwrap();
+            // let total_beasts = self.beast_counts.entry(beast_id).read();
+            
+            // let mut count = self.beast_update_count.entry(beast_id).read();
+            // loop {
+            //     if count > total_beasts {
+            //         break;
+            //     }
+
+            //     let token_id = self.beast_species_lists.entry(beast_id).entry(count).read();
+            //     if token_id != 0 {
+            //         self.emit(MetadataUpdate { token_id });
+            //         count += 1;
+            //     } else {
+            //         break;
+            //     }
+            // };
+
+            // self.beast_update_count.entry(beast_id).write(0);
         }
     }
 
