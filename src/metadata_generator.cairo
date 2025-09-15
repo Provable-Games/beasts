@@ -83,7 +83,7 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         // Build name
         let mut name: ByteArray = "";
         if token_id > 75 {
-        let prefix_name_str = felt252_to_byte_array(prefix_name);
+            let prefix_name_str = felt252_to_byte_array(prefix_name);
             let suffix_name_str = felt252_to_byte_array(suffix_name);
             let beast_name_str = felt252_to_byte_array(beast_name);
             name.append(@format!("\"{} {}\" {}", prefix_name_str, suffix_name_str, beast_name_str));
