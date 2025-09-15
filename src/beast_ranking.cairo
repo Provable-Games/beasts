@@ -91,8 +91,8 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
         let mut count = 0;
 
         let update_count = current_rank - from_rank;
-        if update_count >= 800 {
-            self.beast_update_count.entry(beast_id).write(update_count - 800);
+        if update_count >= 650 {
+            self.beast_update_count.entry(beast_id).write(update_count - 650);
         }
 
         loop {
@@ -110,7 +110,7 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
                 self.beast_species_lists.entry(beast_id).entry(current_rank).write(0);
 
                 // Emit metadata update using syscall
-                if (current_rank - from_rank) < 800 {
+                if (current_rank - from_rank) < 650 {
                     let keys = array!['MetadataUpdate'];
                     let data = array![token_id.try_into().unwrap()];
                     emit_event_syscall(keys.span(), data.span()).unwrap();
