@@ -175,12 +175,12 @@ pub impl BeastSvgImpl of BeastSvgTrait {
             svg.append(@"</text>");
         }
 
-        // Specials and name
-        svg
-            .append(
-                @"<text x='125' y='26' text-anchor='middle' style='fill:#fff;font-size:14px;letter-spacing:1px'>",
-            );
         if prefix_name != 0 || suffix_name != 0 {
+            // Standard Beasts with prefix/suffix
+            svg
+                .append(
+                    @"<text x='125' y='26' text-anchor='middle' style='fill:#fff;font-size:14px;letter-spacing:1px'>",
+                );
             svg.append(@"\"");
             if prefix_name != 0 {
                 let prefix_str = felt252_to_byte_array(prefix_name);
@@ -194,17 +194,24 @@ pub impl BeastSvgImpl of BeastSvgTrait {
                 svg.append(@suffix_str);
             }
             svg.append(@"\"");
+            svg.append(@"</text>");
+            svg
+                .append(
+                    @"<text x='125' y='50' text-anchor='middle' style='fill:#fff;font-size:30px;letter-spacing:1px'>",
+                );
+            let beast_name_str = felt252_to_byte_array(beast_name);
+            svg.append(@beast_name_str);
+            svg.append(@"</text>");
+        } else {
+            // Genesis Beasts without prefix/suffix
+            svg
+                .append(
+                    @"<text x='125' y='47' text-anchor='middle' style='fill:#fff;font-size:34px;letter-spacing:1px'>",
+                );
+            let beast_name_str = felt252_to_byte_array(beast_name);
+            svg.append(@beast_name_str);
+            svg.append(@"</text>");
         }
-        svg.append(@"</text>");
-
-        // Beast name
-        svg
-            .append(
-                @"<text x='125' y='51' text-anchor='middle' style='fill:#fff;font-size:30px;letter-spacing:1px'>",
-            );
-        let beast_name_str = felt252_to_byte_array(beast_name);
-        svg.append(@beast_name_str);
-        svg.append(@"</text>");
 
         // Beast image with clip path
         svg.append(@"<clipPath id='artClip'>");

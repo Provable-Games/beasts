@@ -88,7 +88,10 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
             let prefix_name_str = felt252_to_byte_array(prefix_name);
             let suffix_name_str = felt252_to_byte_array(suffix_name);
             let beast_name_str = felt252_to_byte_array(beast_name);
-            name.append(@format!("\"{} {}\" {}", prefix_name_str, suffix_name_str, beast_name_str));
+            name
+                .append(
+                    @format!("\\\"{} {}\\\" {}", prefix_name_str, suffix_name_str, beast_name_str),
+                );
         } else {
             // no double quotes before genesis name
             let beast_name_str = felt252_to_byte_array(beast_name);
@@ -571,7 +574,7 @@ mod tests {
     // Helper to render and print SVG for a given beast and variant
     fn render_svg_for(beast_id: u8, shiny: u8, animated: u8) -> ByteArray {
         let beast: PackableBeast = PackableBeast {
-            id: beast_id, prefix: 1, suffix: 1, level: 25, health: 100, shiny, animated,
+            id: beast_id, prefix: 0, suffix: 0, level: 20, health: 100, shiny, animated,
         };
 
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
@@ -609,7 +612,6 @@ mod tests {
     // using mainnet data providers
     // 1: Warlock
     #[test]
-    #[ignore]
     #[fork("mainnet")]
     fn generate_warlock_shiny_animated() {
         print_svg_for(1, 1, 1);
