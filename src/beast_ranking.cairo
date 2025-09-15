@@ -92,8 +92,10 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
 
         let update_count = current_rank - from_rank;
         if update_count >= 800 {
+            if self.beast_update_count.entry(beast_id).read() == 0 {
+                self.stale_beasts.append().write(beast_id);
+            }
             self.beast_update_count.entry(beast_id).write(update_count - 800);
-            self.stale_beasts.append().write(beast_id);
         }
 
         loop {

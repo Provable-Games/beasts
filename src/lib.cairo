@@ -35,8 +35,8 @@ pub mod beasts_nft {
 
     use starknet::ContractAddress;
     use starknet::storage::{
-        Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess,
-        StoragePointerWriteAccess, Vec,
+        Map, MutableVecTrait, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+        Vec,
     };
     use super::beast_manager::{BeastManagerTrait, BeastResult};
     use super::beast_ranking::BeastRankingManagerTrait;
@@ -118,6 +118,7 @@ pub mod beasts_nft {
         pub beast_update_count: Map<u8, u16>, // beast_id -> count of updates
         pub beast_last_update_timestamp: Map<u256, u64>, // token_id -> timestamp of last update
         pub stale_beasts: Vec<u8>, // beast_ids that need to be updated
+        pub stale_beasts_index: u32, // index of next beast to process
         pub minted: Map<felt252, bool>,
         pub dungeon_address: ContractAddress,
         pub token_counter: u256,
@@ -187,7 +188,9 @@ pub mod beasts_nft {
             contract_state.erc721_votes.transfer_voting_units(previous_owner, to, 1);
 
             // Update metadata for stale beasts
-            if contract_state.stale_beasts.len() > 0 {
+            let current_index = contract_state.stale_beasts_index.read();
+            let len = contract_state.stale_beasts.len();
+            if current_index < len.try_into().unwrap() {
                 contract_state._refresh_metadata();
             }
         }
@@ -321,6 +324,9 @@ pub mod beasts_nft {
         }
 
         fn refresh_metadata(ref self: ContractState) {
+            let current_index = self.stale_beasts_index.read();
+            let len = self.stale_beasts.len();
+            assert(current_index < len.try_into().unwrap(), 'No stale beasts');
             self._refresh_metadata();
         }
 
@@ -584,25 +590,29 @@ pub mod beasts_nft {
         }
 
         fn _refresh_metadata(ref self: ContractState) {
-            // let beast_id = self.stale_beasts.pop().unwrap();
-            // let total_beasts = self.beast_counts.entry(beast_id).read();
-            
-            // let mut count = self.beast_update_count.entry(beast_id).read();
-            // loop {
-            //     if count > total_beasts {
-            //         break;
-            //     }
+            let current_index = self.stale_beasts_index.read();
 
-            //     let token_id = self.beast_species_lists.entry(beast_id).entry(count).read();
-            //     if token_id != 0 {
-            //         self.emit(MetadataUpdate { token_id });
-            //         count += 1;
-            //     } else {
-            //         break;
-            //     }
-            // };
+            // Get the beast_id at the current index
+            let beast_id = self.stale_beasts.at(current_index.try_into().unwrap()).read();
+            let total_beasts = self.beast_counts.entry(beast_id).read();
 
-            // self.beast_update_count.entry(beast_id).write(0);
+            let mut count = self.beast_update_count.entry(beast_id).read();
+            loop {
+                if count > total_beasts {
+                    break;
+                }
+
+                let token_id = self.beast_species_lists.entry(beast_id).entry(count).read();
+                if token_id != 0 {
+                    self.emit(MetadataUpdate { token_id });
+                    count += 1;
+                } else {
+                    break;
+                }
+            };
+
+            self.beast_update_count.entry(beast_id).write(0);
+            self.stale_beasts_index.write(current_index + 1);
         }
     }
 
