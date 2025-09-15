@@ -82,10 +82,18 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 
         // Build name
         let mut name: ByteArray = "";
-        let prefix_name_str = felt252_to_byte_array(prefix_name);
-        let suffix_name_str = felt252_to_byte_array(suffix_name);
-        let beast_name_str = felt252_to_byte_array(beast_name);
-        name.append(@format!("\"{} {}\" {}", prefix_name_str, suffix_name_str, beast_name_str));
+
+        // non-genesis Beast
+        if beast.prefix > 0 {
+            let prefix_name_str = felt252_to_byte_array(prefix_name);
+            let suffix_name_str = felt252_to_byte_array(suffix_name);
+            let beast_name_str = felt252_to_byte_array(beast_name);
+            name.append(@format!("\"{} {}\" {}", prefix_name_str, suffix_name_str, beast_name_str));
+        } else {
+            // no double quotes before genesis name
+            let beast_name_str = felt252_to_byte_array(beast_name);
+            name.append(@format!("{}", beast_name_str));
+        }
 
         // Get other attributes
         let beast_attrs = BeastManagerTrait::get_beast_attributes(beast);
