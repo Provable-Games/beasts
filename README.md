@@ -211,5 +211,3 @@ The project uses GitHub Actions for:
 - [Shiny GIF URI](https://voyager.online/contract/0x0700f224e6fcb344c27f29e62687333b589b3be39a2c026ede5968bf53b6bb2a)
 
 ---
-
-## Acknowledgments
