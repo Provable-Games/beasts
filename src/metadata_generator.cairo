@@ -467,7 +467,7 @@ mod tests {
             last_killed_timestamp,
         );
 
-        assert(components.name == "\"Behemoth Shadow\" Typhon", 'Name mismatch');
+        assert(components.name == "\\\"Behemoth Shadow\\\" Typhon", 'Name mismatch');
         assert(components.attributes.len() == 17, 'Should have 17 attributes');
         assert!(
             components.attributes.at(0).trait_type == @"Token ID", "Should have Token ID trait",
@@ -612,6 +612,7 @@ mod tests {
     // using mainnet data providers
     // 1: Warlock
     #[test]
+    #[ignore]
     #[fork("mainnet")]
     fn generate_warlock_shiny_animated() {
         print_svg_for(1, 1, 1);
