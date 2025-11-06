@@ -109,7 +109,6 @@ pub mod beasts_nft {
         pub nonces: NoncesComponent::Storage,
         // Beast-specific storage
         pub beasts: Map<u256, PackableBeast>,
-        pub beast_token_ranks: Map<u256, u16>, // token_id -> current rank (for tokenURI)
         pub beast_species_lists: Map<
             u8, Map<u16, u256>,
         >, // beast_id -> rank -> token_id (nested map)
@@ -586,7 +585,7 @@ pub mod beasts_nft {
 
             // Get beast data
             let beast = self.beasts.entry(token_id).read();
-            let rank = self.beast_token_ranks.entry(token_id).read();
+            let rank = BeastRankingManagerTrait::get_beast_rank(self, token_id);
 
             // Get additional data from death mountain
             let mut last_killed_timestamp = 0;

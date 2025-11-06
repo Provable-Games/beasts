@@ -35,7 +35,6 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
 
         // Insert new beast into sorted list and update mappings
         self.beast_species_lists.entry(beast_id).entry(insertion_rank).write(token_id);
-        self.beast_token_ranks.write(token_id, insertion_rank);
         self.beast_counts.write(beast_id, current_count + 1);
         insertion_rank
     }
@@ -97,7 +96,6 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
 
             // Move entry down one rank
             self.beast_species_lists.entry(beast_id).entry(current_rank + 1).write(token_id);
-            self.beast_token_ranks.write(token_id, current_rank + 1);
 
             current_rank -= 1;
         };
@@ -110,7 +108,21 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
             return 0; // Genesis beasts have no rank
         }
 
-        state.beast_token_ranks.read(token_id)
+        let beast = state.beasts.entry(token_id).read();
+        let mut rank = Self::find_insertion_rank_binary(
+            state,
+            beast.id,
+            BeastManagerTrait::get_beast_power(beast),
+            beast.health,
+            state.beast_counts.read(beast.id),
+        );
+
+        // If multiple beasts have the same power and health, find the correct rank
+        while state.beast_species_lists.entry(beast.id).entry(rank).read() != token_id && rank > 1 {
+            rank -= 1;
+        };
+
+        rank
     }
 }
 
