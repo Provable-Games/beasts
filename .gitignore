@@ -8,3 +8,5 @@ snfoundry_cache/
 accounts/
 .snfoundry_cache/
 coverage/
+.cache/
+.scarb-cache/

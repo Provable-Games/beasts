@@ -7,6 +7,7 @@ pub mod beast_png_regular_data;
 pub mod beast_png_shiny_data;
 pub mod beast_gif_regular_data;
 pub mod beast_gif_shiny_data;
+pub mod constants;
 pub mod encoding;
 pub mod interfaces;
 pub mod metadata_generator;
@@ -46,6 +47,7 @@ pub mod beasts_nft {
     use super::metadata_generator::MetadataGeneratorTrait;
     use super::minting_coordinator::{MintRequest, MintingCoordinatorTrait};
     use super::pack::PackableBeast;
+    use super::constants::MAX_EVENTS;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -109,7 +111,6 @@ pub mod beasts_nft {
         pub nonces: NoncesComponent::Storage,
         // Beast-specific storage
         pub beasts: Map<u256, PackableBeast>,
-        pub beast_token_ranks: Map<u256, u16>, // token_id -> current rank (for tokenURI)
         pub beast_species_lists: Map<
             u8, Map<u16, u256>,
         >, // beast_id -> rank -> token_id (nested map)
@@ -137,7 +138,7 @@ pub mod beasts_nft {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
@@ -321,6 +322,8 @@ pub mod beasts_nft {
 
         fn refresh_metadata(ref self: ContractState, beast_id: u8) {
             let mut bookmark_number = self.beast_metadata_refresh_bookmark.entry(beast_id).read();
+
+            println!("bookmark_number: {}", bookmark_number);
 
             assert(bookmark_number > 0, 'No stale beasts');
 
@@ -586,7 +589,7 @@ pub mod beasts_nft {
 
             // Get beast data
             let beast = self.beasts.entry(token_id).read();
-            let rank = self.beast_token_ranks.entry(token_id).read();
+            let rank = BeastRankingManagerTrait::get_beast_rank(self, token_id);
 
             // Get additional data from death mountain
             let mut last_killed_timestamp = 0;
@@ -648,22 +651,22 @@ pub mod beasts_nft {
         ) -> bool {
             let total_beasts = self.beast_counts.entry(beast_id).read();
             let mut bookmark_set = false;
-            if total_beasts > 650 {
+            if total_beasts > MAX_EVENTS {
                 let distance_to_last = total_beasts - insertion_rank;
-                if distance_to_last >= 650 {
+                if distance_to_last >= MAX_EVENTS {
                     self
                         .beast_metadata_refresh_bookmark
                         .entry(beast_id)
-                        .write(insertion_rank + 650);
+                        .write(insertion_rank + MAX_EVENTS);
                     bookmark_set = true;
                 }
             }
 
             // emit metadata update calls from insertion rank till total beasts or insertion rank +
-            // 650
+            // MAX_EVENTS
             let mut count = insertion_rank + 1;
             while count < total_beasts {
-                if count >= insertion_rank + 650 {
+                if count >= insertion_rank + MAX_EVENTS {
                     break;
                 }
                 let token_id = self.beast_species_lists.entry(beast_id).entry(count).read();
