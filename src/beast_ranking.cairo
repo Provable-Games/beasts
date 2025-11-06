@@ -129,11 +129,15 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
 #[cfg(test)]
 mod tests {
     use snforge_std::{
-        ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
-        stop_cheat_caller_address,
+        ContractClassTrait, DeclareResultTrait, declare, map_entry_address,
+        start_cheat_caller_address, stop_cheat_caller_address, store, spy_events, EventSpyTrait,
     };
     use starknet::ContractAddress;
+    use core::traits::TryInto;
     use super::super::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait};
+    use super::super::pack::{PackableBeast, PackableBeastStorePacking};
+    use super::super::beast_definitions::{WARLOCK, PREFIX_SHIMMERING, SUFFIX_MOON};
+    use super::super::constants::MAX_EVENTS;
 
     fn deploy_contract() -> (IBeastsDispatcher, ContractAddress, ContractAddress, ContractAddress) {
         let regular_png_provider = declare("beast_png_regular_data").unwrap().contract_class();
@@ -179,6 +183,84 @@ mod tests {
         (dispatcher, contract_address, recipient, minter)
     }
 
+    const BEASTS_SELECTOR: felt252 = selector!("beasts");
+    const BEAST_SPECIES_LISTS_SELECTOR: felt252 = selector!("beast_species_lists");
+    const BEAST_COUNTS_SELECTOR: felt252 = selector!("beast_counts");
+    const TOKEN_COUNTER_SELECTOR: felt252 = selector!("token_counter");
+    const BOOKMARK_SELECTOR: felt252 = selector!("beast_metadata_refresh_bookmark");
+
+    fn store_packable_beast(
+        contract_address: ContractAddress, token_id: u256, beast: PackableBeast,
+    ) {
+        let packed = PackableBeastStorePacking::pack(beast);
+        let mut key = array![];
+        token_id.serialize(ref key);
+        let address = map_entry_address(BEASTS_SELECTOR, key.span());
+        store(contract_address, address, array![packed].span());
+    }
+
+    fn store_species_rank(
+        contract_address: ContractAddress, beast_id: u8, rank: u16, token_id: u256,
+    ) {
+        let mut keys = array![];
+        beast_id.serialize(ref keys);
+        rank.serialize(ref keys);
+        let address = map_entry_address(BEAST_SPECIES_LISTS_SELECTOR, keys.span());
+        store(contract_address, address, array![token_id.low.into(), token_id.high.into()].span());
+    }
+
+    fn store_beast_count(contract_address: ContractAddress, beast_id: u8, count: u16) {
+        let mut keys = array![];
+        beast_id.serialize(ref keys);
+        let address = map_entry_address(BEAST_COUNTS_SELECTOR, keys.span());
+        store(contract_address, address, array![count.into()].span());
+    }
+
+    fn store_token_counter(contract_address: ContractAddress, value: u256) {
+        store(
+            contract_address,
+            TOKEN_COUNTER_SELECTOR,
+            array![value.low.into(), value.high.into()].span(),
+        );
+    }
+
+    fn stage_beasts(contract_address: ContractAddress, beast_id: u8, staged_count: u16) {
+        assert(beast_id > 0, 'Beast ID must be > 0');
+        assert(beast_id <= 75, 'Beast ID must be <= 75');
+        assert(staged_count > 0, 'Staged count must be > 0');
+        assert(staged_count <= 1024, 'Staged count must be <= 1024');
+
+        const GENESIS_SUPPLY: u256 = 75;
+        let mut index = 0;
+        let mut token_id = GENESIS_SUPPLY + 1;
+
+        loop {
+            if index >= staged_count {
+                break;
+            }
+
+            let level = index + 1_u16;
+            let health = level / 2_u16;
+            let prefix: u8 = (1_u16 + (index % 5_u16)).try_into().unwrap();
+            let suffix: u8 = (1_u16 + (index % 3_u16)).try_into().unwrap();
+
+            let beast = PackableBeast {
+                id: beast_id, prefix, suffix, level, health, shiny: 0, animated: 0,
+            };
+
+            store_packable_beast(contract_address, token_id, beast);
+
+            let rank = staged_count - index;
+            store_species_rank(contract_address, beast_id, rank, token_id);
+
+            index += 1_u16;
+            token_id += 1_u256;
+        };
+
+        store_beast_count(contract_address, beast_id, staged_count);
+        store_token_counter(contract_address, GENESIS_SUPPLY + staged_count.into());
+    }
+
     #[test]
     fn test_ranking_system_basic() {
         // Test basic ranking functionality
@@ -203,6 +285,73 @@ mod tests {
         assert(beasts.get_beast_rank(78_u256) == 3_u16, 'Weakest rank 3');
 
         stop_cheat_caller_address(contract_address);
+    }
+
+    #[test]
+    fn test_max_shift() {
+        let (beasts, contract_address, recipient, minter) = deploy_contract();
+
+        // Seed ranking state without minting by staging the storage slots directly
+        let existing_beast_count = 1023;
+        stage_beasts(contract_address, WARLOCK, existing_beast_count);
+
+        // set internal token counter to 1098 (75 genesis beasts + 1023 beasts)
+        let initial_supply = 1098;
+        store_token_counter(contract_address, initial_supply.into());
+        assert!(
+            beasts.total_supply() == initial_supply.into(),
+            "Wrong total supply. Expected {}, got {}",
+            initial_supply,
+            beasts.total_supply(),
+        );
+
+        // mint the last Warlock as rank 1 which will derank 1023 existing Beasts
+        start_cheat_caller_address(contract_address, minter);
+        let mut spy = spy_events();
+        let (king_warlock_token_id, insertion_rank, bookmark_set) = beasts
+            .mint(recipient, WARLOCK, PREFIX_SHIMMERING, SUFFIX_MOON, 65535, 1023, 0, 0);
+        stop_cheat_caller_address(contract_address);
+
+        let events = spy.get_events();
+
+        // verify contract emitted MAX_EVENTS metadata update events
+        assert!(
+            events.events.len() == MAX_EVENTS.into(),
+            "Wrong number of events. Expected {}, got {}",
+            MAX_EVENTS,
+            events.events.len(),
+        );
+        // assert bookmark was set
+        assert(bookmark_set, 'Bookmark was not set');
+        // check bookmark value
+        let bookmark = beasts.get_beast_metadata_bookmark(WARLOCK);
+        let expected_bookmark = MAX_EVENTS + 1;
+        assert!(
+            bookmark == expected_bookmark,
+            "Wrong bookmark value. Expected {}, got {}",
+            expected_bookmark,
+            bookmark,
+        );
+        // assert insertion rank is 1
+        assert!(insertion_rank == 1, "Insertion rank is not 1. Expected 1, got {}", insertion_rank);
+
+        // verify the minted warlock is rank 1
+        let king_warlock_rank = beasts.get_beast_rank(king_warlock_token_id);
+        assert!(
+            king_warlock_rank == 1, "Wrong Warlock Rank. Expected 1, got {}", king_warlock_rank,
+        );
+        // verify the total supply is 1076 (75 genesis beasts + 1001 beasts)
+        let total_supply = beasts.total_supply();
+        assert!(
+            total_supply == 1099.into(), "Wrong total supply. Expected 1099, got {}", total_supply,
+        );
+        // verify the previous strongest Warlock is rank 2
+        let previous_strongest_warlock_rank = beasts.get_beast_rank(king_warlock_token_id - 1);
+        assert!(
+            previous_strongest_warlock_rank == 2,
+            "Previous strongest shifted. Expected 2, got {}",
+            previous_strongest_warlock_rank,
+        );
     }
 
     #[test]
@@ -295,64 +444,4 @@ mod tests {
 
         stop_cheat_caller_address(contract_address);
     }
-
-    #[test]
-    fn test_ranking_20_shifts() {
-        // Test worst case: inserting strongest beast when 20 weaker ones exist
-        let (beasts, contract_address, recipient, minter) = deploy_contract();
-        start_cheat_caller_address(contract_address, minter);
-
-        // Mint 20 beasts with valid prefix/suffix combinations (token IDs start at 76 after
-        // genesis)
-        let mut prefix = 1_u8;
-        let mut suffix = 1_u8;
-        let mut count = 1_u256;
-
-        loop {
-            if prefix > 69_u8 {
-                break;
-            }
-
-            loop {
-                if suffix > 18_u8 {
-                    break;
-                }
-
-                if count > 20_u256 {
-                    break;
-                }
-
-                let power: u16 = count.try_into().unwrap();
-                beasts.mint(recipient, 1_u8, prefix, suffix, power, power / 2, 0, 0);
-
-                count += 1;
-                suffix += 1;
-            };
-
-            if count > 20_u256 {
-                break;
-            }
-
-            suffix = 1_u8;
-            prefix += 1;
-        };
-
-        // Verify we have 75 genesis + 20 custom = 95 beasts
-        assert(beasts.total_supply() == 95_u256, 'Should have 95 beasts');
-
-        // Now mint the ultimate beast that will trigger 20 shifts
-        beasts.mint(recipient, 1_u8, 69_u8, 18_u8, 65535_u16, 65535_u16, 0, 0);
-
-        // Verify the ultimate beast got rank 1
-        assert(beasts.get_beast_rank(96_u256) == 1_u16, 'Ultimate beast rank 1');
-
-        // Verify total supply increased
-        assert(beasts.total_supply() == 96_u256, 'Should have 96 beasts');
-
-        // Verify some shifted rankings (previous strongest was token 125 with power 50)
-        assert(beasts.get_beast_rank(95_u256) == 2_u16, 'Previous strongest shifted');
-
-        stop_cheat_caller_address(contract_address);
-    }
 }
-
