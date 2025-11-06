@@ -131,6 +131,7 @@ mod tests {
     use snforge_std::{
         ContractClassTrait, DeclareResultTrait, declare, map_entry_address,
         start_cheat_caller_address, stop_cheat_caller_address, store, spy_events, EventSpyTrait,
+        EventSpyAssertionsTrait, IsEmitted,
     };
     use starknet::ContractAddress;
     use core::traits::TryInto;
@@ -138,6 +139,7 @@ mod tests {
     use super::super::pack::{PackableBeast, PackableBeastStorePacking};
     use super::super::beast_definitions::{WARLOCK, PREFIX_SHIMMERING, SUFFIX_MOON};
     use super::super::constants::MAX_EVENTS;
+    use super::super::beasts_nft;
 
     fn deploy_contract() -> (IBeastsDispatcher, ContractAddress, ContractAddress, ContractAddress) {
         let regular_png_provider = declare("beast_png_regular_data").unwrap().contract_class();
@@ -222,6 +224,13 @@ mod tests {
             TOKEN_COUNTER_SELECTOR,
             array![value.low.into(), value.high.into()].span(),
         );
+    }
+
+    fn store_bookmark(contract_address: ContractAddress, beast_id: u8, value: u16) {
+        let mut keys = array![];
+        beast_id.serialize(ref keys);
+        let address = map_entry_address(BOOKMARK_SELECTOR, keys.span());
+        store(contract_address, address, array![value.into()].span());
     }
 
     fn stage_beasts(contract_address: ContractAddress, beast_id: u8, staged_count: u16) {
@@ -352,6 +361,71 @@ mod tests {
             "Previous strongest shifted. Expected 2, got {}",
             previous_strongest_warlock_rank,
         );
+    }
+
+    #[test]
+    fn test_refresh_metadata_emits_expected_events() {
+        const STAGED_COUNT: u16 = 1023;
+        const BOOKMARK_START: u16 = 651;
+        const EXPECTED_EVENTS: usize = 373;
+
+        let (beasts, contract_address, _, _) = deploy_contract();
+
+        stage_beasts(contract_address, WARLOCK, STAGED_COUNT);
+        store_bookmark(contract_address, WARLOCK, BOOKMARK_START);
+
+        let warlock_bookmark = beasts.get_beast_metadata_bookmark(WARLOCK);
+        assert!(
+            warlock_bookmark == BOOKMARK_START,
+            "Wrong bookmark value. Expected {}, got {}",
+            BOOKMARK_START,
+            warlock_bookmark,
+        );
+
+        let mut spy = spy_events();
+        beasts.refresh_metadata(WARLOCK);
+
+        // check bookmark is properly cleared after call to refresh metadata
+        let bookmark_after = beasts.get_beast_metadata_bookmark(WARLOCK);
+        assert(bookmark_after == 0, 'Bookmark not cleared');
+
+        // get events from spy
+        let events = spy.get_events();
+
+        // check number of emitted events matches expected
+        assert!(
+            events.events.len() == EXPECTED_EVENTS,
+            "wrong event count. Expected {}, got {}",
+            EXPECTED_EVENTS,
+            events.events.len(),
+        );
+
+        // assert we did not get a metadata update for the last genesis beast
+        let last_genesis_beast_metadata_update = beasts_nft::Event::MetadataUpdate(
+            beasts_nft::MetadataUpdate { token_id: 75 },
+        );
+        assert!(!events.is_emitted(contract_address, @last_genesis_beast_metadata_update));
+
+        // assert we got a metadata update for the warlock at the bookmark
+        let token_id_at_bookmark = beasts.get_token_id_at_rank(WARLOCK, BOOKMARK_START);
+        let metadata_update_for_warlock_at_bookmark = beasts_nft::Event::MetadataUpdate(
+            beasts_nft::MetadataUpdate { token_id: token_id_at_bookmark },
+        );
+        assert!(events.is_emitted(contract_address, @metadata_update_for_warlock_at_bookmark));
+
+        // assert we got a metadata update for the last ranked warlock which is token ID 76 (one
+        // after genesis)
+        let last_ranked_warlock_metadata_update = beasts_nft::Event::MetadataUpdate(
+            beasts_nft::MetadataUpdate { token_id: 76 },
+        );
+        assert!(events.is_emitted(contract_address, @last_ranked_warlock_metadata_update));
+
+        // assert we did not get a metadata update for the warlock before the bookmark
+        let warlock_before_bookmark = beasts.get_token_id_at_rank(WARLOCK, BOOKMARK_START - 1);
+        let warlock_before_bookmark_event = beasts_nft::Event::MetadataUpdate(
+            beasts_nft::MetadataUpdate { token_id: warlock_before_bookmark },
+        );
+        assert!(!events.is_emitted(contract_address, @warlock_before_bookmark_event));
     }
 
     #[test]
