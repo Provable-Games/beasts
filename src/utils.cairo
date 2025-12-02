@@ -22,7 +22,7 @@ pub fn felt252_to_byte_array(value: felt252) -> ByteArray {
         let byte = data % 256;
         chars.append(byte.try_into().unwrap());
         data = data / 256;
-    };
+    }
 
     // Reverse the array since we extracted bytes in reverse order
     let mut i = chars.len();
@@ -35,7 +35,7 @@ pub fn felt252_to_byte_array(value: felt252) -> ByteArray {
         if char != 0 {
             result.append_byte(char);
         }
-    };
+    }
 
     result
 }

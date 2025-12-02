@@ -76,7 +76,7 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
             } else {
                 left = mid + 1;
             }
-        };
+        }
 
         left
     }
@@ -315,7 +315,7 @@ mod tests {
 
                 count += 1;
                 suffix += 1;
-            };
+            }
 
             if count > 20_u256 {
                 break;
@@ -323,7 +323,7 @@ mod tests {
 
             suffix = 1_u8;
             prefix += 1;
-        };
+        }
 
         // Verify we have 75 genesis + 20 custom = 95 beasts
         assert(beasts.total_supply() == 95_u256, 'Should have 95 beasts');

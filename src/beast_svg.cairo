@@ -1,7 +1,7 @@
 use core::byte_array::ByteArrayTrait;
 use super::beast_manager::BeastAttributes;
-use super::utils::felt252_to_byte_array;
 use super::interfaces::{IBeastImageDataProviderDispatcher, IBeastImageDataProviderDispatcherTrait};
+use super::utils::felt252_to_byte_array;
 
 #[generate_trait]
 pub impl BeastSvgImpl of BeastSvgTrait {

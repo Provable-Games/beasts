@@ -1,9 +1,9 @@
 use super::beast_manager::BeastManagerTrait;
 use super::beast_svg::BeastSvgTrait;
 use super::encoding::bytes_base64_encode;
+use super::interfaces::IBeastImageDataProviderDispatcher;
 use super::pack::PackableBeast;
 use super::utils::felt252_to_byte_array;
-use super::interfaces::IBeastImageDataProviderDispatcher;
 
 /// Generates metadata for beasts
 #[derive(Drop)]
@@ -265,7 +265,7 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
             }
 
             i += 1;
-        };
+        }
 
         json.append(@"]");
 
@@ -278,20 +278,20 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 
 #[cfg(test)]
 mod tests {
-    use super::{Attribute, MetadataGeneratorTrait, PackableBeast, BeastSvgTrait};
-    use super::super::interfaces::{
-        IBeastImageDataProviderDispatcher, IBeastImageDataProviderDispatcherTrait,
-    };
-    use super::super::beast_manager::BeastManagerTrait;
     use beasts_nft::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait};
     use openzeppelin_token::erc721::interface::{
         IERC721MetadataDispatcher, IERC721MetadataDispatcherTrait,
     };
     use snforge_std::{
-        ContractClassTrait, DeclareResultTrait, declare, start_mock_call,
-        start_cheat_caller_address, stop_cheat_caller_address,
+        ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+        start_mock_call, stop_cheat_caller_address,
     };
     use starknet::{ContractAddress, contract_address_const};
+    use super::super::beast_manager::BeastManagerTrait;
+    use super::super::interfaces::{
+        IBeastImageDataProviderDispatcher, IBeastImageDataProviderDispatcherTrait,
+    };
+    use super::{Attribute, BeastSvgTrait, MetadataGeneratorTrait, PackableBeast};
 
     fn find_substring(text: @ByteArray, pattern: @ByteArray) -> bool {
         let text_len = text.len();
@@ -319,7 +319,7 @@ mod tests {
                     break;
                 }
                 j += 1;
-            };
+            }
 
             if found {
                 break true;

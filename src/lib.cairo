@@ -1,12 +1,12 @@
 pub mod beast_definitions;
-pub mod beast_manager;
-pub mod beast_ranking;
-pub mod beast_svg;
-pub mod beast_images;
-pub mod beast_png_regular_data;
-pub mod beast_png_shiny_data;
 pub mod beast_gif_regular_data;
 pub mod beast_gif_shiny_data;
+pub mod beast_images;
+pub mod beast_manager;
+pub mod beast_png_regular_data;
+pub mod beast_png_shiny_data;
+pub mod beast_ranking;
+pub mod beast_svg;
 pub mod encoding;
 pub mod interfaces;
 pub mod metadata_generator;
@@ -23,16 +23,15 @@ pub trait IBeastsAnimation<TContractState> {
 
 #[starknet::contract]
 pub mod beasts_nft {
-    use core::num::traits::{Zero};
+    use core::num::traits::Zero;
     use openzeppelin_access::ownable::OwnableComponent;
-    use openzeppelin_introspection::src5::SRC5Component;
-    use openzeppelin_token::erc721::interface::IERC721Metadata;
-    use openzeppelin_token::erc721::ERC721Component;
-    use openzeppelin_token::common::erc2981::ERC2981Component;
     use openzeppelin_governance::votes::VotesComponent;
+    use openzeppelin_introspection::src5::SRC5Component;
+    use openzeppelin_token::common::erc2981::ERC2981Component;
+    use openzeppelin_token::erc721::ERC721Component;
+    use openzeppelin_token::erc721::interface::IERC721Metadata;
     use openzeppelin_utils::cryptography::nonces::NoncesComponent;
     use openzeppelin_utils::cryptography::snip12::SNIP12Metadata;
-
     use starknet::ContractAddress;
     use starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
@@ -40,8 +39,8 @@ pub mod beasts_nft {
     use super::beast_manager::{BeastManagerTrait, BeastResult};
     use super::beast_ranking::BeastRankingManagerTrait;
     use super::interfaces::{
-        IBeasts, IBeastImageDataProviderDispatcher, IBeastSystemsDispatcher,
-        IBeastSystemsDispatcherTrait, IBeastsAnimation,
+        IBeastImageDataProviderDispatcher, IBeastSystemsDispatcher, IBeastSystemsDispatcherTrait,
+        IBeasts, IBeastsAnimation,
     };
     use super::metadata_generator::MetadataGeneratorTrait;
     use super::minting_coordinator::{MintRequest, MintingCoordinatorTrait};
@@ -306,10 +305,7 @@ pub mod beasts_nft {
                     self.erc721.mint(to, mint_data.token_id);
                     (mint_data.token_id, insertion_rank)
                 },
-                BeastResult::Err(e) => {
-                    core::panic_with_felt252(e);
-                    (0, 0)
-                },
+                BeastResult::Err(e) => { core::panic_with_felt252(e); },
             };
 
             let bookmark_set = InternalTrait::generate_metadata_update_events(
@@ -338,7 +334,7 @@ pub mod beasts_nft {
 
                 self.emit(MetadataUpdate { token_id });
                 bookmark_number += 1;
-            };
+            }
 
             self.beast_metadata_refresh_bookmark.entry(beast_id).write(0);
         }
@@ -562,7 +558,7 @@ pub mod beasts_nft {
                 }
 
                 i += 1;
-            };
+            }
 
             // Update token counter
             let new_supply = MintingCoordinatorTrait::calculate_new_supply(
@@ -669,7 +665,7 @@ pub mod beasts_nft {
                 let token_id = self.beast_species_lists.entry(beast_id).entry(count).read();
                 self.emit(MetadataUpdate { token_id });
                 count += 1;
-            };
+            }
 
             bookmark_set
         }

@@ -82,7 +82,7 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
 
             current_token_id += 1;
             beast_id += 1;
-        };
+        }
 
         results
     }

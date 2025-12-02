@@ -1,4 +1,5 @@
 [package]
+cairo-version = "2.13.1"
 name = "beasts_nft"
 version = "0.1.0"
 edition = "2024_07"
@@ -6,18 +7,18 @@ edition = "2024_07"
 [lib]
 
 [dependencies]
-starknet = "2.10.1"
-openzeppelin_access = "1.0.0"
-openzeppelin_token = "1.0.0"
-openzeppelin_introspection = "1.0.0"
-openzeppelin_governance = "1.0.0"
-openzeppelin_utils = "1.0.0"
+starknet = "2.13.1"
+openzeppelin_access = "2.0.0"
+openzeppelin_token = "2.0.0"
+openzeppelin_introspection = "2.0.0"
+openzeppelin_governance = "2.0.0"
+openzeppelin_utils = "2.0.0"
 
 [scripts]
 test = "snforge test"
 
 [dev-dependencies]
-snforge_std = "0.46.0"
+snforge_std = "0.52.0"
 
 [[target.starknet-contract]]
 allowed-libfuncs-list.name = "experimental"

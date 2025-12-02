@@ -1,8 +1,8 @@
 #[starknet::contract]
 mod beast_png_regular_data {
     use core::byte_array::ByteArrayTrait;
-    use super::super::interfaces::IBeastImageDataProvider;
     use super::super::beast_definitions;
+    use super::super::interfaces::IBeastImageDataProvider;
 
     #[storage]
     struct Storage {}
