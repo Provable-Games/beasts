@@ -26,10 +26,11 @@ pub mod beasts_nft {
     use core::num::traits::Zero;
     use openzeppelin_access::ownable::OwnableComponent;
     use openzeppelin_governance::votes::VotesComponent;
+    use openzeppelin_interfaces::erc721::IERC721Metadata;
     use openzeppelin_introspection::src5::SRC5Component;
     use openzeppelin_token::common::erc2981::ERC2981Component;
     use openzeppelin_token::erc721::ERC721Component;
-    use openzeppelin_token::erc721::interface::IERC721Metadata;
+    use openzeppelin_utils::contract_clock::ERC6372TimestampClock;
     use openzeppelin_utils::cryptography::nonces::NoncesComponent;
     use openzeppelin_utils::cryptography::snip12::SNIP12Metadata;
     use starknet::ContractAddress;
@@ -64,6 +65,9 @@ pub mod beasts_nft {
     #[abi(embed_v0)]
     impl ERC721CamelOnlyImpl = ERC721Component::ERC721CamelOnlyImpl<ContractState>;
     impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
+
+    // ERC6372 Clock implementation (required for VotesComponent)
+    impl Clock = ERC6372TimestampClock;
 
     // Votes Implementation
     #[abi(embed_v0)]

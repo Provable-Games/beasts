@@ -279,7 +279,7 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 #[cfg(test)]
 mod tests {
     use beasts_nft::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait};
-    use openzeppelin_token::erc721::interface::{
+    use openzeppelin_interfaces::erc721::{
         IERC721MetadataDispatcher, IERC721MetadataDispatcherTrait,
     };
     use snforge_std::{
