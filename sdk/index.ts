@@ -38,6 +38,9 @@ export { getBeastImageDataUri } from "./image-data";
 export { generateBeastSvg, generateBeastSvgFromNFT } from "./svg";
 export type { BeastSvgInput } from "./svg";
 
+// Re-export utility functions
+export { calculatePower } from "./utils";
+
 // Import for local use
 import { getBeastName, getBeastTier, getBeastType } from "./lookups";
 
@@ -94,13 +97,7 @@ export function getTierColor(tier: number): string {
   return colors[tier] ?? "#cccccc";
 }
 
-/**
- * Calculate a beast's power based on tier and level
- * Power = (6 - tier) * level
- */
-export function calculatePower(tier: number, level: number): number {
-  return (6 - tier) * level;
-}
+// calculatePower is re-exported from ./utils above
 
 /**
  * Get complete beast info from a beast ID

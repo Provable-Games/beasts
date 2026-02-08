@@ -2,7 +2,7 @@
 /**
  * Compare on-chain token_uri SVGs with our SDK-generated SVGs.
  *
- * Calls the beast contract for 10 token IDs via sncast, decodes the
+ * Calls the beast contract for 11 token IDs via sncast, decodes the
  * on-chain SVG, generates the SDK SVG, and diffs them.
  *
  * Usage: node scripts/compare-onchain-svg.mjs
@@ -82,27 +82,12 @@ function extractMetadata(dataUri) {
 }
 
 /**
- * Normalize an SVG for comparison:
- * - Replace foreignObject+xhtml:img with <image> (the known difference)
- * - Normalize whitespace
+ * Normalize an SVG for comparison.
+ * The SDK now uses foreignObject matching on-chain output, so no
+ * transformation is needed. This function is kept as a no-op hook
+ * for any future normalization needs.
  */
 function normalizeOnchainSvg(svg) {
-  // Replace the foreignObject+xhtml:img pattern with our <image> pattern
-  // On-chain pattern:
-  //   <foreignObject x='1' y='1' width='128' height='128'>
-  //   <xhtml:img xmlns:xhtml='http://www.w3.org/1999/xhtml' src='...' style='...'/>
-  //   </foreignObject>
-  // Our pattern:
-  //   <image href='...' x='1' y='1' width='128' height='128' image-rendering='pixelated'/>
-
-  const foreignObjRegex = /<foreignObject x='1' y='1' width='128' height='128'><xhtml:img xmlns:xhtml='http:\/\/www\.w3\.org\/1999\/xhtml' src='([^']*)' style='[^']*'\/><\/foreignObject>/;
-  const match = svg.match(foreignObjRegex);
-  if (match) {
-    const imageUrl = match[1];
-    const replacement = `<image href='${imageUrl}' x='1' y='1' width='128' height='128' image-rendering='pixelated'/>`;
-    svg = svg.replace(foreignObjRegex, replacement);
-  }
-
   return svg;
 }
 

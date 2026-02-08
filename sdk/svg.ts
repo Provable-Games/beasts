@@ -7,9 +7,10 @@
 
 import { getBeastName, getBeastTier, getBeastType } from "./lookups";
 import { getBeastImageDataUri } from "./image-data";
-import { calculatePower } from "./index";
+import { calculatePower } from "./utils";
 import {
   getSvgTierColor,
+  VT323_FONT_BASE64,
   SVG_GOLD_GRADIENT,
   SVG_PANEL_GRADIENT,
   SVG_SHINY_RIM_GRADIENT,
@@ -36,7 +37,7 @@ export interface BeastSvgInput {
   power: number;
   shiny: boolean;
   rank: number | null; // 1=crown, >1=trophy, 0/null=none
-  imageUrl?: string; // Optional override, defaults to getBeastStaticImageUrl()
+  imageUrl?: string; // Optional override, defaults to getBeastImageDataUri(beastId, shiny)
 }
 
 /**
@@ -77,6 +78,13 @@ function buildDefs(isShiny: boolean): string {
 
   return (
     "<defs>" +
+    "<style>@font-face{font-family:'VT323';src:url(data:application/font-woff2;charset=utf-8;base64," +
+    VT323_FONT_BASE64 +
+    ") format('woff2');font-weight:normal;font-style:normal;}" +
+    ".label{fill:#c9c9d1;font-size:14px;letter-spacing:0.5px;font-weight:500}" +
+    ".valL{fill:#fff;font-size:18px;font-weight:500}" +
+    "text{font-family:'VT323',monospace;}" +
+    "</style>" +
     SVG_GOLD_GRADIENT +
     SVG_PANEL_GRADIENT +
     SVG_SHINY_RIM_GRADIENT +
@@ -160,7 +168,7 @@ function buildBeastName(
   return `<text x='125' y='47' text-anchor='middle' style='fill:#fff;font-size:34px;letter-spacing:1px'>${beastName}</text>`;
 }
 
-/** Build the beast image with clip path and native SVG image for crisp scaling. */
+/** Build the beast image with clip path and foreignObject for crisp iOS Safari scaling. */
 function buildBeastImage(imageUrl: string): string {
   return (
     "<clipPath id='artClip'>" +
@@ -168,7 +176,9 @@ function buildBeastImage(imageUrl: string): string {
     "</clipPath>" +
     "<rect x='15' y='58' width='220' height='144' rx='8' fill='#000'/>" +
     "<g transform='translate(61, 65)' clip-path='url(#artClip)'>" +
-    `<image href='${escapeXml(imageUrl)}' x='1' y='1' width='128' height='128' image-rendering='pixelated'/>` +
+    `<foreignObject x='1' y='1' width='128' height='128'>` +
+    `<xhtml:img xmlns:xhtml='http://www.w3.org/1999/xhtml' src='${escapeXml(imageUrl)}' style='width:100%;height:100%;image-rendering:-webkit-optimize-contrast;-ms-interpolation-mode:nearest-neighbor;image-rendering:-moz-crisp-edges;image-rendering:pixelated;'/>` +
+    `</foreignObject>` +
     "</g>" +
     "<rect x='15' y='58' width='220' height='144' rx='8' fill='none' stroke='#fff' stroke-opacity='.08' stroke-width='2'/>"
   );
@@ -183,17 +193,17 @@ function buildStatsPanel(
   return (
     "<g transform='translate(15 210)'>" +
     "<rect width='70' height='50' rx='5' fill='url(#panel)'/>" +
-    "<text x='35' y='18' text-anchor='middle' class='beast-label'>TIER</text>" +
-    `<text x='35' y='38' text-anchor='middle' class='beast-val'>${tier}</text>` +
+    "<text x='35' y='18' text-anchor='middle' class='label'>TIER</text>" +
+    `<text x='35' y='38' text-anchor='middle' class='valL'>${tier}</text>` +
     "<g transform='translate(75)'>" +
     "<rect width='70' height='50' rx='5' fill='url(#panel)'/>" +
-    "<text x='35' y='18' text-anchor='middle' class='beast-label'>LEVEL</text>" +
-    `<text x='35' y='38' text-anchor='middle' class='beast-val'>${level}</text>` +
+    "<text x='35' y='18' text-anchor='middle' class='label'>LEVEL</text>" +
+    `<text x='35' y='38' text-anchor='middle' class='valL'>${level}</text>` +
     "</g>" +
     "<g transform='translate(150)'>" +
     "<rect width='70' height='50' rx='5' fill='url(#panel)'/>" +
-    "<text x='35' y='18' text-anchor='middle' class='beast-label'>TYPE</text>" +
-    `<text x='35' y='37' text-anchor='middle' class='beast-val'>${escapeXml(beastType)}</text>` +
+    "<text x='35' y='18' text-anchor='middle' class='label'>TYPE</text>" +
+    `<text x='35' y='37' text-anchor='middle' class='valL'>${escapeXml(beastType)}</text>` +
     "</g>" +
     "</g>"
   );
@@ -205,8 +215,8 @@ function buildPowerHealthPanel(power: number, health: number): string {
     // Power panel
     "<g transform='translate(15 265)'>" +
     "<rect width='107' height='65' rx='5' fill='url(#panel)'/>" +
-    "<text x='35' y='22' text-anchor='middle' class='beast-label'>POWER</text>" +
-    `<text x='35' y='46' text-anchor='middle' class='beast-val'>${power}</text>` +
+    "<text x='35' y='22' text-anchor='middle' class='label'>POWER</text>" +
+    `<text x='35' y='46' text-anchor='middle' class='valL'>${power}</text>` +
     "<g transform='translate(82,31.15) scale(1)'>" +
     "<use href='#bolt' pointer-events='none'/>" +
     "</g>" +
@@ -214,8 +224,8 @@ function buildPowerHealthPanel(power: number, health: number): string {
     // Health panel
     "<g transform='translate(128 265)'>" +
     "<rect width='107' height='65' rx='5' fill='url(#panel)'/>" +
-    "<text x='35' y='22' text-anchor='middle' class='beast-label'>HEALTH</text>" +
-    `<text x='35' y='46' text-anchor='middle' class='beast-val'>${health}</text>` +
+    "<text x='35' y='22' text-anchor='middle' class='label'>HEALTH</text>" +
+    `<text x='35' y='46' text-anchor='middle' class='valL'>${health}</text>` +
     "<g transform='translate(77.3,32.744) scale(0.75)'>" +
     "<use href='#heart' pointer-events='none'/>" +
     "</g>" +

@@ -4,7 +4,7 @@
  *
  * Parses the 4 Cairo data files (png regular/shiny, gif regular/shiny),
  * maps function names to beast IDs via beast_definitions.cairo,
- * and outputs src/lib/beast-sdk/image-data.ts with 4 lookup maps.
+ * and outputs ../image-data.ts (inside sdk/) with 4 lookup maps.
  *
  * Usage: node scripts/extract-beast-images.mjs
  */

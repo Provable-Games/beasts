@@ -20,7 +20,11 @@
     "test:watch": "vitest",
     "extract-images": "node scripts/extract-beast-images.mjs"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
+    "tsx": "^4.0.0",
     "typescript": "^5.6.0",
     "vitest": "^3.0.0"
   }
