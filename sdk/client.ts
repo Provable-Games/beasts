@@ -94,7 +94,9 @@ export interface GetAccountBeastsOptions {
 }
 
 export interface GetAccountTokenIdsOptions {
-  /** Prefer Voyager for token IDs if Summit API fails. */
+  /**
+   * @deprecated Voyager is always attempted when configured.
+   */
   allowVoyagerFallback?: boolean;
 }
 
@@ -238,22 +240,22 @@ export function createBeastSdk(config: BeastSdkConfig = {}): BeastSdkClient {
 
     if (apiBaseUrl) {
       try {
-        const beasts = await fetchSummitBeasts(
+        const tokenIds = await fetchSummitTokenIds(
           fetcher,
           apiBaseUrl,
           normalizedOwner,
           apiPageSize,
           apiTimeoutMs
         );
-        return beasts.map((beast) => beast.tokenId);
+        return tokenIds;
       } catch (error) {
         void error;
       }
     }
 
-    if (options?.allowVoyagerFallback && voyagerApiKey) {
+    if (voyagerApiKey) {
       try {
-        const beasts = await fetchVoyagerBeasts(
+        const tokenIds = await fetchVoyagerTokenIds(
           fetcher,
           voyagerApiUrl,
           voyagerApiKey,
@@ -262,7 +264,7 @@ export function createBeastSdk(config: BeastSdkConfig = {}): BeastSdkClient {
           voyagerPageSize,
           voyagerTimeoutMs
         );
-        return beasts.map((beast) => beast.tokenId);
+        return tokenIds;
       } catch (error) {
         void error;
       }
@@ -403,6 +405,21 @@ export function normalizeStarknetAddress(address: string): string {
   return `0x${value.toString(16).padStart(64, "0")}`;
 }
 
+function normalizeStarknetAddressLoose(address: string): string {
+  const trimmed = address.trim().toLowerCase();
+  if (!trimmed) {
+    return "";
+  }
+  const hex = trimmed.startsWith("0x") ? trimmed.slice(2) : trimmed;
+  if (!hex) {
+    return `0x${"0".repeat(64)}`;
+  }
+  if (hex.length > 64) {
+    return normalizeStarknetAddress(address);
+  }
+  return `0x${hex.padStart(64, "0")}`;
+}
+
 function formatFullName(
   beastName: string,
   prefix: string | null,
@@ -522,6 +539,45 @@ async function fetchSummitBeasts(
   return beasts;
 }
 
+async function fetchSummitTokenIds(
+  fetchImpl: typeof fetch,
+  baseUrl: string,
+  owner: string,
+  pageSize: number,
+  timeoutMs: number
+): Promise<number[]> {
+  const tokenIds: number[] = [];
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const url = new URL(`${baseUrl}/beasts/all`);
+    url.searchParams.set("owner", owner);
+    url.searchParams.set("limit", pageSize.toString());
+    url.searchParams.set("offset", offset.toString());
+
+    const response = await fetchJson<SummitBeastListResponse>(
+      fetchImpl,
+      url.toString(),
+      { method: "GET" },
+      timeoutMs
+    );
+
+    for (const row of response.data) {
+      tokenIds.push(coerceNumber(row.token_id, "token_id"));
+    }
+
+    hasMore = Boolean(response.pagination?.has_more);
+    offset += response.data.length;
+
+    if (response.data.length === 0) {
+      hasMore = false;
+    }
+  }
+
+  return tokenIds;
+}
+
 function parseSummitBeastRow(row: SummitBeastRow): BeastOnchain {
   return {
     tokenId: coerceNumber(row.token_id, "token_id"),
@@ -583,6 +639,56 @@ async function fetchVoyagerBeasts(
   }
 
   return beasts;
+}
+
+async function fetchVoyagerTokenIds(
+  fetchImpl: typeof fetch,
+  apiUrl: string,
+  apiKey: string,
+  contractAddress: string,
+  owner: string,
+  pageSize: number,
+  timeoutMs: number
+): Promise<number[]> {
+  const tokenIds: number[] = [];
+  let cursor: string | null = null;
+  let hasMore = true;
+
+  while (hasMore) {
+    const url = new URL(`${apiUrl}/nft-items`);
+    url.searchParams.set("contract_address", contractAddress);
+    url.searchParams.set("owner_address", owner);
+    url.searchParams.set("limit", pageSize.toString());
+    if (cursor) {
+      url.searchParams.set("cursor", cursor);
+    }
+
+    const response = await fetchJson<VoyagerResponse>(
+      fetchImpl,
+      url.toString(),
+      {
+        method: "GET",
+        headers: {
+          "x-api-key": apiKey,
+          "Content-Type": "application/json",
+        },
+      },
+      timeoutMs
+    );
+
+    for (const item of response.items) {
+      tokenIds.push(coerceNumber(item.tokenId, "tokenId"));
+    }
+
+    const nextCursor = extractCursorFromUrl(response.pagination?.next ?? null);
+    if (!nextCursor || response.items.length < pageSize) {
+      hasMore = false;
+    } else {
+      cursor = nextCursor;
+    }
+  }
+
+  return tokenIds;
 }
 
 function extractCursorFromUrl(url: string | null): string | null {
@@ -826,7 +932,7 @@ async function getBeastOwnersRange(
   for (let i = 0; i < count; i++) {
     const ownerIndex = 1 + i;
     if (ownerIndex >= result.length) break;
-    const tokenOwner = normalizeStarknetAddress(result[ownerIndex]);
+    const tokenOwner = normalizeStarknetAddressLoose(result[ownerIndex]);
     if (tokenOwner === owner) {
       matches.push(startToken + i);
     }
