@@ -27,6 +27,84 @@ export interface BeastApiResponse {
 }
 
 /**
+ * Summit API /beasts/all row (numeric, lightweight payload).
+ */
+export interface SummitBeastRow {
+  token_id: number;
+  beast_id: number;
+  prefix: number;
+  suffix: number;
+  level: number;
+  health: number;
+  shiny: number;
+  animated: number;
+  [key: string]: unknown;
+}
+
+/**
+ * Summit API /beasts/all response shape.
+ */
+export interface SummitBeastListResponse {
+  data: SummitBeastRow[];
+  pagination: {
+    limit: number;
+    offset: number;
+    total: number;
+    has_more: boolean;
+  };
+}
+
+/**
+ * Canonical on-chain beast data (PackableBeast + token ID).
+ */
+export interface BeastOnchain {
+  tokenId: number;
+  beastId: number;
+  prefix: number;
+  suffix: number;
+  level: number;
+  health: number;
+  shiny: number;
+  animated: number;
+  rank?: number | null;
+}
+
+/**
+ * Render-ready beast data for UI/SVG generation.
+ */
+export interface BeastRenderData {
+  tokenId: number;
+  beastId: number;
+  prefix: number;
+  suffix: number;
+  level: number;
+  health: number;
+  shiny: boolean;
+  animated: boolean;
+  rank: number | null;
+  name: string;
+  prefixName: string | null;
+  suffixName: string | null;
+  fullName: string;
+  tier: number;
+  type: BeastCombatType;
+  power: number;
+}
+
+/**
+ * Data source identifier for fetch results.
+ */
+export type BeastDataSource = "summit-api" | "voyager" | "rpc";
+
+/**
+ * Fetch result wrapper with source info.
+ */
+export interface BeastFetchResult {
+  beasts: BeastRenderData[];
+  source: BeastDataSource;
+}
+
+/**
  * Core beast input attributes (matches on-chain PackableBeast fields).
  */
 export interface BeastInput {

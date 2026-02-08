@@ -9,6 +9,12 @@
 // Re-export types
 export type {
   BeastApiResponse,
+  SummitBeastRow,
+  SummitBeastListResponse,
+  BeastOnchain,
+  BeastRenderData,
+  BeastFetchResult,
+  BeastDataSource,
   BeastCombatType,
   BeastTier,
   BeastId,
@@ -30,11 +36,17 @@ export {
   BEAST_TYPES,
   ITEM_NAME_PREFIXES,
   ITEM_NAME_SUFFIXES,
+  BEAST_NAME_IDS,
+  ITEM_NAME_PREFIX_IDS,
+  ITEM_NAME_SUFFIX_IDS,
   getBeastName,
   getBeastTier,
   getBeastType,
+  getBeastIdByName,
   getPrefix,
+  getPrefixIdByName,
   getSuffix,
+  getSuffixIdByName,
 } from "./lookups";
 
 // Re-export image functions
@@ -54,6 +66,22 @@ export type { BeastSvgInput } from "./svg";
 
 // Re-export utility functions
 export { calculatePower, calculatePowerClamped, isHigherRank } from "./utils";
+
+// Data client
+export {
+  createBeastSdk,
+  normalizeStarknetAddress,
+  resolveBeastRenderData,
+  resolveBeastRenderDataList,
+  toBeastSvgInput,
+} from "./client";
+export type {
+  BeastSdkConfig,
+  BeastSdkClient,
+  GetAccountBeastsOptions,
+  GetAccountTokenIdsOptions,
+  GetBeastsByTokenIdsOptions,
+} from "./client";
 
 // Validation helpers
 export {

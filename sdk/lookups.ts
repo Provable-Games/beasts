@@ -239,6 +239,25 @@ export const ITEM_NAME_SUFFIXES: Record<number, string> = {
 };
 
 /**
+ * Reverse lookup maps for name -> ID.
+ */
+export const BEAST_NAME_IDS = new Map<string, number>();
+export const ITEM_NAME_PREFIX_IDS = new Map<string, number>();
+export const ITEM_NAME_SUFFIX_IDS = new Map<string, number>();
+
+for (const [id, name] of Object.entries(BEAST_NAMES)) {
+  BEAST_NAME_IDS.set(name.toLowerCase(), Number(id));
+}
+
+for (const [id, name] of Object.entries(ITEM_NAME_PREFIXES)) {
+  ITEM_NAME_PREFIX_IDS.set(name.toLowerCase(), Number(id));
+}
+
+for (const [id, name] of Object.entries(ITEM_NAME_SUFFIXES)) {
+  ITEM_NAME_SUFFIX_IDS.set(name.toLowerCase(), Number(id));
+}
+
+/**
  * Look up a beast name by ID
  */
 export function getBeastName(beastId: number): string {
@@ -271,4 +290,28 @@ export function getPrefix(prefixId: number): string {
  */
 export function getSuffix(suffixId: number): string {
   return ITEM_NAME_SUFFIXES[suffixId] ?? "";
+}
+
+/**
+ * Reverse lookup a beast ID by name (case-insensitive).
+ */
+export function getBeastIdByName(name: string | null): number | null {
+  if (!name) return null;
+  return BEAST_NAME_IDS.get(name.trim().toLowerCase()) ?? null;
+}
+
+/**
+ * Reverse lookup a prefix ID by name (case-insensitive).
+ */
+export function getPrefixIdByName(prefix: string | null): number | null {
+  if (!prefix) return null;
+  return ITEM_NAME_PREFIX_IDS.get(prefix.trim().toLowerCase()) ?? null;
+}
+
+/**
+ * Reverse lookup a suffix ID by name (case-insensitive).
+ */
+export function getSuffixIdByName(suffix: string | null): number | null {
+  if (!suffix) return null;
+  return ITEM_NAME_SUFFIX_IDS.get(suffix.trim().toLowerCase()) ?? null;
 }

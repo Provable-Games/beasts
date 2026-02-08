@@ -82,6 +82,26 @@ scarb build
 snforge test
 ```
 
+## 🧰 SDK
+
+The TypeScript SDK can fetch Beast data from Summit API, fall back to Voyager, and finally to RPC using the onchain data provider. It also renders the NFT card locally.
+
+```ts
+import { createBeastSdk, generateBeastSvg, toBeastSvgInput } from "@lootsurvivor/beast-sdk";
+
+const sdk = createBeastSdk({
+  apiBaseUrl: "https://your-summit-api.example",
+  voyager: {
+    apiKey: "YOUR_VOYAGER_API_KEY",
+  },
+  // RPC defaults to https://api.cartridge.gg/x/starknet/mainnet/rpc/v0_10
+  // and the mainnet Beast data provider.
+});
+
+const { beasts } = await sdk.getAccountBeasts("0x0123...");
+const svg = beasts[0] ? generateBeastSvg(toBeastSvgInput(beasts[0])) : null;
+```
+
 ## 🏗️ Architecture
 
 ### Smart Contract Structure
