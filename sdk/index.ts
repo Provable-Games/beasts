@@ -7,7 +7,21 @@
  */
 
 // Re-export types
-export type { BeastApiResponse, BeastCombatType, BeastTier, BeastId } from "./types";
+export type {
+  BeastApiResponse,
+  BeastCombatType,
+  BeastTier,
+  BeastId,
+  BeastInput,
+  ValidationResult,
+  BeastMetadataAttribute,
+  BeastMetadataJson,
+  BeastMetadataAttributesParsed,
+  MetadataValidationIssue,
+  MetadataValidationResult,
+  ParsedTokenUri,
+  TokenUriParseResult,
+} from "./types";
 
 // Re-export lookup tables and functions
 export {
@@ -39,7 +53,31 @@ export { generateBeastSvg, generateBeastSvgFromNFT } from "./svg";
 export type { BeastSvgInput } from "./svg";
 
 // Re-export utility functions
-export { calculatePower } from "./utils";
+export { calculatePower, calculatePowerClamped, isHigherRank } from "./utils";
+
+// Validation helpers
+export {
+  GENESIS_DEFAULTS,
+  validateBeastId,
+  validateBeastAttributes,
+  validateBeastInput,
+  createGenesisBeast,
+} from "./validation";
+
+// Metadata helpers
+export {
+  decodeTokenUriJson,
+  buildTokenUriFromJsonString,
+  buildTokenUri,
+  parseTokenUri,
+  decodeSvgDataUri,
+  encodeSvgDataUri,
+  getAttributeMap,
+  validateMetadataJson,
+  parseMetadataAttributes,
+  parseTokenUriDetailed,
+  parseTokenUriSafe,
+} from "./metadata";
 
 // Import for local use
 import { getBeastName, getBeastTier, getBeastType } from "./lookups";

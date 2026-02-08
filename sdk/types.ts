@@ -27,6 +27,105 @@ export interface BeastApiResponse {
 }
 
 /**
+ * Core beast input attributes (matches on-chain PackableBeast fields).
+ */
+export interface BeastInput {
+  beastId: number;
+  prefix: number;
+  suffix: number;
+  level: number;
+  health: number;
+  shiny: number;
+  animated: number;
+}
+
+/**
+ * Validation result for beast inputs.
+ */
+export interface ValidationResult {
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Token URI metadata attribute.
+ */
+export interface BeastMetadataAttribute {
+  trait_type: string;
+  value: string;
+}
+
+/**
+ * Token URI metadata JSON shape.
+ */
+export interface BeastMetadataJson {
+  name: string;
+  description: string;
+  image: string;
+  attributes: BeastMetadataAttribute[];
+  [key: string]: unknown;
+}
+
+/**
+ * Parsed metadata attributes with typed fields.
+ */
+export interface BeastMetadataAttributesParsed {
+  tokenId: number | null;
+  beastId: number | null;
+  beast: string | null;
+  type: string | null;
+  tier: number | null;
+  prefix: string | null;
+  suffix: string | null;
+  level: number | null;
+  health: number | null;
+  power: number | null;
+  rank: number | null;
+  adventurersKilled: number | null;
+  lastKilledBy: number | null;
+  lastDeathTimestamp: number | null;
+  shiny: number | null;
+  animated: number | null;
+  genesis: number | null;
+}
+
+/**
+ * Metadata validation issue.
+ */
+export interface MetadataValidationIssue {
+  path: string;
+  message: string;
+}
+
+/**
+ * Metadata validation result.
+ */
+export interface MetadataValidationResult {
+  ok: boolean;
+  issues: MetadataValidationIssue[];
+}
+
+/**
+ * Parsed token URI with convenience projections.
+ */
+export interface ParsedTokenUri {
+  metadata: BeastMetadataJson;
+  attributeMap: Record<string, string>;
+  attributes: BeastMetadataAttributesParsed;
+  imageSvg?: string;
+}
+
+/**
+ * Safe token URI parse result.
+ */
+export interface TokenUriParseResult {
+  ok: boolean;
+  value?: ParsedTokenUri;
+  error?: string;
+  issues?: MetadataValidationIssue[];
+}
+
+/**
  * Combat type categories for beasts
  */
 export type BeastCombatType = "Magic" | "Hunter" | "Brute";

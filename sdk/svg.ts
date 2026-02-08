@@ -37,7 +37,8 @@ export interface BeastSvgInput {
   power: number;
   shiny: boolean;
   rank: number | null; // 1=crown, >1=trophy, 0/null=none
-  imageUrl?: string; // Optional override, defaults to getBeastImageDataUri(beastId, shiny)
+  animated?: boolean; // Optional: use GIF data when true
+  imageUrl?: string; // Optional override, defaults to getBeastImageDataUri(beastId, shiny, animated)
 }
 
 /**
@@ -55,6 +56,7 @@ interface BeastNFT {
   power: number | null;
   rank: number | null;
   shiny: boolean;
+  animated?: boolean | null;
   type: string | null;
   imageUrl: string | null;
   [key: string]: unknown;
@@ -256,8 +258,9 @@ export function generateBeastSvg(input: BeastSvgInput): string {
     rank,
   } = input;
 
+  const animated = input.animated ?? false;
   const imageUrl =
-    input.imageUrl ?? getBeastImageDataUri(beastId, shiny);
+    input.imageUrl ?? getBeastImageDataUri(beastId, shiny, animated);
   const beastType = getBeastType(beastId);
 
   return (
@@ -297,6 +300,7 @@ export function generateBeastSvgFromNFT(beast: BeastNFT): string {
     power,
     shiny: beast.shiny,
     rank: beast.rank,
+    animated: beast.animated ?? false,
     imageUrl: beast.imageUrl ?? undefined,
   });
 }
