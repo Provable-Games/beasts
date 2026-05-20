@@ -10,14 +10,18 @@ mod mint_tests {
         ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
         stop_cheat_caller_address,
     };
-    use starknet::{ContractAddress, contract_address_const};
+    use starknet::ContractAddress;
+
+    fn test_address(address: felt252) -> ContractAddress {
+        address.try_into().unwrap()
+    }
 
     fn deploy_contract() -> (
         IBeastsDispatcher, IERC721Dispatcher, IOwnableDispatcher, ContractAddress,
     ) {
-        let owner = contract_address_const::<'owner'>();
-        let recipient = contract_address_const::<'recipient'>();
-        let royalty_receiver: ContractAddress = contract_address_const::<'royalty_receiver'>();
+        let owner = test_address('owner');
+        let recipient = test_address('recipient');
+        let royalty_receiver: ContractAddress = test_address('royalty_receiver');
         let royalty_fraction: u128 = 500;
 
         // Declare and deploy contract
@@ -68,7 +72,7 @@ mod mint_tests {
     #[test]
     fn test_set_dungeon_address() {
         let (beasts, _, ownable, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
+        let minter = test_address('minter');
 
         // Set minter as owner
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -83,8 +87,8 @@ mod mint_tests {
     #[should_panic(expected: ('Caller is not the owner',))]
     fn test_set_dungeon_address_not_owner() {
         let (beasts, _, _, _) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
-        let random_caller = contract_address_const::<'random'>();
+        let minter = test_address('minter');
+        let random_caller = test_address('random');
 
         // Try to set minter as non-owner
         start_cheat_caller_address(beasts.contract_address, random_caller);
@@ -95,8 +99,8 @@ mod mint_tests {
     #[test]
     fn test_mint_basic() {
         let (beasts, erc721, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
-        let recipient = contract_address_const::<'recipient'>();
+        let minter = test_address('minter');
+        let recipient = test_address('recipient');
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -136,8 +140,8 @@ mod mint_tests {
     #[should_panic(expected: ('Not authorized to mint',))]
     fn test_mint_not_authorized() {
         let (beasts, _, _, owner) = deploy_contract();
-        let random_caller = contract_address_const::<'random'>();
-        let recipient = contract_address_const::<'recipient'>();
+        let random_caller = test_address('random');
+        let recipient = test_address('recipient');
 
         // Try to mint without being minter
         start_cheat_caller_address(beasts.contract_address, random_caller);
@@ -149,7 +153,7 @@ mod mint_tests {
     #[should_panic(expected: ('Invalid beast ID',))]
     fn test_mint_invalid_beast_id_zero() {
         let (beasts, _, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
+        let minter = test_address('minter');
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -166,7 +170,7 @@ mod mint_tests {
     #[should_panic(expected: ('Invalid beast ID',))]
     fn test_mint_invalid_beast_id_too_high() {
         let (beasts, _, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
+        let minter = test_address('minter');
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -183,8 +187,8 @@ mod mint_tests {
     #[should_panic(expected: ('Beast already minted',))]
     fn test_mint_duplicate() {
         let (beasts, _, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
-        let recipient = contract_address_const::<'recipient'>();
+        let minter = test_address('minter');
+        let recipient = test_address('recipient');
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -203,8 +207,8 @@ mod mint_tests {
     #[test]
     fn test_mint_same_beast_different_attributes() {
         let (beasts, erc721, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
-        let recipient = contract_address_const::<'recipient'>();
+        let minter = test_address('minter');
+        let recipient = test_address('recipient');
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -231,7 +235,7 @@ mod mint_tests {
     #[test]
     fn test_mint_genesis_beasts() {
         let (beasts, erc721, _, owner) = deploy_contract();
-        let recipient = contract_address_const::<'recipient'>();
+        let recipient = test_address('recipient');
 
         // Mint genesis beasts as owner
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -261,7 +265,7 @@ mod mint_tests {
     #[should_panic(expected: ('Caller is not the owner',))]
     fn test_mint_genesis_beasts_not_owner() {
         let (beasts, _, _, _) = deploy_contract();
-        let random_caller = contract_address_const::<'random'>();
+        let random_caller = test_address('random');
 
         // Try to mint genesis beasts as non-owner
         start_cheat_caller_address(beasts.contract_address, random_caller);
@@ -272,7 +276,7 @@ mod mint_tests {
     #[test]
     fn test_total_supply() {
         let (beasts, _, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
+        let minter = test_address('minter');
 
         // Initial supply should be 0
         assert(beasts.total_supply() == 0, 'Initial supply should be 0');
@@ -298,8 +302,8 @@ mod mint_tests {
     #[test]
     fn test_token_uri_with_minted_data() {
         let (beasts, _, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
-        let recipient = contract_address_const::<'recipient'>();
+        let minter = test_address('minter');
+        let recipient = test_address('recipient');
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -378,8 +382,8 @@ mod mint_tests {
     #[test]
     fn test_king_beast_basic_functionality() {
         let (beasts, _, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
-        let recipient = contract_address_const::<'recipient'>();
+        let minter = test_address('minter');
+        let recipient = test_address('recipient');
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -405,9 +409,9 @@ mod mint_tests {
     #[test]
     fn test_king_beast_higher_power_replaces_king() {
         let (beasts, _, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
-        let recipient = contract_address_const::<'recipient'>();
-        let recipient2 = contract_address_const::<'recipient2'>();
+        let minter = test_address('minter');
+        let recipient = test_address('recipient');
+        let recipient2 = test_address('recipient2');
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -434,9 +438,9 @@ mod mint_tests {
     #[test]
     fn test_king_beast_lower_power_does_not_replace() {
         let (beasts, _, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
-        let recipient = contract_address_const::<'recipient'>();
-        let recipient2 = contract_address_const::<'recipient2'>();
+        let minter = test_address('minter');
+        let recipient = test_address('recipient');
+        let recipient2 = test_address('recipient2');
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -463,8 +467,8 @@ mod mint_tests {
     #[test]
     fn test_king_beast_different_tiers() {
         let (beasts, _, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
-        let recipient = contract_address_const::<'recipient'>();
+        let minter = test_address('minter');
+        let recipient = test_address('recipient');
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -502,9 +506,9 @@ mod mint_tests {
     #[test]
     fn test_king_beast_same_power_keeps_existing() {
         let (beasts, _, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
-        let recipient = contract_address_const::<'recipient'>();
-        let recipient2 = contract_address_const::<'recipient2'>();
+        let minter = test_address('minter');
+        let recipient = test_address('recipient');
+        let recipient2 = test_address('recipient2');
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -531,8 +535,8 @@ mod mint_tests {
     #[test]
     fn test_king_beast_edge_cases() {
         let (beasts, _, _, owner) = deploy_contract();
-        let minter = contract_address_const::<'minter'>();
-        let recipient = contract_address_const::<'recipient'>();
+        let minter = test_address('minter');
+        let recipient = test_address('recipient');
 
         // Set minter
         start_cheat_caller_address(beasts.contract_address, owner);
