@@ -8,9 +8,9 @@
 
 ## Overview
 
-The Beasts are a collection of digital-native creatures, born onchain and built for battle. With 1,243 variants across 75 species, the fixed supply of 93,225 Beasts balances abundance and scarcity. Beasts carry two sets of traits: visual and combat.
+The Beasts are a collection of digital-native creatures, born onchain and built for battle. Across 75 species, each Beast combines naming, visual, and combat attributes to balance abundance and scarcity. Beasts carry two sets of traits: visual and combat.
 
-- Visual traits power collecting: Shiny and Animated forms activate pixel-perfect effects. Each Beast has live ranking within its species (1–1,243) that updates as new Beasts are minted; once a species is complete, a King Beast is crowned.
+- Visual traits power collecting: Shiny and Animated forms activate pixel-perfect effects. Non-genesis Beasts receive live ranking within their species based on power and health, and those rankings update as new Beasts are minted.
 - Combat traits power play: On mint, a Beast includes level and health. Together with its type and tier, this defines a combat profile compatible with the Loot Survivor system that first brought Beasts into the world.
 - Live, credibly neutral traits such as Adventurers slain, last Adventurer who defeated a Beast, and timestamp of that defeat enable long-term growth systems without hardcoding game logic.
 - Beasts are earned by worthy Adventurers in the dungeons of Loot Survivor using verifiable randomness. Every step is etched onchain for permanent provenance. For collectors, Beasts offer verifiable scarcity and provenance; for players, they unlock endless onchain fun.
@@ -57,9 +57,12 @@ The Beasts are a collection of digital-native creatures, born onchain and built 
 
 ### Prerequisites
 
-- [Scarb](https://docs.swmansion.com/scarb/) 2.10.1
-- [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) 0.46.0
-- [Cairo Coverage](https://github.com/software-mansion/cairo-coverage) 0.5.0 (for test coverage)
+- [Scarb](https://docs.swmansion.com/scarb/) 2.15.1
+- [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) 0.55.0
+- [Starkli](https://book.starkli.rs/) for deployment
+- [Cairo Coverage](https://github.com/software-mansion/cairo-coverage) and [lcov](https://github.com/linux-test-project/lcov) for local coverage reports
+
+Tool versions used by CI are pinned in `.tool-versions`.
 
 ### Setup
 
@@ -89,13 +92,18 @@ snforge test
 ```
 src/
 ├── lib.cairo                  # Entry point; exposes modules and ERC721 contract (beasts_nft)
-├── pack.cairo                 # Attribute packing (id, name parts, level, health, shiny, animated)
 ├── beast_definitions.cairo    # 75 species definitions and names
 ├── beast_manager.cairo        # Validation and uniqueness hashing
-├── beast_ranking.cairo        # Per-species live ranking + king logic
+├── minting_coordinator.cairo  # Single and batch mint prep
+├── beast_ranking.cairo        # Per-species live ranking
+├── pack.cairo                 # Attribute packing (id, name parts, level, health, shiny, animated)
 ├── metadata_generator.cairo   # Onchain JSON metadata generation
 ├── beast_svg.cairo            # Dynamic SVG artwork generation
-├── minting_coordinator.cairo  # Single and batch mint prep
+├── beast_images.cairo         # Shared image helpers
+├── beast_png_*_data.cairo     # PNG image data provider contracts
+├── beast_gif_*_data.cairo     # GIF image data provider contracts
+├── encoding.cairo             # Encoding helpers
+├── utils.cairo                # Shared utilities
 └── interfaces.cairo           # External interfaces (image data providers, systems)
 ```
 
@@ -133,17 +141,23 @@ PackableBeast {
 
 ## 🧪 Testing
 
-Run the comprehensive test suite:
+Run the test suite:
 
 ```bash
-# Run foundry with coverage
+# Default local run
+snforge test
+
+# Match the CI test command
+snforge test --max-n-steps 4294967295
+
+# Generate local coverage
 snforge test --coverage
 
 # Summarize coverage locally
 lcov --summary coverage/coverage.lcov
 ```
 
-CI enforces formatting and coverage on patches (≥35%); aim for ≥80% overall when feasible.
+For a longer local pass, use `snforge test --fuzzer-runs 500 --coverage`. CI currently enforces formatting and tests, but not coverage thresholds; aim for >=80% overall coverage when feasible.
 
 ## 🚢 Deployment
 
@@ -160,10 +174,10 @@ Required in `.env` (no defaults are assumed):
 - `RPC_URL` (e.g., Sepolia or Mainnet endpoint)
 - `NAME`, `SYMBOL`
 - `OWNER`, `ROYALTY_RECEIVER`, `ROYALTY_FRACTION` (u128, denominator 10,000)
+- `TERMINAL_TIMESTAMP` (u64): UNIX timestamp in seconds after which `token_uri` is disabled and calls revert. Use `0` to keep `token_uri` active indefinitely.
 
 Optional in `.env`:
 
-- `TERMINAL_TIMESTAMP` (u64, default `0`): UNIX timestamp (seconds) after which `token_uri` is disabled and calls revert. Use `0` to keep `token_uri` active indefinitely.
 - `DEATH_MOUNTAIN_ADDRESS` (ContractAddress, default `0`): external systems integration address; set to `0` to disable.
 
 2. Deploy to Starknet:
@@ -186,15 +200,16 @@ Notes:
 
 ```bash
 scarb fmt
+scarb fmt --check --workspace
 ```
 
 ### CI/CD
 
 The project uses GitHub Actions for:
 
-- Linting (scarb fmt --check)
-- Testing with fuzzing
-- Coverage verification (patch ≥35%)
+- Linting (`scarb fmt --check --workspace`)
+- Contract tests (`snforge test --max-n-steps 4294967295`)
+- Caching/installing coverage tools for local parity; coverage thresholds are not currently enforced in CI
 
 ## 🤝 Acknowledgments
 
@@ -210,7 +225,3 @@ The project uses GitHub Actions for:
 - [Shiny PNG URI](https://voyager.online/contract/0x03bdFdEeA997CA7C7b1d66590a541FC559cE5A742e0162fE98Fe371E70709444)
 - [Regular GIF URI](https://voyager.online/contract/0x012F11AD850839d27351Bbf49858A3180AdB1C30d9942423FD089F5740776293)
 - [Shiny GIF URI](https://voyager.online/contract/0x0700f224e6fcb344c27f29e62687333b589b3be39a2c026ede5968bf53b6bb2a)
-
----
-
-## Acknowledgments
