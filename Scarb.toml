@@ -22,7 +22,6 @@ test = "snforge test"
 snforge_std = "0.60.0"
 
 [[target.starknet-contract]]
-allowed-libfuncs = false
 
 [profile.dev.cairo]
 
