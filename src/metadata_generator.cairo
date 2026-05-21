@@ -286,12 +286,16 @@ mod tests {
         ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
         start_mock_call, stop_cheat_caller_address,
     };
-    use starknet::{ContractAddress, contract_address_const};
+    use starknet::ContractAddress;
     use super::super::beast_manager::BeastManagerTrait;
     use super::super::interfaces::{
         IBeastImageDataProviderDispatcher, IBeastImageDataProviderDispatcherTrait,
     };
     use super::{Attribute, BeastSvgTrait, MetadataGeneratorTrait, PackableBeast};
+
+    fn test_address(address: felt252) -> ContractAddress {
+        address.try_into().unwrap()
+    }
 
     fn find_substring(text: @ByteArray, pattern: @ByteArray) -> bool {
         let text_len = text.len();
@@ -333,8 +337,8 @@ mod tests {
     fn deploy_beasts_with_terminal(
         terminal_ts: u64, mock_provider_addr: ContractAddress,
     ) -> (IBeastsDispatcher, IERC721MetadataDispatcher, ContractAddress, ContractAddress) {
-        let owner = contract_address_const::<'owner'>();
-        let royalty_receiver: ContractAddress = contract_address_const::<'royalty_receiver'>();
+        let owner = test_address('owner');
+        let royalty_receiver: ContractAddress = test_address('royalty_receiver');
 
         let contract = declare("beasts_nft").unwrap().contract_class();
 
@@ -393,13 +397,13 @@ mod tests {
         let (beasts, metadata, owner, _addr) = deploy_beasts_with_terminal(0_u64, mock_provider);
 
         // Set minter
-        let minter = contract_address_const::<'minter'>();
+        let minter = test_address('minter');
         start_cheat_caller_address(beasts.contract_address, owner);
         beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Mint one beast
-        let recipient = contract_address_const::<'recipient'>();
+        let recipient = test_address('recipient');
         start_cheat_caller_address(beasts.contract_address, minter);
         let (token_id, _, _) = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
@@ -423,13 +427,13 @@ mod tests {
         let (beasts, metadata, owner, _addr) = deploy_beasts_with_terminal(1_u64, mock_provider);
 
         // Set minter
-        let minter = contract_address_const::<'minter'>();
+        let minter = test_address('minter');
         start_cheat_caller_address(beasts.contract_address, owner);
         beasts.set_dungeon_address(minter);
         stop_cheat_caller_address(beasts.contract_address);
 
         // Mint a beast so token exists
-        let recipient = contract_address_const::<'recipient'>();
+        let recipient = test_address('recipient');
         start_cheat_caller_address(beasts.contract_address, minter);
         let (token_id, _, _) = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);

@@ -57,8 +57,8 @@ The Beasts are a collection of digital-native creatures, born onchain and built 
 
 ### Prerequisites
 
-- [Scarb](https://docs.swmansion.com/scarb/) 2.15.1
-- [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) 0.55.0
+- [Scarb](https://docs.swmansion.com/scarb/) 2.18.0
+- [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) 0.60.0
 - [Starkli](https://book.starkli.rs/) for deployment
 - [Cairo Coverage](https://github.com/software-mansion/cairo-coverage) and [lcov](https://github.com/linux-test-project/lcov) for local coverage reports
 
