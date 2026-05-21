@@ -79,7 +79,7 @@ fn unpack_from_u256(value: u256) -> PackableBeast {
     PackableBeast { id, prefix, suffix, level, health, shiny, animated }
 }
 
-/// Encodes a beast into its deterministic token id.
+/// Encodes a beast into its compact deterministic token id.
 pub fn encode_token_id(beast: PackableBeast) -> u256 {
     pack_to_u256(beast)
 }

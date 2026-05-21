@@ -8,10 +8,16 @@ pub mod beast_png_shiny_data;
 pub mod beast_ranking;
 pub mod beast_svg;
 pub mod encoding;
+pub mod enumerable;
+
 pub mod interfaces;
 pub mod metadata_generator;
+#[cfg(test)]
+mod mint_tests;
 pub mod minting_coordinator;
 pub mod pack;
+#[cfg(test)]
+mod tests;
 pub mod utils;
 
 // Minimal view interface to expose `animation_url` alongside `token_uri`.
@@ -39,6 +45,7 @@ pub mod beasts_nft {
     };
     use super::beast_manager::{BeastManagerTrait, BeastResult};
     use super::beast_ranking::BeastRankingManagerTrait;
+    use super::enumerable::EnumerableComponent;
     use super::interfaces::{
         IBeastImageDataProviderDispatcher, IBeastSystemsDispatcher, IBeastSystemsDispatcherTrait,
         IBeasts, IBeastsAnimation,
@@ -53,6 +60,7 @@ pub mod beasts_nft {
     component!(path: ERC2981Component, storage: erc2981, event: ERC2981Event);
     component!(path: VotesComponent, storage: erc721_votes, event: ERC721VotesEvent);
     component!(path: NoncesComponent, storage: nonces, event: NoncesEvent);
+    component!(path: EnumerableComponent, storage: erc721_enumerable, event: EnumerableEvent);
 
     // Ownable Mixin
     #[abi(embed_v0)]
@@ -78,6 +86,11 @@ pub mod beasts_nft {
     #[abi(embed_v0)]
     impl NoncesImpl = NoncesComponent::NoncesImpl<ContractState>;
     impl NoncesInternalImpl = NoncesComponent::InternalImpl<ContractState>;
+
+    // Owner enumeration
+    #[abi(embed_v0)]
+    impl EnumerableImpl = EnumerableComponent::EnumerableImpl<ContractState>;
+    impl EnumerableInternalImpl = EnumerableComponent::InternalImpl<ContractState>;
 
     // SRC5 Implementation
     #[abi(embed_v0)]
@@ -110,6 +123,8 @@ pub mod beasts_nft {
         pub erc2981: ERC2981Component::Storage,
         #[substorage(v0)]
         pub nonces: NoncesComponent::Storage,
+        #[substorage(v0)]
+        pub erc721_enumerable: EnumerableComponent::Storage,
         // Beast-specific storage
         pub beast_token_ranks: Map<u256, u16>, // token_id -> current rank (for tokenURI)
         pub beast_species_lists: Map<
@@ -120,7 +135,6 @@ pub mod beasts_nft {
         pub last_manual_metadata_refresh: Map<u256, u64>, // token_id -> timestamp of last update
         pub minted: Map<felt252, bool>,
         pub dungeon_address: ContractAddress,
-        pub supply_count: u256,
         // External data providers
         pub regular_png_provider: IBeastImageDataProviderDispatcher,
         pub shiny_png_provider: IBeastImageDataProviderDispatcher,
@@ -152,6 +166,8 @@ pub mod beasts_nft {
         ERC2981Event: ERC2981Component::Event,
         #[flat]
         NoncesEvent: NoncesComponent::Event,
+        #[flat]
+        EnumerableEvent: EnumerableComponent::Event,
         MetadataUpdate: MetadataUpdate,
     }
 
@@ -184,6 +200,7 @@ pub mod beasts_nft {
             // id exists which is necessary for mints
             let previous_owner = self._owner_of(token_id);
             contract_state.erc721_votes.transfer_voting_units(previous_owner, to, 1);
+            contract_state.erc721_enumerable.before_update(to, token_id);
         }
     }
 
@@ -208,6 +225,7 @@ pub mod beasts_nft {
     ) {
         self.ownable.initializer(owner);
         self.erc721.initializer(name, symbol, "");
+        self.erc721_enumerable.initializer();
         self.erc2981.initializer(royalty_receiver, royalty_fraction);
 
         // Store external image data dispatchers
@@ -298,7 +316,6 @@ pub mod beasts_nft {
 
                     // Mint NFT
                     self.erc721.mint(to, mint_data.token_id);
-                    self.supply_count.write(self.supply_count.read() + 1);
                     (mint_data.token_id, insertion_rank)
                 },
                 BeastResult::Err(e) => { core::panic_with_felt252(e); },
@@ -391,10 +408,6 @@ pub mod beasts_nft {
         fn is_minted(self: @ContractState, beast_id: u8, prefix: u8, suffix: u8) -> bool {
             let hash = BeastManagerTrait::get_beast_hash(beast_id, prefix, suffix);
             self.minted.entry(hash).read()
-        }
-
-        fn total_supply(self: @ContractState) -> u256 {
-            self.supply_count.read()
         }
 
         fn get_beast_rank(self: @ContractState, token_id: u256) -> u16 {
@@ -546,22 +559,18 @@ pub mod beasts_nft {
                     break;
                 }
 
-                match batch.at(i) {
+                match MintingCoordinatorTrait::prepare_genesis_mint(*batch.at(i)) {
                     BeastResult::Ok(mint_data) => {
+                        self.minted.entry(mint_data.hash).write(true);
+
                         // Mint NFT
-                        self.erc721.mint(to, *mint_data.token_id);
+                        self.erc721.mint(to, mint_data.token_id);
                     },
-                    BeastResult::Err(e) => { core::panic_with_felt252(*e); },
+                    BeastResult::Err(e) => { core::panic_with_felt252(e); },
                 }
 
                 i += 1;
             }
-
-            // Update supply count
-            let new_supply = MintingCoordinatorTrait::calculate_new_supply(
-                self.supply_count.read(), 75,
-            );
-            self.supply_count.write(new_supply);
         }
 
         /// Internal helper to build the onchain metadata URI for a token.

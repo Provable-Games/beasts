@@ -132,7 +132,7 @@ Beasts do not use sequential token IDs. For fresh deployments, every token ID is
 token_id = encode_token_id(PackableBeast)
 ```
 
-The bit layout is:
+The token ID directly packs the immutable Beast payload:
 
 ```text
 id
@@ -144,13 +144,14 @@ id
 + animated * 2^52
 ```
 
-This keeps every valid Beast token ID below `2^53`, so it fits comfortably in `u256`. The same format is used for genesis and non-genesis Beasts.
+This keeps every valid Beast token ID below `2^53`, so it fits comfortably in `u256` and can also be stored as a `felt252` by the owner enumerable component.
 
-Because the token ID is the source of the Beast attributes, contract reads such as `get_beast(token_id)`, `token_uri(token_id)`, and ranking comparisons decode the token ID after verifying ERC721 ownership/existence. There is no separate onchain map from `token_id` to `PackableBeast`.
+Because the token ID is the source of the static Beast attributes, contract reads such as `get_beast(token_id)`, `token_uri(token_id)`, and ranking comparisons decode the token ID after verifying ERC721 ownership/existence. There is no separate onchain map from `token_id` to `PackableBeast`.
 
-Genesis Beasts are minted in the constructor to the owner with `prefix = 0`, `suffix = 0`, `level = 1`, `health = 100`, `shiny = 1`, and `animated = 1`. Genesis Beasts have rank `0` and are not entered into the non-genesis uniqueness map. Non-genesis Beast uniqueness is tracked by `(beast_id, prefix, suffix)`, while ranking and metadata refresh state continue to index by packed token ID.
+Genesis Beasts are minted in the constructor to the owner with `prefix = 0`, `suffix = 0`, `level = 1`, `health = 100`, `shiny = 1`, and `animated = 1`. Genesis Beasts have rank `0`. Beast uniqueness is tracked by `(beast_id, prefix, suffix)`, while ranking and metadata refresh state continue to index by token ID.
 
-`total_supply()` is a count of minted NFTs, not the largest token ID.
+There is no Beasts `total_supply()` API. Use ERC721 `balance_of(owner)` and `token_of_owner_by_index(owner, index)` for owner-level queries.
+Owner enumeration is exposed through the Beasts-specific `IBEASTS_OWNER_ENUMERABLE_ID`, not the full ERC721 enumerable interface ID, because global enumeration is intentionally unavailable.
 
 ## 🎮 Beast Types & Tiers
 
