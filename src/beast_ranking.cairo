@@ -172,7 +172,8 @@ mod tests {
         let genesis = PackableBeast {
             id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
         };
-        assert(beasts.get_beast_rank(encode_token_id(genesis)) == 0_u16, 'Genesis has no rank');
+        let genesis_token_id = encode_token_id(genesis);
+        assert(beasts.get_beast_rank(genesis_token_id) == 0_u16, 'Genesis has no rank');
 
         // Mint first custom beast
         let (weak_token_id, _, _) = beasts.mint(recipient, 1_u8, 1_u8, 1_u8, 100_u16, 50_u16, 0, 0);
@@ -258,7 +259,7 @@ mod tests {
         assert(beasts.get_beast_rank(strongest_token_id) == 1_u16, 'Strongest rank 1');
         assert(beasts.get_beast_rank(previous_strongest_token_id) == 2_u16, 'Previous rank 2');
         assert(beasts.get_beast_rank(weakest_token_id) == 6_u16, 'Weakest rank 6');
-        assert(beasts.total_supply() == 81_u256, 'Should have 81 beasts');
+        assert(beasts.get_species_count(1) == 6_u16, 'Should have 6 species 1 beasts');
 
         stop_cheat_caller_address(contract_address);
     }
@@ -337,8 +338,7 @@ mod tests {
             prefix += 1;
         }
 
-        // Verify we have 75 genesis + 20 custom = 95 beasts
-        assert(beasts.total_supply() == 95_u256, 'Should have 95 beasts');
+        assert(beasts.get_species_count(1) == 20_u16, 'Should have 20 species 1 beasts');
 
         // Now mint the ultimate beast that will trigger 20 shifts
         let (ultimate_token_id, _, _) = beasts
@@ -347,8 +347,7 @@ mod tests {
         // Verify the ultimate beast got rank 1
         assert(beasts.get_beast_rank(ultimate_token_id) == 1_u16, 'Ultimate beast rank 1');
 
-        // Verify total supply increased
-        assert(beasts.total_supply() == 96_u256, 'Should have 96 beasts');
+        assert(beasts.get_species_count(1) == 21_u16, 'Should have 21 species 1 beasts');
 
         // Verify some shifted rankings
         assert(beasts.get_beast_rank(previous_strongest_token_id) == 2_u16, 'Previous shifted');

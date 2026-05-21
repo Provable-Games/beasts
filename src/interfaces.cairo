@@ -1,6 +1,16 @@
 use starknet::ContractAddress;
 use super::pack::PackableBeast;
 
+/// Beasts-specific owner-only enumerable interface.
+/// EFS: token_of_owner_by_index(ContractAddress,(u128,u128))->(u128,u128)
+pub const IBEASTS_OWNER_ENUMERABLE_ID: felt252 =
+    0x312c74a3a4f7aaf9aa3e80ddea171f958139ef0c3dbea524e0763682b7d57dd;
+
+#[starknet::interface]
+pub trait IBeastsOwnerEnumerable<TContractState> {
+    fn token_of_owner_by_index(self: @TContractState, owner: ContractAddress, index: u256) -> u256;
+}
+
 /// Interface for the Beasts NFT contract
 #[starknet::interface]
 pub trait IBeasts<TContractState> {
@@ -30,7 +40,6 @@ pub trait IBeasts<TContractState> {
     // Beast queries
     fn get_beast(self: @TContractState, token_id: u256) -> PackableBeast;
     fn is_minted(self: @TContractState, beast_id: u8, prefix: u8, suffix: u8) -> bool;
-    fn total_supply(self: @TContractState) -> u256;
 
     // Beast ranking queries
     fn get_beast_rank(self: @TContractState, token_id: u256) -> u16;

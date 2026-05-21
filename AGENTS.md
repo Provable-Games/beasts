@@ -27,9 +27,9 @@
 - `PackableBeast` in `src/pack.cairo` defines the canonical 53-bit token ID format. Use `encode_token_id(beast)` and `decode_token_id(token_id)`; do not duplicate the bit math elsewhere.
 - ERC721 token IDs are deterministic, not sequential: `token_id == encode_token_id(PackableBeast)` for both genesis and non-genesis Beasts.
 - The contract intentionally has no `Storage.beasts` map. Decode token IDs only after ERC721 ownership/existence checks where user-facing existence matters.
-- `total_supply()` is backed by `supply_count` and is a count of minted NFTs, not the largest token ID.
-- Genesis Beasts are minted in the constructor, have rank `0`, and must not rely on `token_id <= 75`. They remain excluded from the `minted` uniqueness map.
-- Non-genesis uniqueness remains based on `(beast_id, prefix, suffix)` via `minted`; ranking, metadata bookmarks, and manual refresh timestamps still index by packed token ID.
+- The Beasts API intentionally has no enumerable `total_supply()`; use ERC721 `balance_of(owner)` and owner enumeration for owner-level queries.
+- Genesis Beasts are minted in the constructor, have rank `0`, and must not rely on `token_id <= 75`. They are entered into the `minted` uniqueness map so `(beast_id, 0, 0)` duplicate attempts fail with `Beast already minted`.
+- Beast uniqueness remains based on `(beast_id, prefix, suffix)` via `minted`; ranking, metadata bookmarks, and manual refresh timestamps still index by packed token ID.
 - This storage/token-ID design is for fresh deployments only. Do not add migration behavior for legacy sequential token IDs unless explicitly requested.
 
 ## Testing Guidelines

@@ -69,8 +69,8 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
         }
     }
 
-    /// Prepares batch genesis mint data
-    fn prepare_genesis_batch() -> Array<BeastResult<MintData>> {
+    /// Prepares the genesis beast ids.
+    fn prepare_genesis_batch() -> Array<u8> {
         let mut results = array![];
         let mut beast_id: u8 = 1;
 
@@ -79,8 +79,7 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
                 break;
             }
 
-            let result = Self::prepare_genesis_mint(beast_id);
-            results.append(result);
+            results.append(beast_id);
 
             beast_id += 1;
         }
@@ -108,11 +107,6 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
             i += 1;
         }
     }
-
-    /// Calculates supply after a batch mint
-    fn calculate_new_supply(current_supply: u256, mint_count: u32) -> u256 {
-        current_supply + mint_count.into()
-    }
 }
 
 #[cfg(test)]
@@ -131,6 +125,7 @@ mod tests {
                 let expected_beast = PackableBeast {
                     id: 3, prefix: 1, suffix: 2, level: 100, health: 1000, shiny: 0, animated: 1,
                 };
+                assert(data.beast == expected_beast, 'Beast mismatch');
                 assert(data.beast.id == 3, 'Beast ID mismatch');
                 assert(data.beast.prefix == 1, 'Prefix mismatch');
                 assert(data.beast.suffix == 2, 'Suffix mismatch');
@@ -164,6 +159,7 @@ mod tests {
                 let expected_beast = PackableBeast {
                     id: 25, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
                 };
+                assert(data.beast == expected_beast, 'Beast mismatch');
                 assert(data.beast.id == 25, 'Beast ID mismatch');
                 assert(data.beast.prefix == 0, 'Prefix should be 0');
                 assert(data.beast.suffix == 0, 'Suffix should be 0');
@@ -183,29 +179,8 @@ mod tests {
 
         assert(batch.len() == 75, 'Should have 75 beasts');
 
-        // Check first beast
-        match batch.at(0) {
-            BeastResult::Ok(data) => {
-                let expected_beast = PackableBeast {
-                    id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
-                };
-                assert(*data.beast.id == 1, 'First beast should be ID 1');
-                assert(*data.token_id == encode_token_id(expected_beast), 'First token ID');
-            },
-            BeastResult::Err(_) => { assert(false, 'First beast should not fail'); },
-        }
-
-        // Check last beast
-        match batch.at(74) {
-            BeastResult::Ok(data) => {
-                let expected_beast = PackableBeast {
-                    id: 75, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
-                };
-                assert(*data.beast.id == 75, 'Last beast should be ID 75');
-                assert(*data.token_id == encode_token_id(expected_beast), 'Last token ID');
-            },
-            BeastResult::Err(_) => { assert(false, 'Last beast should not fail'); },
-        }
+        assert(*batch.at(0) == 1, 'First beast should be ID 1');
+        assert(*batch.at(74) == 75, 'Last beast should be ID 75');
     }
 
     #[test]
@@ -235,15 +210,6 @@ mod tests {
         assert(
             !MintingCoordinatorTrait::validate_uniqueness(1, 2, 3, @existing_hashes),
             'Should not be unique',
-        );
-    }
-
-    #[test]
-    fn test_calculate_new_supply() {
-        assert(MintingCoordinatorTrait::calculate_new_supply(0, 1) == 1, 'Supply 0+1=1');
-        assert(MintingCoordinatorTrait::calculate_new_supply(100, 75) == 175, 'Supply 100+75=175');
-        assert(
-            MintingCoordinatorTrait::calculate_new_supply(1000, 0) == 1000, 'Supply 1000+0=1000',
         );
     }
 }

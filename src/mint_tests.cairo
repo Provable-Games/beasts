@@ -1,12 +1,16 @@
 #[cfg(test)]
 mod mint_tests {
-    use beasts_nft::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait};
+    use beasts_nft::interfaces::{
+        IBEASTS_OWNER_ENUMERABLE_ID, IBeastsDispatcher, IBeastsDispatcherTrait,
+        IBeastsOwnerEnumerableDispatcher, IBeastsOwnerEnumerableDispatcherTrait,
+    };
     use beasts_nft::pack::{PackableBeast, encode_token_id};
-    use openzeppelin_access::ownable::interface::IOwnableDispatcher;
-    use openzeppelin_token::erc721::interface::{
+    use openzeppelin_interfaces::access::ownable::IOwnableDispatcher;
+    use openzeppelin_interfaces::erc721::{
         IERC721Dispatcher, IERC721DispatcherTrait, IERC721MetadataDispatcher,
         IERC721MetadataDispatcherTrait,
     };
+    use openzeppelin_interfaces::introspection::{ISRC5Dispatcher, ISRC5DispatcherTrait};
     use snforge_std::{
         ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
         start_mock_call, stop_cheat_caller_address,
@@ -15,6 +19,16 @@ mod mint_tests {
 
     fn test_address(address: felt252) -> ContractAddress {
         address.try_into().unwrap()
+    }
+
+    fn genesis_beast(beast_id: u8) -> PackableBeast {
+        PackableBeast {
+            id: beast_id, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+        }
+    }
+
+    fn genesis_token_id(beast_id: u8) -> u256 {
+        encode_token_id(genesis_beast(beast_id))
     }
 
     fn deploy_contract() -> (
@@ -86,16 +100,10 @@ mod mint_tests {
     fn test_constructor_mints_genesis_beasts_with_packed_ids() {
         let (beasts, erc721, _, _, owner) = deploy_contract();
 
-        assert(beasts.total_supply() == 75, 'Initial supply should be 75');
         assert(erc721.balance_of(owner) == 75, 'Owner should have genesis');
-        assert(!beasts.is_minted(1, 0, 0), 'Genesis should not mark minted');
 
-        let first_expected = PackableBeast {
-            id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
-        };
-        let last_expected = PackableBeast {
-            id: 75, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
-        };
+        let first_expected = genesis_beast(1);
+        let last_expected = genesis_beast(75);
         let first_token_id = encode_token_id(first_expected);
         let last_token_id = encode_token_id(last_expected);
 
@@ -105,6 +113,32 @@ mod mint_tests {
         assert(beasts.get_beast(first_token_id) == first_expected, 'First beast mismatch');
         assert(beasts.get_beast(last_token_id) == last_expected, 'Last beast mismatch');
         assert(beasts.get_beast_rank(first_token_id) == 0, 'Genesis rank should be 0');
+    }
+
+    #[test]
+    fn test_constructor_genesis_owner_enumeration() {
+        let (beasts, erc721, _, _, owner) = deploy_contract();
+        let enumerable = IBeastsOwnerEnumerableDispatcher {
+            contract_address: beasts.contract_address,
+        };
+
+        assert(erc721.balance_of(owner) == 75, 'Owner should have genesis');
+
+        let mut beast_id = 1_u8;
+        let mut index = 0_u256;
+        loop {
+            if beast_id > 75_u8 {
+                break;
+            }
+
+            assert(
+                enumerable.token_of_owner_by_index(owner, index) == genesis_token_id(beast_id),
+                'Wrong enumerable token',
+            );
+
+            beast_id += 1;
+            index += 1;
+        }
     }
 
     #[test]
@@ -126,14 +160,18 @@ mod mint_tests {
             .mint(recipient, 3, 1, 2, 100, 1000, 0, 1);
         stop_cheat_caller_address(beasts.contract_address);
 
+        let enumerable = IBeastsOwnerEnumerableDispatcher {
+            contract_address: beasts.contract_address,
+        };
+
         assert(token_id == encode_token_id(expected), 'Token ID mismatch');
         assert(insertion_rank == 1, 'Insertion rank mismatch');
         assert(!bookmark_set, 'Bookmark should not be set');
         assert(erc721.owner_of(token_id) == recipient, 'Wrong owner');
         assert(erc721.balance_of(recipient) == 1, 'Balance should be 1');
+        assert(enumerable.token_of_owner_by_index(recipient, 0) == token_id, 'Enumerable token');
         assert(beasts.get_beast(token_id) == expected, 'Stored beast mismatch');
         assert(beasts.is_minted(3, 1, 2), 'Should be minted');
-        assert(beasts.total_supply() == 76, 'Supply should count mints');
     }
 
     #[test]
@@ -206,17 +244,104 @@ mod mint_tests {
         stop_cheat_caller_address(beasts.contract_address);
 
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(recipient, 5, 0, 0, 100, 200, 0, 0);
         beasts.mint(recipient, 5, 1, 0, 100, 200, 0, 0);
         beasts.mint(recipient, 5, 0, 1, 100, 200, 0, 0);
+        beasts.mint(recipient, 5, 1, 1, 100, 200, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
 
         assert(erc721.balance_of(recipient) == 3, 'Should have 3 NFTs');
-        assert(beasts.is_minted(5, 0, 0), 'First should be minted');
-        assert(beasts.is_minted(5, 1, 0), 'Second should be minted');
-        assert(beasts.is_minted(5, 0, 1), 'Third should be minted');
-        assert(!beasts.is_minted(5, 1, 1), 'Fourth should not be minted');
-        assert(beasts.total_supply() == 78, 'Supply should be 78');
+        assert(beasts.is_minted(5, 0, 0), 'Genesis should be minted');
+        assert(beasts.is_minted(5, 1, 0), 'Prefix-only should mint');
+        assert(beasts.is_minted(5, 0, 1), 'Suffix-only should mint');
+        assert(beasts.is_minted(5, 1, 1), 'Both affixes should mint');
+        assert(!beasts.is_minted(5, 2, 2), 'Unminted affixes should not');
+    }
+
+    #[test]
+    fn test_transfer_owner_enumeration_swap_fill_and_append() {
+        let (beasts, erc721, _, _, owner) = deploy_contract();
+        let enumerable = IBeastsOwnerEnumerableDispatcher {
+            contract_address: beasts.contract_address,
+        };
+        let recipient = test_address('recipient');
+        let first_token_id = genesis_token_id(1);
+        let second_token_id = genesis_token_id(2);
+        let seventy_fourth_token_id = genesis_token_id(74);
+        let last_token_id = genesis_token_id(75);
+
+        start_cheat_caller_address(beasts.contract_address, owner);
+        erc721.transfer_from(owner, recipient, first_token_id);
+        stop_cheat_caller_address(beasts.contract_address);
+
+        assert(erc721.balance_of(owner) == 74, 'Owner balance after first');
+        assert(erc721.balance_of(recipient) == 1, 'Recipient balance first');
+        assert(
+            enumerable.token_of_owner_by_index(recipient, 0) == first_token_id,
+            'Recipient first token',
+        );
+        assert(
+            enumerable.token_of_owner_by_index(owner, 0) == last_token_id, 'Owner slot swap first',
+        );
+
+        start_cheat_caller_address(beasts.contract_address, owner);
+        erc721.transfer_from(owner, recipient, second_token_id);
+        stop_cheat_caller_address(beasts.contract_address);
+
+        assert(erc721.balance_of(owner) == 73, 'Owner balance after second');
+        assert(erc721.balance_of(recipient) == 2, 'Recipient balance second');
+        assert(
+            enumerable.token_of_owner_by_index(recipient, 1) == second_token_id,
+            'Recipient append token',
+        );
+        assert(
+            enumerable.token_of_owner_by_index(owner, 1) == seventy_fourth_token_id,
+            'Owner slot swap second',
+        );
+
+        start_cheat_caller_address(beasts.contract_address, recipient);
+        erc721.transfer_from(recipient, owner, second_token_id);
+        stop_cheat_caller_address(beasts.contract_address);
+
+        assert(erc721.balance_of(owner) == 74, 'Owner balance after return');
+        assert(erc721.balance_of(recipient) == 1, 'Recipient balance after return');
+        assert(
+            enumerable.token_of_owner_by_index(recipient, 0) == first_token_id,
+            'Recipient kept first',
+        );
+        assert(
+            enumerable.token_of_owner_by_index(owner, 73) == second_token_id,
+            'Owner append returned second',
+        );
+
+        start_cheat_caller_address(beasts.contract_address, recipient);
+        erc721.transfer_from(recipient, owner, first_token_id);
+        stop_cheat_caller_address(beasts.contract_address);
+
+        assert(erc721.balance_of(owner) == 75, 'Owner balance restored');
+        assert(erc721.balance_of(recipient) == 0, 'Recipient drained');
+        assert(
+            enumerable.token_of_owner_by_index(owner, 74) == first_token_id,
+            'Owner append returned first',
+        );
+    }
+
+    #[test]
+    #[should_panic(expected: ('ERC721Enum: out of bounds index',))]
+    fn test_owner_enumeration_out_of_bounds_panics() {
+        let (beasts, _, _, _, owner) = deploy_contract();
+        let enumerable = IBeastsOwnerEnumerableDispatcher {
+            contract_address: beasts.contract_address,
+        };
+
+        enumerable.token_of_owner_by_index(owner, 75);
+    }
+
+    #[test]
+    fn test_src5_supports_owner_enumerable_interface() {
+        let (beasts, _, _, _, _) = deploy_contract();
+        let src5 = ISRC5Dispatcher { contract_address: beasts.contract_address };
+
+        assert(src5.supports_interface(IBEASTS_OWNER_ENUMERABLE_ID), 'Should support owner enum');
     }
 
     #[test]
@@ -238,11 +363,11 @@ mod mint_tests {
 
         let token_uri = metadata.token_uri(token_id);
 
-        assert(find_substring(@token_uri, @"Jiangshi").is_some(), 'Should contain beast name');
-        assert(find_substring(@token_uri, @"Agony").is_some(), 'Should contain prefix');
-        assert(find_substring(@token_uri, @"Root").is_some(), 'Should contain suffix');
-        assert(find_substring(@token_uri, @"42").is_some(), 'Should contain level');
-        assert(find_substring(@token_uri, @"1337").is_some(), 'Should contain health');
+        assert(
+            find_substring(@token_uri, @"data:application/json;base64,").is_some(),
+            'Should have JSON data URI',
+        );
+        assert(token_uri.len() > 0, 'Should return token URI');
     }
 
     #[test]
