@@ -45,7 +45,7 @@ pub mod beasts_nft {
     };
     use super::metadata_generator::MetadataGeneratorTrait;
     use super::minting_coordinator::{MintRequest, MintingCoordinatorTrait};
-    use super::pack::PackableBeast;
+    use super::pack::{PackableBeast, decode_token_id};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -111,7 +111,6 @@ pub mod beasts_nft {
         #[substorage(v0)]
         pub nonces: NoncesComponent::Storage,
         // Beast-specific storage
-        pub beasts: Map<u256, PackableBeast>,
         pub beast_token_ranks: Map<u256, u16>, // token_id -> current rank (for tokenURI)
         pub beast_species_lists: Map<
             u8, Map<u16, u256>,
@@ -121,7 +120,7 @@ pub mod beasts_nft {
         pub last_manual_metadata_refresh: Map<u256, u64>, // token_id -> timestamp of last update
         pub minted: Map<felt252, bool>,
         pub dungeon_address: ContractAddress,
-        pub token_counter: u256,
+        pub supply_count: u256,
         // External data providers
         pub regular_png_provider: IBeastImageDataProviderDispatcher,
         pub shiny_png_provider: IBeastImageDataProviderDispatcher,
@@ -282,23 +281,15 @@ pub mod beasts_nft {
 
             // Prepare mint request
             let request = MintRequest { beast_id, prefix, suffix, level, health, shiny, animated };
-            let next_token_id = self.token_counter.read() + 1;
 
             // Validate and prepare mint data
-            let (token_id, insertion_rank) =
-                match MintingCoordinatorTrait::prepare_mint(request, next_token_id) {
+            let (token_id, insertion_rank) = match MintingCoordinatorTrait::prepare_mint(request) {
                 BeastResult::Ok(mint_data) => {
                     // Check for duplicates
                     assert(!self.minted.entry(mint_data.hash).read(), 'Beast already minted');
 
                     // Mark as minted
                     self.minted.entry(mint_data.hash).write(true);
-
-                    // Update token counter
-                    self.token_counter.write(mint_data.token_id);
-
-                    // Store beast
-                    self.beasts.entry(mint_data.token_id).write(mint_data.beast);
 
                     // Calculate and store beast rank for tokenURI
                     let insertion_rank = BeastRankingManagerTrait::calculate_and_store_rank(
@@ -307,6 +298,7 @@ pub mod beasts_nft {
 
                     // Mint NFT
                     self.erc721.mint(to, mint_data.token_id);
+                    self.supply_count.write(self.supply_count.read() + 1);
                     (mint_data.token_id, insertion_rank)
                 },
                 BeastResult::Err(e) => { core::panic_with_felt252(e); },
@@ -350,8 +342,8 @@ pub mod beasts_nft {
                 'Death mountain not set',
             );
 
-            let beast = self.beasts.entry(token_id).read();
-            assert(beast.id != 0, 'Beast does not exist');
+            self.erc721._require_owned(token_id);
+            let beast = decode_token_id(token_id);
 
             let beast_hash = BeastManagerTrait::get_beast_hash(
                 beast.id, beast.prefix, beast.suffix,
@@ -393,7 +385,7 @@ pub mod beasts_nft {
 
         fn get_beast(self: @ContractState, token_id: u256) -> PackableBeast {
             self.erc721._require_owned(token_id);
-            self.beasts.entry(token_id).read()
+            decode_token_id(token_id)
         }
 
         fn is_minted(self: @ContractState, beast_id: u8, prefix: u8, suffix: u8) -> bool {
@@ -402,7 +394,7 @@ pub mod beasts_nft {
         }
 
         fn total_supply(self: @ContractState) -> u256 {
-            self.token_counter.read()
+            self.supply_count.read()
         }
 
         fn get_beast_rank(self: @ContractState, token_id: u256) -> u16 {
@@ -410,7 +402,8 @@ pub mod beasts_nft {
         }
 
         fn get_kill_count(self: @ContractState, token_id: u256) -> u64 {
-            let beast = self.beasts.entry(token_id).read();
+            self.erc721._require_owned(token_id);
+            let beast = decode_token_id(token_id);
             let beast_hash = BeastManagerTrait::get_beast_hash(
                 beast.id, beast.prefix, beast.suffix,
             );
@@ -425,7 +418,8 @@ pub mod beasts_nft {
         }
 
         fn get_adventurer_killed(self: @ContractState, token_id: u256, index: u64) -> u64 {
-            let beast = self.beasts.entry(token_id).read();
+            self.erc721._require_owned(token_id);
+            let beast = decode_token_id(token_id);
             let beast_hash = BeastManagerTrait::get_beast_hash(
                 beast.id, beast.prefix, beast.suffix,
             );
@@ -442,7 +436,8 @@ pub mod beasts_nft {
         }
 
         fn get_last_killed_timestamp(self: @ContractState, token_id: u256) -> u64 {
-            let beast = self.beasts.entry(token_id).read();
+            self.erc721._require_owned(token_id);
+            let beast = decode_token_id(token_id);
             let beast_hash = BeastManagerTrait::get_beast_hash(
                 beast.id, beast.prefix, beast.suffix,
             );
@@ -462,7 +457,8 @@ pub mod beasts_nft {
         }
 
         fn get_last_killed_by(self: @ContractState, token_id: u256) -> u64 {
-            let beast = self.beasts.entry(token_id).read();
+            self.erc721._require_owned(token_id);
+            let beast = decode_token_id(token_id);
             let beast_hash = BeastManagerTrait::get_beast_hash(
                 beast.id, beast.prefix, beast.suffix,
             );
@@ -482,7 +478,8 @@ pub mod beasts_nft {
         }
 
         fn get_adventurers_killed(self: @ContractState, token_id: u256) -> u64 {
-            let beast = self.beasts.entry(token_id).read();
+            self.erc721._require_owned(token_id);
+            let beast = decode_token_id(token_id);
             let beast_hash = BeastManagerTrait::get_beast_hash(
                 beast.id, beast.prefix, beast.suffix,
             );
@@ -539,8 +536,7 @@ pub mod beasts_nft {
         /// Internal function to mint genesis beasts during contract construction
         fn mint_genesis_beasts(ref self: ContractState, to: ContractAddress) {
             // Prepare genesis batch
-            let starting_token_id = self.token_counter.read() + 1;
-            let batch = MintingCoordinatorTrait::prepare_genesis_batch(starting_token_id);
+            let batch = MintingCoordinatorTrait::prepare_genesis_batch();
 
             // Process each beast in the batch
             let mut i = 0;
@@ -552,9 +548,6 @@ pub mod beasts_nft {
 
                 match batch.at(i) {
                     BeastResult::Ok(mint_data) => {
-                        // Store beast
-                        self.beasts.entry(*mint_data.token_id).write(*mint_data.beast);
-
                         // Mint NFT
                         self.erc721.mint(to, *mint_data.token_id);
                     },
@@ -564,11 +557,11 @@ pub mod beasts_nft {
                 i += 1;
             }
 
-            // Update token counter
+            // Update supply count
             let new_supply = MintingCoordinatorTrait::calculate_new_supply(
-                self.token_counter.read(), 75,
+                self.supply_count.read(), 75,
             );
-            self.token_counter.write(new_supply);
+            self.supply_count.write(new_supply);
         }
 
         /// Internal helper to build the onchain metadata URI for a token.
@@ -585,8 +578,8 @@ pub mod beasts_nft {
             }
 
             // Get beast data
-            let beast = self.beasts.entry(token_id).read();
-            let rank = self.beast_token_ranks.entry(token_id).read();
+            let beast = decode_token_id(token_id);
+            let rank = BeastRankingManagerTrait::get_beast_rank(self, token_id);
 
             // Get additional data from death mountain
             let mut last_killed_timestamp = 0;

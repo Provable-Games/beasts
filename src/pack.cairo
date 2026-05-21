@@ -33,6 +33,62 @@ mod pow {
     pub const TWO_POW_52: u256 = 0x10000000000000; // 2^52
 }
 
+fn pack_to_u256(value: PackableBeast) -> u256 {
+    value.id.into()
+        + value.prefix.into() * pow::TWO_POW_7
+        + value.suffix.into() * pow::TWO_POW_14
+        + value.level.into() * pow::TWO_POW_19
+        + value.health.into() * pow::TWO_POW_35
+        + value.shiny.into() * pow::TWO_POW_51
+        + value.animated.into() * pow::TWO_POW_52
+}
+
+fn unpack_from_u256(value: u256) -> PackableBeast {
+    let mut packed = value;
+
+    // Extract id (7 bits)
+    let id = (packed % pow::TWO_POW_7).try_into().expect('unpack id');
+    packed = packed / pow::TWO_POW_7;
+
+    // Extract prefix (7 bits)
+    let prefix = (packed % pow::TWO_POW_7).try_into().expect('unpack prefix');
+    packed = packed / pow::TWO_POW_7;
+
+    // Extract suffix (5 bits)
+    let suffix = (packed % pow::TWO_POW_5).try_into().expect('unpack suffix');
+    packed = packed / pow::TWO_POW_5;
+
+    // Extract level (16 bits)
+    let level = (packed % pow::TWO_POW_16).try_into().expect('unpack level');
+    packed = packed / pow::TWO_POW_16;
+
+    // Extract health (16 bits)
+    let health = (packed % pow::TWO_POW_16).try_into().expect('unpack health');
+    packed = packed / pow::TWO_POW_16;
+
+    // Extract shiny (1 bit)
+    let shiny = (packed % 2_u256).try_into().expect('unpack shiny');
+    packed = packed / 2_u256;
+
+    // Extract animated (1 bit)
+    let animated = (packed % 2_u256).try_into().expect('unpack animated');
+    packed = packed / 2_u256;
+
+    assert(packed == 0, 'invalid token id');
+
+    PackableBeast { id, prefix, suffix, level, health, shiny, animated }
+}
+
+/// Encodes a beast into its deterministic token id.
+pub fn encode_token_id(beast: PackableBeast) -> u256 {
+    pack_to_u256(beast)
+}
+
+/// Decodes a deterministic token id back into its beast data.
+pub fn decode_token_id(token_id: u256) -> PackableBeast {
+    unpack_from_u256(token_id)
+}
+
 // Storage packing implementation for PackableBeast
 pub impl PackableBeastStorePacking of starknet::storage_access::StorePacking<
     PackableBeast, felt252,
@@ -41,55 +97,19 @@ pub impl PackableBeastStorePacking of starknet::storage_access::StorePacking<
         // Pack according to structure:
         // id: 7 bits, prefix: 7 bits, suffix: 5 bits, level: 16 bits, health: 16 bits, shiny: 1
         // bit, animated: 1 bit
-        (value.id.into()
-            + value.prefix.into() * pow::TWO_POW_7
-            + value.suffix.into() * pow::TWO_POW_14
-            + value.level.into() * pow::TWO_POW_19
-            + value.health.into() * pow::TWO_POW_35
-            + value.shiny.into() * pow::TWO_POW_51
-            + value.animated.into() * pow::TWO_POW_52)
-            .try_into()
-            .expect('pack beast overflow')
+        encode_token_id(value).try_into().expect('pack beast overflow')
     }
 
     fn unpack(value: felt252) -> PackableBeast {
-        let mut packed: u256 = value.into();
-
-        // Extract id (7 bits)
-        let id = (packed % pow::TWO_POW_7).try_into().expect('unpack id');
-        packed = packed / pow::TWO_POW_7;
-
-        // Extract prefix (7 bits)
-        let prefix = (packed % pow::TWO_POW_7).try_into().expect('unpack prefix');
-        packed = packed / pow::TWO_POW_7;
-
-        // Extract suffix (5 bits)
-        let suffix = (packed % pow::TWO_POW_5).try_into().expect('unpack suffix');
-        packed = packed / pow::TWO_POW_5;
-
-        // Extract level (16 bits)
-        let level = (packed % pow::TWO_POW_16).try_into().expect('unpack level');
-        packed = packed / pow::TWO_POW_16;
-
-        // Extract health (16 bits)
-        let health = (packed % pow::TWO_POW_16).try_into().expect('unpack health');
-        packed = packed / pow::TWO_POW_16;
-
-        // Extract shiny (1 bit)
-        let shiny = (packed % 2_u256).try_into().expect('unpack shiny');
-        packed = packed / 2_u256;
-
-        // Extract animated (1 bit)
-        let animated = (packed % 2_u256).try_into().expect('unpack animated');
-        packed = packed / 2_u256;
-
-        PackableBeast { id, prefix, suffix, level, health, shiny, animated }
+        decode_token_id(value.into())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{PackableBeast, PackableBeastStorePacking, get_hash};
+    use super::{
+        PackableBeast, PackableBeastStorePacking, decode_token_id, encode_token_id, get_hash,
+    };
 
     #[test]
     fn test_pack_and_unpack_basic() {
@@ -146,6 +166,29 @@ mod tests {
         assert(beast.health == unpacked.health, 'max health');
         assert(beast.shiny == unpacked.shiny, 'max shiny');
         assert(beast.animated == unpacked.animated, 'max animated');
+    }
+
+    #[test]
+    fn test_encode_decode_token_id_round_trip() {
+        let beast = PackableBeast {
+            id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: 0, animated: 1,
+        };
+
+        let token_id = encode_token_id(beast);
+        let decoded = decode_token_id(token_id);
+
+        assert(decoded == beast, 'token id round trip');
+    }
+
+    #[test]
+    fn test_encode_token_id_max_values_fit_u256() {
+        let beast = PackableBeast {
+            id: 75, prefix: 69, suffix: 18, level: 65535, health: 65535, shiny: 1, animated: 1,
+        };
+
+        let token_id = encode_token_id(beast);
+        assert(token_id < 0x20000000000000_u256, 'token id exceeds 53 bits');
+        assert(decode_token_id(token_id) == beast, 'max token id round trip');
     }
 
     #[test]

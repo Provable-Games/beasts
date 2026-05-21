@@ -1,10 +1,11 @@
 #[cfg(test)]
 mod tests {
     use beasts_nft::beast_definitions;
+    use beasts_nft::pack::{PackableBeast, encode_token_id};
     use openzeppelin_token::erc721::interface::{
         IERC721MetadataDispatcher, IERC721MetadataDispatcherTrait,
     };
-    use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
+    use snforge_std::{ContractClassTrait, DeclareResultTrait, declare, start_mock_call};
     use starknet::ContractAddress;
 
     fn test_address(address: felt252) -> ContractAddress {
@@ -56,46 +57,45 @@ mod tests {
     fn test_token_uri_returns_proper_strings() {
         // Deploy contract
         let owner = test_address('owner');
-        let recipient = test_address('recipient');
+        let royalty_receiver = test_address('royalty_receiver');
+        let mock_provider = test_address('provider');
 
         // Declare and deploy contract
         let contract = declare("beasts_nft").unwrap().contract_class();
 
         // Setup calldata for deployment with proper ByteArray serialization
         let mut calldata = array![];
+        let name: ByteArray = "Beasts";
+        let symbol: ByteArray = "BEAST";
+        let royalty_fraction: u128 = 500;
 
-        // Name: "Beasts" as ByteArray
-        calldata.append(0); // no full 31-byte chunks
-        calldata.append('Beasts'); // pending word
-        calldata.append(6); // pending word length (6 bytes)
-
-        // Symbol: "BEAST" as ByteArray
-        calldata.append(0); // no full 31-byte chunks
-        calldata.append('BEAST'); // pending word
-        calldata.append(5); // pending word length (5 bytes)
-
-        // Base URI: empty ByteArray
-        calldata.append(0); // no full 31-byte chunks
-        calldata.append(0); // no pending word
-        calldata.append(0); // pending word length (0 bytes)
-
-        calldata.append(recipient.into());
-
-        // Token IDs array as Span<u256>
-        calldata.append(1); // array length
-        calldata.append(3); // token_id for Jiangshi (u256 low)
-        calldata.append(0); // token_id for Jiangshi (u256 high)
-
-        calldata.append(owner.into());
+        name.serialize(ref calldata);
+        symbol.serialize(ref calldata);
+        owner.serialize(ref calldata);
+        royalty_receiver.serialize(ref calldata);
+        royalty_fraction.serialize(ref calldata);
+        mock_provider.serialize(ref calldata);
+        mock_provider.serialize(ref calldata);
+        mock_provider.serialize(ref calldata);
+        mock_provider.serialize(ref calldata);
+        0.serialize(ref calldata);
+        0.serialize(ref calldata);
 
         let (contract_address, _) = contract.deploy(@calldata).unwrap();
         let metadata_dispatcher = IERC721MetadataDispatcher { contract_address };
+        let mock_img: ByteArray = "data:image/png;base64,AA==";
+        start_mock_call(mock_provider, selector!("get_data_uri"), mock_img);
 
-        // Get token URI for Jiangshi (token id 3)
-        let token_uri = metadata_dispatcher.token_uri(3);
+        let jiangshi = PackableBeast {
+            id: 3, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+        };
+        let token_id = encode_token_id(jiangshi);
+
+        // Get token URI for genesis Jiangshi
+        let token_uri = metadata_dispatcher.token_uri(token_id);
 
         // Print the token URI for inspection
-        println!("Token URI for Jiangshi (id 3):");
+        println!("Token URI for genesis Jiangshi:");
         println!("{}", token_uri);
 
         // Verify it contains the beast name as a string, not a number

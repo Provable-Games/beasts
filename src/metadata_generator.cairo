@@ -211,7 +211,7 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 
         // Genesis attribute
         let mut genesis_value: ByteArray = "";
-        genesis_value.append(@format!("{}", if token_id <= 75 {
+        genesis_value.append(@format!("{}", if rank == 0 {
             1
         } else {
             0
