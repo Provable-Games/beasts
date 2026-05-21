@@ -52,6 +52,7 @@ The Beasts are a collection of digital-native creatures, born onchain and built 
 - **⚔️ Battle-Ready**: Each Beast is minted with level and health and is compatible with the Loot Survivor combat system
 - **🏛️ 75 Unique Species**: From mystical Warlocks to fierce Minotaurs, each with distinct visual traits
 - **📊 Tiered Rarity System**: 5 tiers with visual indicators through border colors and effects
+- **🔐 Deterministic Token IDs**: A Beast’s ERC721 token ID is the packed representation of its species, name parts, combat stats, and visual flags
 
 ## 📦 Installation
 
@@ -109,7 +110,7 @@ src/
 
 ### Beast Data Model
 
-Each Beast is efficiently packed into 53 bits:
+Each Beast is efficiently packed into 53 bits. The packed value is also the ERC721 `token_id`:
 
 ```cairo
 PackableBeast {
@@ -122,6 +123,34 @@ PackableBeast {
     animated: u8, // 1 bit  - visual trait
 }
 ```
+
+### Beast Token ID Design
+
+Beasts do not use sequential token IDs. For fresh deployments, every token ID is deterministic:
+
+```text
+token_id = encode_token_id(PackableBeast)
+```
+
+The bit layout is:
+
+```text
+id
++ prefix   * 2^7
++ suffix   * 2^14
++ level    * 2^19
++ health   * 2^35
++ shiny    * 2^51
++ animated * 2^52
+```
+
+This keeps every valid Beast token ID below `2^53`, so it fits comfortably in `u256`. The same format is used for genesis and non-genesis Beasts.
+
+Because the token ID is the source of the Beast attributes, contract reads such as `get_beast(token_id)`, `token_uri(token_id)`, and ranking comparisons decode the token ID after verifying ERC721 ownership/existence. There is no separate onchain map from `token_id` to `PackableBeast`.
+
+Genesis Beasts are minted in the constructor to the owner with `prefix = 0`, `suffix = 0`, `level = 1`, `health = 100`, `shiny = 1`, and `animated = 1`. Genesis Beasts have rank `0` and are not entered into the non-genesis uniqueness map. Non-genesis Beast uniqueness is tracked by `(beast_id, prefix, suffix)`, while ranking and metadata refresh state continue to index by packed token ID.
+
+`total_supply()` is a count of minted NFTs, not the largest token ID.
 
 ## 🎮 Beast Types & Tiers
 

@@ -1,5 +1,5 @@
 use super::beast_manager::{BeastManagerTrait, BeastResult};
-use super::pack::PackableBeast;
+use super::pack::{PackableBeast, encode_token_id};
 
 /// Represents a mint request
 #[derive(Drop, Copy, Serde)]
@@ -28,7 +28,7 @@ pub struct MintingCoordinator {}
 #[generate_trait]
 pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
     /// Validates and prepares data for minting
-    fn prepare_mint(request: MintRequest, next_token_id: u256) -> BeastResult<MintData> {
+    fn prepare_mint(request: MintRequest) -> BeastResult<MintData> {
         // Create and validate the beast
         match BeastManagerTrait::create_beast(
             request.beast_id,
@@ -45,42 +45,43 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
                     request.beast_id, request.prefix, request.suffix,
                 );
 
+                let token_id = encode_token_id(beast);
+
                 // Return mint data
-                BeastResult::Ok(MintData { beast, hash, token_id: next_token_id })
+                BeastResult::Ok(MintData { beast, hash, token_id })
             },
             BeastResult::Err(e) => BeastResult::Err(e),
         }
     }
 
     /// Prepares data for genesis mint
-    fn prepare_genesis_mint(beast_id: u8, next_token_id: u256) -> BeastResult<MintData> {
+    fn prepare_genesis_mint(beast_id: u8) -> BeastResult<MintData> {
         // Create genesis beast
         match BeastManagerTrait::create_genesis_beast(beast_id) {
             BeastResult::Ok(beast) => {
                 // Genesis beasts have no prefix/suffix, so hash is simpler
                 let hash = BeastManagerTrait::get_beast_hash(beast_id, 0, 0);
+                let token_id = encode_token_id(beast);
 
-                BeastResult::Ok(MintData { beast, hash, token_id: next_token_id })
+                BeastResult::Ok(MintData { beast, hash, token_id })
             },
             BeastResult::Err(e) => BeastResult::Err(e),
         }
     }
 
     /// Prepares batch genesis mint data
-    fn prepare_genesis_batch(starting_token_id: u256) -> Array<BeastResult<MintData>> {
+    fn prepare_genesis_batch() -> Array<BeastResult<MintData>> {
         let mut results = array![];
         let mut beast_id: u8 = 1;
-        let mut current_token_id = starting_token_id;
 
         loop {
             if beast_id > 75 {
                 break;
             }
 
-            let result = Self::prepare_genesis_mint(beast_id, current_token_id);
+            let result = Self::prepare_genesis_mint(beast_id);
             results.append(result);
 
-            current_token_id += 1;
             beast_id += 1;
         }
 
@@ -116,6 +117,7 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
 
 #[cfg(test)]
 mod tests {
+    use super::super::pack::{PackableBeast, encode_token_id};
     use super::{BeastResult, MintRequest, MintingCoordinatorTrait};
 
     #[test]
@@ -124,8 +126,11 @@ mod tests {
             beast_id: 3, prefix: 1, suffix: 2, level: 100, health: 1000, shiny: 0, animated: 1,
         };
 
-        match MintingCoordinatorTrait::prepare_mint(request, 42) {
+        match MintingCoordinatorTrait::prepare_mint(request) {
             BeastResult::Ok(data) => {
+                let expected_beast = PackableBeast {
+                    id: 3, prefix: 1, suffix: 2, level: 100, health: 1000, shiny: 0, animated: 1,
+                };
                 assert(data.beast.id == 3, 'Beast ID mismatch');
                 assert(data.beast.prefix == 1, 'Prefix mismatch');
                 assert(data.beast.suffix == 2, 'Suffix mismatch');
@@ -133,7 +138,7 @@ mod tests {
                 assert(data.beast.health == 1000, 'Health mismatch');
                 assert(data.beast.shiny == 0, 'Shiny mismatch');
                 assert(data.beast.animated == 1, 'Animated mismatch');
-                assert(data.token_id == 42, 'Token ID mismatch');
+                assert(data.token_id == encode_token_id(expected_beast), 'Token ID mismatch');
                 assert(data.hash != 0, 'Hash should not be zero');
             },
             BeastResult::Err(_) => { assert(false, 'Should not fail'); },
@@ -146,7 +151,7 @@ mod tests {
             beast_id: 0, prefix: 1, suffix: 2, level: 100, health: 1000, shiny: 0, animated: 0,
         };
 
-        match MintingCoordinatorTrait::prepare_mint(request, 42) {
+        match MintingCoordinatorTrait::prepare_mint(request) {
             BeastResult::Ok(_) => { assert(false, 'Should fail'); },
             BeastResult::Err(e) => { assert(e == 'Invalid beast ID', 'Wrong error'); },
         }
@@ -154,8 +159,11 @@ mod tests {
 
     #[test]
     fn test_prepare_genesis_mint() {
-        match MintingCoordinatorTrait::prepare_genesis_mint(25, 100) {
+        match MintingCoordinatorTrait::prepare_genesis_mint(25) {
             BeastResult::Ok(data) => {
+                let expected_beast = PackableBeast {
+                    id: 25, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+                };
                 assert(data.beast.id == 25, 'Beast ID mismatch');
                 assert(data.beast.prefix == 0, 'Prefix should be 0');
                 assert(data.beast.suffix == 0, 'Suffix should be 0');
@@ -163,7 +171,7 @@ mod tests {
                 assert(data.beast.health == 100, 'Health should be 100');
                 assert(data.beast.shiny == 1, 'Shiny should be 1');
                 assert(data.beast.animated == 1, 'Animated should be 1');
-                assert(data.token_id == 100, 'Token ID mismatch');
+                assert(data.token_id == encode_token_id(expected_beast), 'Token ID mismatch');
             },
             BeastResult::Err(_) => { assert(false, 'Should not fail'); },
         }
@@ -171,15 +179,18 @@ mod tests {
 
     #[test]
     fn test_prepare_genesis_batch() {
-        let batch = MintingCoordinatorTrait::prepare_genesis_batch(1000);
+        let batch = MintingCoordinatorTrait::prepare_genesis_batch();
 
         assert(batch.len() == 75, 'Should have 75 beasts');
 
         // Check first beast
         match batch.at(0) {
             BeastResult::Ok(data) => {
+                let expected_beast = PackableBeast {
+                    id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+                };
                 assert(*data.beast.id == 1, 'First beast should be ID 1');
-                assert(*data.token_id == 1000, 'First token ID should be 1000');
+                assert(*data.token_id == encode_token_id(expected_beast), 'First token ID');
             },
             BeastResult::Err(_) => { assert(false, 'First beast should not fail'); },
         }
@@ -187,8 +198,11 @@ mod tests {
         // Check last beast
         match batch.at(74) {
             BeastResult::Ok(data) => {
+                let expected_beast = PackableBeast {
+                    id: 75, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+                };
                 assert(*data.beast.id == 75, 'Last beast should be ID 75');
-                assert(*data.token_id == 1074, 'Last token ID should be 1074');
+                assert(*data.token_id == encode_token_id(expected_beast), 'Last token ID');
             },
             BeastResult::Err(_) => { assert(false, 'Last beast should not fail'); },
         }
@@ -211,7 +225,7 @@ mod tests {
             beast_id: 1, prefix: 2, suffix: 3, level: 100, health: 1000, shiny: 0, animated: 0,
         };
 
-        let hash = match MintingCoordinatorTrait::prepare_mint(request, 1) {
+        let hash = match MintingCoordinatorTrait::prepare_mint(request) {
             BeastResult::Ok(data) => data.hash,
             BeastResult::Err(_) => 0,
         };
