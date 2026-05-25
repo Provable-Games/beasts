@@ -3,6 +3,7 @@ mod mint_tests {
     use beasts_nft::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait};
     use beasts_nft::pack::{PackableBeast, encode_token_id};
     use openzeppelin_access::ownable::interface::IOwnableDispatcher;
+    use openzeppelin_interfaces::upgrades::{IUpgradeableDispatcher, IUpgradeableDispatcherTrait};
     use openzeppelin_token::erc721::interface::{
         IERC721Dispatcher, IERC721DispatcherTrait, IERC721MetadataDispatcher,
         IERC721MetadataDispatcherTrait,
@@ -11,7 +12,7 @@ mod mint_tests {
         ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
         start_mock_call, stop_cheat_caller_address,
     };
-    use starknet::ContractAddress;
+    use starknet::{ClassHash, ContractAddress};
 
     fn test_address(address: felt252) -> ContractAddress {
         address.try_into().unwrap()
@@ -22,6 +23,7 @@ mod mint_tests {
         IERC721Dispatcher,
         IERC721MetadataDispatcher,
         IOwnableDispatcher,
+        IUpgradeableDispatcher,
         ContractAddress,
     ) {
         let owner = test_address('owner');
@@ -54,13 +56,14 @@ mod mint_tests {
             IERC721Dispatcher { contract_address },
             IERC721MetadataDispatcher { contract_address },
             IOwnableDispatcher { contract_address },
+            IUpgradeableDispatcher { contract_address },
             owner,
         )
     }
 
     #[test]
     fn test_set_dungeon_address() {
-        let (beasts, _, _, _, owner) = deploy_contract();
+        let (beasts, _, _, _, _, owner) = deploy_contract();
         let minter = test_address('minter');
 
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -73,7 +76,7 @@ mod mint_tests {
     #[test]
     #[should_panic(expected: ('Caller is not the owner',))]
     fn test_set_dungeon_address_not_owner() {
-        let (beasts, _, _, _, _) = deploy_contract();
+        let (beasts, _, _, _, _, _) = deploy_contract();
         let minter = test_address('minter');
         let random_caller = test_address('random');
 
@@ -83,8 +86,31 @@ mod mint_tests {
     }
 
     #[test]
+    #[should_panic(expected: ('Caller is not the owner',))]
+    fn test_upgrade_not_owner() {
+        let (beasts, _, _, _, upgradeable, _) = deploy_contract();
+        let random_caller = test_address('random');
+        let zero_class_hash: ClassHash = 0.try_into().unwrap();
+
+        start_cheat_caller_address(beasts.contract_address, random_caller);
+        upgradeable.upgrade(zero_class_hash);
+        stop_cheat_caller_address(beasts.contract_address);
+    }
+
+    #[test]
+    #[should_panic(expected: ('Class hash cannot be zero',))]
+    fn test_upgrade_owner_reaches_upgradeable_validation() {
+        let (beasts, _, _, _, upgradeable, owner) = deploy_contract();
+        let zero_class_hash: ClassHash = 0.try_into().unwrap();
+
+        start_cheat_caller_address(beasts.contract_address, owner);
+        upgradeable.upgrade(zero_class_hash);
+        stop_cheat_caller_address(beasts.contract_address);
+    }
+
+    #[test]
     fn test_constructor_mints_genesis_beasts_with_packed_ids() {
-        let (beasts, erc721, _, _, owner) = deploy_contract();
+        let (beasts, erc721, _, _, _, owner) = deploy_contract();
 
         assert(beasts.total_supply() == 75, 'Initial supply should be 75');
         assert(erc721.balance_of(owner) == 75, 'Owner should have genesis');
@@ -109,7 +135,7 @@ mod mint_tests {
 
     #[test]
     fn test_mint_basic_uses_encoded_token_id() {
-        let (beasts, erc721, _, _, owner) = deploy_contract();
+        let (beasts, erc721, _, _, _, owner) = deploy_contract();
         let minter = test_address('minter');
         let recipient = test_address('recipient');
 
@@ -139,7 +165,7 @@ mod mint_tests {
     #[test]
     #[should_panic(expected: ('Not authorized to mint',))]
     fn test_mint_not_authorized() {
-        let (beasts, _, _, _, _) = deploy_contract();
+        let (beasts, _, _, _, _, _) = deploy_contract();
         let random_caller = test_address('random');
         let recipient = test_address('recipient');
 
@@ -151,7 +177,7 @@ mod mint_tests {
     #[test]
     #[should_panic(expected: ('Invalid beast ID',))]
     fn test_mint_invalid_beast_id_zero() {
-        let (beasts, _, _, _, owner) = deploy_contract();
+        let (beasts, _, _, _, _, owner) = deploy_contract();
         let minter = test_address('minter');
 
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -166,7 +192,7 @@ mod mint_tests {
     #[test]
     #[should_panic(expected: ('Invalid beast ID',))]
     fn test_mint_invalid_beast_id_too_high() {
-        let (beasts, _, _, _, owner) = deploy_contract();
+        let (beasts, _, _, _, _, owner) = deploy_contract();
         let minter = test_address('minter');
 
         start_cheat_caller_address(beasts.contract_address, owner);
@@ -181,7 +207,7 @@ mod mint_tests {
     #[test]
     #[should_panic(expected: ('Beast already minted',))]
     fn test_mint_duplicate() {
-        let (beasts, _, _, _, owner) = deploy_contract();
+        let (beasts, _, _, _, _, owner) = deploy_contract();
         let minter = test_address('minter');
         let recipient = test_address('recipient');
 
@@ -197,7 +223,7 @@ mod mint_tests {
 
     #[test]
     fn test_mint_same_beast_different_attributes() {
-        let (beasts, erc721, _, _, owner) = deploy_contract();
+        let (beasts, erc721, _, _, _, owner) = deploy_contract();
         let minter = test_address('minter');
         let recipient = test_address('recipient');
 
@@ -221,7 +247,7 @@ mod mint_tests {
 
     #[test]
     fn test_token_uri_with_minted_data() {
-        let (beasts, _, metadata, _, owner) = deploy_contract();
+        let (beasts, _, metadata, _, _, owner) = deploy_contract();
         let minter = test_address('minter');
         let recipient = test_address('recipient');
         let mock_provider = test_address('provider');
@@ -248,7 +274,7 @@ mod mint_tests {
     #[test]
     #[should_panic]
     fn test_unowned_packed_token_id_fails_ownership_check() {
-        let (beasts, _, _, _, _) = deploy_contract();
+        let (beasts, _, _, _, _, _) = deploy_contract();
         let unowned = PackableBeast {
             id: 4, prefix: 1, suffix: 1, level: 2, health: 3, shiny: 0, animated: 0,
         };
