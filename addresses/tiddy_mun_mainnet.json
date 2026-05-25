@@ -1,0 +1,13 @@
+{
+  "network": "mainnet",
+  "contract_name": "tiddy_mun_nft",
+  "contract_address": "0x0202d78ebda24bde4e44434bcfd2b329d6c0dde25eb2b713a8e7c3e8f4e1a8bb",
+  "class_hash": "0x078d71aeb3bc7d2d4df98b0f11b7a4004a4e22f44a724f47e1c7aed92ba3046e",
+  "declare_transaction_hash": "0x02af7eaf4f31da5d920a386dd727489a3bfa3eac195b15580b89ef2674fad4c0",
+  "deploy_transaction_hash": "0x02ba5e3a83e4befe69a5c2f1bb9e12bb06d464be94e1d003e3de679f5816731e",
+  "owner": "0x0245939b4a0a2a05b3721ca530342c61e4291ccd6d71ab829ee7dbe8b6e23bca",
+  "minter_address": "0x0",
+  "name": "Tiddy Mun",
+  "symbol": "TIDDY",
+  "total_supply_at_deploy": "1"
+}

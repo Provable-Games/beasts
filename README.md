@@ -249,8 +249,18 @@ The project uses GitHub Actions for:
 - [Play Loot Survivor](https://lootsurvivor.io)
 - [Discord Community](https://discord.gg/lootsurvivor)
 - [Twitter](https://x.com/lootsurvivor)
+- [Tiddy Mun NFT](https://voyager.online/contract/0x0202d78ebda24bde4e44434bcfd2b329d6c0dde25eb2b713a8e7c3e8f4e1a8bb)
 - [Beast NFT](https://voyager.online/contract/0x046da8955829adf2bda310099a0063451923f02e648cf25a1203aac6335cf0e4)
 - [Regular PNG URI](https://voyager.online/contract/0x07bcd91940f5a2640437c764815b6a8a173f09fff991420b691713bebd82f7bf)
 - [Shiny PNG URI](https://voyager.online/contract/0x03bdFdEeA997CA7C7b1d66590a541FC559cE5A742e0162fE98Fe371E70709444)
 - [Regular GIF URI](https://voyager.online/contract/0x012F11AD850839d27351Bbf49858A3180AdB1C30d9942423FD089F5740776293)
 - [Shiny GIF URI](https://voyager.online/contract/0x0700f224e6fcb344c27f29e62687333b589b3be39a2c026ede5968bf53b6bb2a)
+
+## Tiddy Mun Mainnet
+
+- Contract: `0x0202d78ebda24bde4e44434bcfd2b329d6c0dde25eb2b713a8e7c3e8f4e1a8bb`
+- Class hash: `0x078d71aeb3bc7d2d4df98b0f11b7a4004a4e22f44a724f47e1c7aed92ba3046e`
+- Owner: `0x0245939b4a0a2a05b3721ca530342c61e4291ccd6d71ab829ee7dbe8b6e23bca`
+- Minter: `0x0` until the owner enables live minting.
+- ABI: `abis/tiddy_mun_nft.json`
+- Address manifest: `addresses/tiddy_mun_mainnet.json`
