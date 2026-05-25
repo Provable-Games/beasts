@@ -5,6 +5,7 @@ coverage/coverage.lcov
 snfoundry_trace/
 snfoundry_cache/
 .env
+.secrets/
 accounts/
 .snfoundry_cache/
 coverage/

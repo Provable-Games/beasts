@@ -1,0 +1,21 @@
+[sncast.default]
+account = "$SNCAST_ACCOUNT"
+accounts-file = "$SNCAST_ACCOUNTS_FILE"
+url = "$RPC_URL"
+wait-params = { timeout = 300, retry-interval = 5 }
+
+[sncast.sepolia]
+account = "$SNCAST_ACCOUNT"
+accounts-file = "$SNCAST_ACCOUNTS_FILE"
+url = "$SEPOLIA_RPC_URL"
+wait-params = { timeout = 300, retry-interval = 5 }
+block-explorer = "Voyager"
+show-explorer-links = true
+
+[sncast.mainnet]
+account = "$SNCAST_ACCOUNT"
+accounts-file = "$SNCAST_ACCOUNTS_FILE"
+url = "$MAINNET_RPC_URL"
+wait-params = { timeout = 300, retry-interval = 5 }
+block-explorer = "Voyager"
+show-explorer-links = true
