@@ -12,6 +12,11 @@ pub const TYPE_MAGIC: felt252 = 'Magic';
 pub const TYPE_HUNTER: felt252 = 'Hunter';
 pub const TYPE_BRUTE: felt252 = 'Brute';
 
+// Type codes as encoded in token IDs
+pub const TYPE_CODE_MAGIC: u8 = 0;
+pub const TYPE_CODE_HUNTER: u8 = 1;
+pub const TYPE_CODE_BRUTE: u8 = 2;
+
 // Magical T1s (1-5)
 pub const WARLOCK: u8 = 1;
 pub const TYPHON: u8 = 2;
@@ -391,15 +396,32 @@ pub fn get_tier(beast: u8) -> u8 {
 }
 
 pub fn get_type(beast: u8) -> felt252 {
+    type_name(get_type_code(beast))
+}
+
+/// Type code as encoded in token IDs: 0 = Magic, 1 = Hunter, 2 = Brute
+pub fn get_type_code(beast: u8) -> u8 {
     assert(beast != 0, 'Invalid beast');
     if (beast <= 25) {
-        TYPE_MAGIC
+        TYPE_CODE_MAGIC
     } else if beast <= 50 {
-        TYPE_HUNTER
+        TYPE_CODE_HUNTER
     } else if beast <= 75 {
-        TYPE_BRUTE
+        TYPE_CODE_BRUTE
     } else {
         panic!("Invalid beast")
+    }
+}
+
+pub fn type_name(code: u8) -> felt252 {
+    if code == TYPE_CODE_MAGIC {
+        TYPE_MAGIC
+    } else if code == TYPE_CODE_HUNTER {
+        TYPE_HUNTER
+    } else if code == TYPE_CODE_BRUTE {
+        TYPE_BRUTE
+    } else {
+        panic!("Invalid type code")
     }
 }
 

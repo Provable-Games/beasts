@@ -209,13 +209,15 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         animated_value.append(@format!("{}", beast_attrs.animated));
         attributes.append(Attribute { trait_type: "Animated", value: animated_value });
 
-        // Genesis attribute
+        // Genesis attribute — derived from the token ID: the (id, 0, 0)
+        // affix slot is reserved for the species' Genesis Beast.
         let mut genesis_value: ByteArray = "";
-        genesis_value.append(@format!("{}", if rank == 0 {
-            1
-        } else {
-            0
-        }));
+        genesis_value
+            .append(@format!("{}", if beast.prefix == 0 && beast.suffix == 0 {
+                1
+            } else {
+                0
+            }));
         attributes.append(Attribute { trait_type: "Genesis", value: genesis_value });
 
         MetadataComponents { name, description, image, attributes }
@@ -287,6 +289,7 @@ mod tests {
         start_mock_call, stop_cheat_caller_address,
     };
     use starknet::ContractAddress;
+    use super::super::beast_definitions::{get_tier, get_type_code};
     use super::super::beast_manager::BeastManagerTrait;
     use super::super::interfaces::{
         IBeastImageDataProviderDispatcher, IBeastImageDataProviderDispatcherTrait,
@@ -445,7 +448,15 @@ mod tests {
     #[test]
     fn test_build_metadata_components() {
         let beast = PackableBeast {
-            id: 2, prefix: 5, suffix: 10, level: 25, health: 100, shiny: 0, animated: 0,
+            id: 2,
+            prefix: 5,
+            suffix: 10,
+            level: 25,
+            health: 100,
+            shiny: 0,
+            animated: 0,
+            tier: 1,
+            beast_type: 0,
         };
 
         let adventurers_killed = 10;
@@ -578,7 +589,15 @@ mod tests {
     // Helper to render and print SVG for a given beast and variant
     fn render_svg_for(beast_id: u8, shiny: u8, animated: u8) -> ByteArray {
         let beast: PackableBeast = PackableBeast {
-            id: beast_id, prefix: 0, suffix: 0, level: 20, health: 100, shiny, animated,
+            id: beast_id.into(),
+            prefix: 0,
+            suffix: 0,
+            level: 20,
+            health: 100,
+            shiny,
+            animated,
+            tier: get_tier(beast_id),
+            beast_type: get_type_code(beast_id),
         };
 
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);

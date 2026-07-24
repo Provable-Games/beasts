@@ -42,7 +42,11 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
 
     /// Uses binary search to find insertion rank within species-specific list
     fn find_insertion_rank_binary(
-        state: @super::beasts_nft::ContractState, beast_id: u8, power: u16, health: u16, count: u16,
+        state: @super::beasts_nft::ContractState,
+        beast_id: u64,
+        power: u16,
+        health: u16,
+        count: u16,
     ) -> u16 {
         if count == 0 {
             return 1; // First beast of this species
@@ -83,7 +87,7 @@ pub impl BeastRankingManagerImpl of BeastRankingManagerTrait {
 
     /// Shifts entries in species list down from insertion point
     fn shift_species_list_down(
-        ref self: super::beasts_nft::ContractState, beast_id: u8, from_rank: u16, count: u16,
+        ref self: super::beasts_nft::ContractState, beast_id: u64, from_rank: u16, count: u16,
     ) {
         // Shift from the end to avoid overwriting
         let mut current_rank = count;
@@ -170,23 +174,32 @@ mod tests {
         start_cheat_caller_address(contract_address, minter);
 
         let genesis = PackableBeast {
-            id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+            id: 1,
+            prefix: 0,
+            suffix: 0,
+            level: 1,
+            health: 100,
+            shiny: 1,
+            animated: 1,
+            tier: 1,
+            beast_type: 0,
         };
         assert(beasts.get_beast_rank(encode_token_id(genesis)) == 0_u16, 'Genesis has no rank');
 
         // Mint first custom beast
-        let (weak_token_id, _, _) = beasts.mint(recipient, 1_u8, 1_u8, 1_u8, 100_u16, 50_u16, 0, 0);
+        let (weak_token_id, _, _) = beasts
+            .mint(recipient, 1_u64, 1_u8, 1_u8, 100_u16, 50_u16, 0, 0);
         assert(beasts.get_beast_rank(weak_token_id) == 1_u16, 'First custom beast rank 1');
 
         // Mint stronger beast
         let (strong_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 1_u8, 2_u8, 200_u16, 80_u16, 0, 0);
+            .mint(recipient, 1_u64, 1_u8, 2_u8, 200_u16, 80_u16, 0, 0);
         assert(beasts.get_beast_rank(strong_token_id) == 1_u16, 'Strong beast rank 1');
         assert(beasts.get_beast_rank(weak_token_id) == 2_u16, 'Weak beast rank 2');
 
         // Mint weakest beast
         let (weakest_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 1_u8, 3_u8, 50_u16, 30_u16, 0, 0);
+            .mint(recipient, 1_u64, 1_u8, 3_u8, 50_u16, 30_u16, 0, 0);
         assert(beasts.get_beast_rank(weakest_token_id) == 3_u16, 'Weakest rank 3');
 
         stop_cheat_caller_address(contract_address);
@@ -200,9 +213,9 @@ mod tests {
 
         // Same level, different health
         let (lower_health_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 1_u8, 1_u8, 100_u16, 30_u16, 0, 0);
+            .mint(recipient, 1_u64, 1_u8, 1_u8, 100_u16, 30_u16, 0, 0);
         let (higher_health_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 1_u8, 2_u8, 100_u16, 80_u16, 0, 0);
+            .mint(recipient, 1_u64, 1_u8, 2_u8, 100_u16, 80_u16, 0, 0);
 
         // Higher health should win tiebreaker
         assert(beasts.get_beast_rank(higher_health_token_id) == 1_u16, 'Higher health rank 1');
@@ -219,13 +232,13 @@ mod tests {
 
         // Species 1 beasts
         let (species_1_strong_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 1_u8, 1_u8, 100_u16, 50_u16, 0, 0);
+            .mint(recipient, 1_u64, 1_u8, 1_u8, 100_u16, 50_u16, 0, 0);
         let (species_1_weaker_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 1_u8, 2_u8, 80_u16, 40_u16, 0, 0);
+            .mint(recipient, 1_u64, 1_u8, 2_u8, 80_u16, 40_u16, 0, 0);
 
         // Species 2 beast (should start at rank 1)
         let (species_2_token_id, _, _) = beasts
-            .mint(recipient, 2_u8, 1_u8, 1_u8, 90_u16, 45_u16, 0, 0);
+            .mint(recipient, 2_u64, 1_u8, 1_u8, 90_u16, 45_u16, 0, 0);
 
         // Verify species isolation
         assert(beasts.get_beast_rank(species_1_strong_token_id) == 1_u16, 'Species 1 strongest');
@@ -243,16 +256,16 @@ mod tests {
 
         // Insert 5 weaker beasts
         let (weakest_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 1_u8, 1_u8, 10_u16, 30_u16, 0, 0);
-        beasts.mint(recipient, 1_u8, 1_u8, 2_u8, 20_u16, 40_u16, 0, 0);
-        beasts.mint(recipient, 1_u8, 1_u8, 3_u8, 30_u16, 50_u16, 0, 0);
-        beasts.mint(recipient, 1_u8, 1_u8, 4_u8, 40_u16, 60_u16, 0, 0);
+            .mint(recipient, 1_u64, 1_u8, 1_u8, 10_u16, 30_u16, 0, 0);
+        beasts.mint(recipient, 1_u64, 1_u8, 2_u8, 20_u16, 40_u16, 0, 0);
+        beasts.mint(recipient, 1_u64, 1_u8, 3_u8, 30_u16, 50_u16, 0, 0);
+        beasts.mint(recipient, 1_u64, 1_u8, 4_u8, 40_u16, 60_u16, 0, 0);
         let (previous_strongest_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 1_u8, 5_u8, 50_u16, 70_u16, 0, 0);
+            .mint(recipient, 1_u64, 1_u8, 5_u8, 50_u16, 70_u16, 0, 0);
 
         // Insert strongest (should shift all 5 down)
         let (strongest_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 1_u8, 6_u8, 200_u16, 100_u16, 0, 0);
+            .mint(recipient, 1_u64, 1_u8, 6_u8, 200_u16, 100_u16, 0, 0);
 
         // Verify all rankings
         assert(beasts.get_beast_rank(strongest_token_id) == 1_u16, 'Strongest rank 1');
@@ -271,12 +284,12 @@ mod tests {
 
         // Mint first beast with power 100, health 50
         let (first_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 1_u8, 1_u8, 100_u16, 50_u16, 0, 0);
+            .mint(recipient, 1_u64, 1_u8, 1_u8, 100_u16, 50_u16, 0, 0);
         assert(beasts.get_beast_rank(first_token_id) == 1_u16, 'First beast rank 1');
 
         // Mint second beast with identical power and health
         let (second_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 1_u8, 2_u8, 100_u16, 50_u16, 0, 0);
+            .mint(recipient, 1_u64, 1_u8, 2_u8, 100_u16, 50_u16, 0, 0);
 
         // First beast should maintain rank 1, second beast gets rank 2
         assert(beasts.get_beast_rank(first_token_id) == 1_u16, 'First beast keeps rank 1');
@@ -284,7 +297,7 @@ mod tests {
 
         // Mint third beast with same stats
         let (third_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 1_u8, 3_u8, 100_u16, 50_u16, 0, 0);
+            .mint(recipient, 1_u64, 1_u8, 3_u8, 100_u16, 50_u16, 0, 0);
         assert(beasts.get_beast_rank(third_token_id) == 3_u16, 'Third beast gets rank 3');
 
         // Verify all rankings remain stable
@@ -322,7 +335,7 @@ mod tests {
 
                 let power: u16 = count.try_into().unwrap();
                 let (token_id, _, _) = beasts
-                    .mint(recipient, 1_u8, prefix, suffix, power, power / 2, 0, 0);
+                    .mint(recipient, 1_u64, prefix, suffix, power, power / 2, 0, 0);
                 previous_strongest_token_id = token_id;
 
                 count += 1;
@@ -342,7 +355,7 @@ mod tests {
 
         // Now mint the ultimate beast that will trigger 20 shifts
         let (ultimate_token_id, _, _) = beasts
-            .mint(recipient, 1_u8, 69_u8, 18_u8, 65535_u16, 65535_u16, 0, 0);
+            .mint(recipient, 1_u64, 69_u8, 18_u8, 65535_u16, 65535_u16, 0, 0);
 
         // Verify the ultimate beast got rank 1
         assert(beasts.get_beast_rank(ultimate_token_id) == 1_u16, 'Ultimate beast rank 1');

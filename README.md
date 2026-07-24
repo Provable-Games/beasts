@@ -110,17 +110,19 @@ src/
 
 ### Beast Data Model
 
-Each Beast is efficiently packed into 53 bits. The packed value is also the ERC721 `token_id`:
+Each Beast is efficiently packed into 116 bits. The packed value is also the ERC721 `token_id`:
 
 ```cairo
 PackableBeast {
-    id: u8,       // 7 bits - species (1–75)
-    prefix: u8,   // 7 bits - name prefix
-    suffix: u8,   // 5 bits - name suffix
-    level: u16,   // 16 bits - level
-    health: u16,  // 16 bits - health
-    shiny: u8,    // 1 bit  - visual trait
-    animated: u8, // 1 bit  - visual trait
+    id: u64,        // 64 bits - species (1–75 genesis, 76+ community)
+    prefix: u8,     // 7 bits  - name prefix
+    suffix: u8,     // 5 bits  - name suffix
+    level: u16,     // 16 bits - level
+    health: u16,    // 16 bits - health
+    shiny: u8,      // 1 bit   - visual trait
+    animated: u8,   // 1 bit   - visual trait
+    tier: u8,       // 3 bits  - tier (1–5), static per species
+    beast_type: u8, // 3 bits  - type (0 = Magic, 1 = Hunter, 2 = Brute)
 }
 ```
 
@@ -136,19 +138,21 @@ The bit layout is:
 
 ```text
 id
-+ prefix   * 2^7
-+ suffix   * 2^14
-+ level    * 2^19
-+ health   * 2^35
-+ shiny    * 2^51
-+ animated * 2^52
++ prefix     * 2^64
++ suffix     * 2^71
++ level      * 2^76
++ health     * 2^92
++ shiny      * 2^108
++ animated   * 2^109
++ tier       * 2^110
++ beast_type * 2^113
 ```
 
-This keeps every valid Beast token ID below `2^53`, so it fits comfortably in `u256`. The same format is used for genesis and non-genesis Beasts.
+This keeps every valid Beast token ID below `2^116`, so it fits in `u128` (two 64-bit words for indexers and databases; JavaScript clients should use `BigInt`). The same format is used for genesis and non-genesis Beasts. Tier and type are resolved by the contract at mint time — never caller-supplied — so decoded values are trustworthy after an ERC721 existence check, and `power = level * (6 - tier)` is a pure function of the token ID.
 
 Because the token ID is the source of the Beast attributes, contract reads such as `get_beast(token_id)`, `token_uri(token_id)`, and ranking comparisons decode the token ID after verifying ERC721 ownership/existence. There is no separate onchain map from `token_id` to `PackableBeast`.
 
-Genesis Beasts are minted in the constructor to the owner with `prefix = 0`, `suffix = 0`, `level = 1`, `health = 100`, `shiny = 1`, and `animated = 1`. Genesis Beasts have rank `0` and are not entered into the non-genesis uniqueness map. Non-genesis Beast uniqueness is tracked by `(beast_id, prefix, suffix)`, while ranking and metadata refresh state continue to index by packed token ID.
+Genesis Beasts are minted in the constructor to the owner with `prefix = 0`, `suffix = 0`, `level = 1`, `health = 100`, `shiny = 1`, and `animated = 1`. Genesis Beasts have rank `0` and are not entered into the non-genesis uniqueness map. The `(id, 0, 0)` affix slot is reserved for the Genesis Beast of each species: non-genesis mints require `prefix >= 1` and `suffix >= 1`, so genesis status is derived directly from the token ID and every species has a maximum supply of exactly 1,243 (69 prefixes × 18 suffixes + 1 genesis). Non-genesis Beast uniqueness is tracked by `(beast_id, prefix, suffix)`, while ranking and metadata refresh state continue to index by packed token ID.
 
 `total_supply()` is a count of minted NFTs, not the largest token ID.
 
