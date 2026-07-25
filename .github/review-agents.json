@@ -1,0 +1,10 @@
+{
+  "agents": [
+    {
+      "agent_id": "contracts",
+      "agent_name": "Cairo Contract Reviewer",
+      "prompt_file": ".github/prompts/contract-review.md",
+      "diff_paths": ["src/", "Scarb.toml", "Scarb.lock", "scripts/"]
+    }
+  ]
+}
