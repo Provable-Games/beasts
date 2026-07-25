@@ -7,7 +7,7 @@ use super::utils::felt252_to_byte_array;
 pub impl BeastSvgImpl of BeastSvgTrait {
     /// Generates a complete data URI for the SVG
     fn generate_svg(
-        beast_id: u8,
+        beast_id: u64,
         prefix_name: felt252,
         suffix_name: felt252,
         beast_name: felt252,
@@ -225,7 +225,10 @@ pub impl BeastSvgImpl of BeastSvgTrait {
             .append(
                 @"<foreignObject x='1' y='1' width='128' height='128'><xhtml:img xmlns:xhtml='http://www.w3.org/1999/xhtml' src='",
             );
-        let beast_image = image_data_provider.get_data_uri(beast_id);
+        // Legacy image data providers are keyed by u8 genesis species IDs;
+        // community species (76+) get art through their own providers.
+        let legacy_species: u8 = beast_id.try_into().expect('not a genesis species');
+        let beast_image = image_data_provider.get_data_uri(legacy_species);
         svg.append(@beast_image);
         svg
             .append(

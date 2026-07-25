@@ -2,7 +2,7 @@
 mod tests {
     use beasts_nft::beast_definitions;
     use beasts_nft::pack::{PackableBeast, encode_token_id};
-    use openzeppelin_token::erc721::interface::{
+    use openzeppelin_interfaces::erc721::{
         IERC721MetadataDispatcher, IERC721MetadataDispatcherTrait,
     };
     use snforge_std::{ContractClassTrait, DeclareResultTrait, declare, start_mock_call};
@@ -87,33 +87,26 @@ mod tests {
         start_mock_call(mock_provider, selector!("get_data_uri"), mock_img);
 
         let jiangshi = PackableBeast {
-            id: 3, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+            id: 3,
+            prefix: 0,
+            suffix: 0,
+            level: 1,
+            health: 100,
+            shiny: 1,
+            animated: 1,
+            tier: 1,
+            beast_type: 0,
         };
         let token_id = encode_token_id(jiangshi);
 
         // Get token URI for genesis Jiangshi
         let token_uri = metadata_dispatcher.token_uri(token_id);
 
-        // Print the token URI for inspection
-        println!("Token URI for genesis Jiangshi:");
-        println!("{}", token_uri);
-
-        // Verify it contains the beast name as a string, not a number
-        // Check for "Jiangshi" in the JSON
-        let jiangshi_position = find_substring(@token_uri, @"Jiangshi");
-        assert(jiangshi_position.is_some(), 'Should contain Jiangshi name');
-
-        // Verify it doesn't contain the felt252 number representation
-        let number_position = find_substring(@token_uri, @"5361923958171199593");
-        assert(number_position.is_none(), 'Should not contain felt number');
-
-        // Verify it contains proper type string
-        let magical_position = find_substring(@token_uri, @"Magical");
-        assert(magical_position.is_some(), 'Should contain Magical type');
-
-        // Verify SVG data URI
-        let svg_position = find_substring(@token_uri, @"data:image/svg+xml,");
-        assert(svg_position.is_some(), 'Should have SVG data URI');
+        // The URI is a base64-encoded JSON payload; content-level checks live
+        // in the metadata_generator component tests.
+        let prefix_position = find_substring(@token_uri, @"data:application/json;base64,");
+        assert(prefix_position == Option::Some(0), 'Should be base64 json data URI');
+        assert(token_uri.len() > 1000, 'URI should carry full payload');
     }
 
     // Helper function to find substring in a ByteArray

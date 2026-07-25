@@ -14,8 +14,10 @@ pub struct BeastManager {}
 
 #[generate_trait]
 pub impl BeastManagerImpl of BeastManagerTrait {
-    /// Validates a beast ID is within valid range
-    fn validate_beast_id(beast_id: u8) -> BeastResult<()> {
+    /// Validates a beast ID is within valid range.
+    /// Genesis species tables cover 1-75; registered community species
+    /// extend this range once the registry lands.
+    fn validate_beast_id(beast_id: u64) -> BeastResult<()> {
         if beast_id >= 1 && beast_id <= 75 {
             BeastResult::Ok(())
         } else {
@@ -23,17 +25,19 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         }
     }
 
-    /// Validates beast attributes are within valid ranges
+    /// Validates beast attributes are within valid ranges.
+    /// The (id, 0, 0) affix slot is reserved for the species' Genesis Beast,
+    /// so regular mints require both prefix and suffix >= 1.
     fn validate_beast_attributes(
         prefix: u8, suffix: u8, shiny: u8, animated: u8,
     ) -> BeastResult<()> {
-        // Prefix validation (0-69 based on beast_definitions)
-        if prefix > 69 {
+        // Prefix validation (1-69 based on beast_definitions)
+        if prefix == 0 || prefix > 69 {
             return BeastResult::Err('Invalid prefix');
         }
 
-        // Suffix validation (0-18 based on beast_definitions)
-        if suffix > 18 {
+        // Suffix validation (1-18 based on beast_definitions)
+        if suffix == 0 || suffix > 18 {
             return BeastResult::Err('Invalid suffix');
         }
 
@@ -50,9 +54,11 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         BeastResult::Ok(())
     }
 
-    /// Creates a new beast with validation
+    /// Creates a new beast with validation.
+    /// Tier and type are resolved by the contract, never caller-supplied,
+    /// so the values encoded into the token ID are trustworthy.
     fn create_beast(
-        beast_id: u8, prefix: u8, suffix: u8, level: u16, health: u16, shiny: u8, animated: u8,
+        beast_id: u64, prefix: u8, suffix: u8, level: u16, health: u16, shiny: u8, animated: u8,
     ) -> BeastResult<PackableBeast> {
         // Validate beast ID
         match Self::validate_beast_id(beast_id) {
@@ -66,34 +72,57 @@ pub impl BeastManagerImpl of BeastManagerTrait {
             BeastResult::Err(e) => { return BeastResult::Err(e); },
         }
 
+        let (tier, beast_type) = Self::resolve_species_traits(beast_id);
+
         // Create the beast
-        let beast = PackableBeast { id: beast_id, prefix, suffix, level, health, shiny, animated };
+        let beast = PackableBeast {
+            id: beast_id, prefix, suffix, level, health, shiny, animated, tier, beast_type,
+        };
         BeastResult::Ok(beast)
     }
 
     /// Creates a genesis beast with default attributes
-    fn create_genesis_beast(beast_id: u8) -> BeastResult<PackableBeast> {
+    fn create_genesis_beast(beast_id: u64) -> BeastResult<PackableBeast> {
         // Validate beast ID
         match Self::validate_beast_id(beast_id) {
             BeastResult::Ok(_) => {},
             BeastResult::Err(e) => { return BeastResult::Err(e); },
         }
 
+        let (tier, beast_type) = Self::resolve_species_traits(beast_id);
+
         // Create genesis beast with default attributes
         let beast = PackableBeast {
-            id: beast_id, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+            id: beast_id,
+            prefix: 0,
+            suffix: 0,
+            level: 1,
+            health: 100,
+            shiny: 1,
+            animated: 1,
+            tier,
+            beast_type,
         };
         BeastResult::Ok(beast)
     }
 
+    /// Resolves the static tier/type for a species.
+    /// Only genesis species (1-75) exist until the registry lands; callers
+    /// must have validated the ID first.
+    fn resolve_species_traits(beast_id: u64) -> (u8, u8) {
+        let species: u8 = beast_id.try_into().expect('not a genesis species');
+        (beast_definitions::get_tier(species), beast_definitions::get_type_code(species))
+    }
+
     /// Generates a unique hash for a beast combination
-    fn get_beast_hash(beast_id: u8, prefix: u8, suffix: u8) -> felt252 {
+    fn get_beast_hash(beast_id: u64, prefix: u8, suffix: u8) -> felt252 {
         get_hash(beast_id, prefix, suffix)
     }
 
     /// Gets the beast name including prefix and suffix
     fn get_full_beast_name(beast: PackableBeast) -> (felt252, felt252, felt252) {
-        let base_name = beast_definitions::get_beast_name(beast.id);
+        let species: u8 = beast.id.try_into().expect('not a genesis species');
+        let base_name = beast_definitions::get_beast_name(species);
         let prefix_name = if beast.prefix > 0 {
             beast_definitions::get_prefix(beast.prefix)
         } else {
@@ -108,13 +137,12 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         (prefix_name, base_name, suffix_name)
     }
 
-    /// Gets beast metadata attributes
+    /// Gets beast metadata attributes.
+    /// Tier and type come from the decoded token ID — pure, no table reads.
     fn get_beast_attributes(beast: PackableBeast) -> BeastAttributes {
-        let tier = beast_definitions::get_tier(beast.id);
-
         BeastAttributes {
-            beast_type: beast_definitions::get_type(beast.id),
-            tier: tier,
+            beast_type: beast_definitions::type_name(beast.beast_type),
+            tier: beast.tier,
             level: beast.level,
             health: beast.health,
             shiny: beast.shiny,
@@ -123,9 +151,9 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         }
     }
 
+    /// Pure function of the token ID: power = level * (6 - tier).
     fn get_beast_power(beast: PackableBeast) -> u16 {
-        let tier = beast_definitions::get_tier(beast.id);
-        let multiplier: u16 = (6 - tier.into());
+        let multiplier: u16 = (6 - beast.tier.into());
 
         if beast.level > 65535_u16 / multiplier {
             65535_u16
@@ -185,8 +213,8 @@ mod tests {
     #[test]
     fn test_validate_beast_attributes_valid() {
         assert(
-            BeastManagerTrait::validate_beast_attributes(0, 0, 0, 0) == BeastResult::Ok(()),
-            'Attrs 0,0,0,0 should be valid',
+            BeastManagerTrait::validate_beast_attributes(1, 1, 0, 0) == BeastResult::Ok(()),
+            'Attrs 1,1,0,0 should be valid',
         );
         assert(
             BeastManagerTrait::validate_beast_attributes(69, 18, 1, 1) == BeastResult::Ok(()),
@@ -202,13 +230,13 @@ mod tests {
     fn test_validate_beast_attributes_invalid() {
         assert(
             BeastManagerTrait::validate_beast_attributes(
-                70, 0, 0, 0,
+                70, 1, 0, 0,
             ) == BeastResult::Err('Invalid prefix'),
             'Prefix 70 invalid',
         );
         assert(
             BeastManagerTrait::validate_beast_attributes(
-                0, 19, 0, 0,
+                1, 19, 0, 0,
             ) == BeastResult::Err('Invalid suffix'),
             'Suffix 19 invalid',
         );
@@ -221,28 +249,52 @@ mod tests {
     }
 
     #[test]
+    fn test_validate_beast_attributes_zero_affixes_invalid() {
+        // (id, 0, 0) is reserved for the Genesis Beast; regular mints
+        // require both affixes >= 1.
+        assert(
+            BeastManagerTrait::validate_beast_attributes(
+                0, 0, 0, 0,
+            ) == BeastResult::Err('Invalid prefix'),
+            'Zero affixes invalid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_attributes(
+                0, 5, 0, 0,
+            ) == BeastResult::Err('Invalid prefix'),
+            'Zero prefix invalid',
+        );
+        assert(
+            BeastManagerTrait::validate_beast_attributes(
+                5, 0, 0, 0,
+            ) == BeastResult::Err('Invalid suffix'),
+            'Zero suffix invalid',
+        );
+    }
+
+    #[test]
     fn test_validate_beast_attributes_shiny_animated_invalid() {
         assert(
             BeastManagerTrait::validate_beast_attributes(
-                0, 0, 2, 0,
+                1, 1, 2, 0,
             ) == BeastResult::Err('Invalid shiny value'),
             'Shiny 2 invalid',
         );
         assert(
             BeastManagerTrait::validate_beast_attributes(
-                0, 0, 0, 2,
+                1, 1, 0, 2,
             ) == BeastResult::Err('Invalid animated value'),
             'Animated 2 invalid',
         );
         assert(
             BeastManagerTrait::validate_beast_attributes(
-                0, 0, 255, 0,
+                1, 1, 255, 0,
             ) == BeastResult::Err('Invalid shiny value'),
             'Shiny 255 invalid',
         );
         assert(
             BeastManagerTrait::validate_beast_attributes(
-                0, 0, 0, 255,
+                1, 1, 0, 255,
             ) == BeastResult::Err('Invalid animated value'),
             'Animated 255 invalid',
         );
@@ -259,8 +311,18 @@ mod tests {
                 assert(beast.health == 1000, 'Health mismatch');
                 assert(beast.shiny == 0, 'Shiny mismatch');
                 assert(beast.animated == 0, 'Animated mismatch');
+                assert(beast.tier == 1, 'Tier mismatch');
+                assert(beast.beast_type == 0, 'Type mismatch');
             },
             BeastResult::Err(_) => { assert(false, 'Should not fail'); },
+        }
+    }
+
+    #[test]
+    fn test_create_beast_zero_affixes_rejected() {
+        match BeastManagerTrait::create_beast(3, 0, 0, 100, 1000, 0, 0) {
+            BeastResult::Ok(_) => { assert(false, 'Should fail'); },
+            BeastResult::Err(e) => { assert(e == 'Invalid prefix', 'Wrong error'); },
         }
     }
 
@@ -307,6 +369,8 @@ mod tests {
                 assert(beast.health == 100, 'Health should be 100');
                 assert(beast.shiny == 1, 'Shiny should be 1');
                 assert(beast.animated == 1, 'Animated should be 1');
+                assert(beast.tier == 4, 'Tier should be 4');
+                assert(beast.beast_type == 1, 'Type should be Hunter');
             },
             BeastResult::Err(_) => { assert(false, 'Should not fail'); },
         }
@@ -325,7 +389,15 @@ mod tests {
     #[test]
     fn test_get_full_beast_name() {
         let beast = PackableBeast {
-            id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: 0, animated: 0,
+            id: 3,
+            prefix: 1,
+            suffix: 2,
+            level: 42,
+            health: 1337,
+            shiny: 0,
+            animated: 0,
+            tier: 1,
+            beast_type: 0,
         };
         let (prefix, name, suffix) = BeastManagerTrait::get_full_beast_name(beast);
 
@@ -337,7 +409,15 @@ mod tests {
     #[test]
     fn test_get_full_beast_name_no_prefix_suffix() {
         let beast = PackableBeast {
-            id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 0, animated: 0,
+            id: 1,
+            prefix: 0,
+            suffix: 0,
+            level: 1,
+            health: 100,
+            shiny: 0,
+            animated: 0,
+            tier: 1,
+            beast_type: 0,
         };
         let (prefix, name, suffix) = BeastManagerTrait::get_full_beast_name(beast);
 
@@ -349,7 +429,15 @@ mod tests {
     #[test]
     fn test_get_beast_attributes() {
         let beast = PackableBeast {
-            id: 3, prefix: 1, suffix: 2, level: 42, health: 1337, shiny: 0, animated: 0,
+            id: 3,
+            prefix: 1,
+            suffix: 2,
+            level: 42,
+            health: 1337,
+            shiny: 0,
+            animated: 0,
+            tier: 1,
+            beast_type: 0,
         };
         let attrs = BeastManagerTrait::get_beast_attributes(beast);
 

@@ -10,8 +10,12 @@ pub mod beast_svg;
 pub mod encoding;
 pub mod interfaces;
 pub mod metadata_generator;
+#[cfg(test)]
+mod mint_tests;
 pub mod minting_coordinator;
 pub mod pack;
+#[cfg(test)]
+mod tests;
 pub mod utils;
 
 // Minimal view interface to expose `animation_url` alongside `token_uri`.
@@ -113,10 +117,10 @@ pub mod beasts_nft {
         // Beast-specific storage
         pub beast_token_ranks: Map<u256, u16>, // token_id -> current rank (for tokenURI)
         pub beast_species_lists: Map<
-            u8, Map<u16, u256>,
+            u64, Map<u16, u256>,
         >, // beast_id -> rank -> token_id (nested map)
-        pub beast_counts: Map<u8, u16>, // beast_id -> count of beasts
-        pub beast_metadata_refresh_bookmark: Map<u8, u16>, // beast_id -> count of updates
+        pub beast_counts: Map<u64, u16>, // beast_id -> count of beasts
+        pub beast_metadata_refresh_bookmark: Map<u64, u16>, // beast_id -> count of updates
         pub last_manual_metadata_refresh: Map<u256, u64>, // token_id -> timestamp of last update
         pub minted: Map<felt252, bool>,
         pub dungeon_address: ContractAddress,
@@ -267,7 +271,7 @@ pub mod beasts_nft {
         fn mint(
             ref self: ContractState,
             to: ContractAddress,
-            beast_id: u8,
+            beast_id: u64,
             prefix: u8,
             suffix: u8,
             level: u16,
@@ -311,7 +315,7 @@ pub mod beasts_nft {
             (token_id, insertion_rank, bookmark_set)
         }
 
-        fn refresh_metadata(ref self: ContractState, beast_id: u8) {
+        fn refresh_metadata(ref self: ContractState, beast_id: u64) {
             let mut bookmark_number = self.beast_metadata_refresh_bookmark.entry(beast_id).read();
 
             assert(bookmark_number > 0, 'No stale beasts');
@@ -388,7 +392,7 @@ pub mod beasts_nft {
             decode_token_id(token_id)
         }
 
-        fn is_minted(self: @ContractState, beast_id: u8, prefix: u8, suffix: u8) -> bool {
+        fn is_minted(self: @ContractState, beast_id: u64, prefix: u8, suffix: u8) -> bool {
             let hash = BeastManagerTrait::get_beast_hash(beast_id, prefix, suffix);
             self.minted.entry(hash).read()
         }
@@ -513,15 +517,15 @@ pub mod beasts_nft {
             self.terminal_timestamp.read()
         }
 
-        fn get_token_id_at_rank(self: @ContractState, beast_id: u8, rank: u16) -> u256 {
+        fn get_token_id_at_rank(self: @ContractState, beast_id: u64, rank: u16) -> u256 {
             self.beast_species_lists.entry(beast_id).entry(rank).read()
         }
 
-        fn get_species_count(self: @ContractState, beast_id: u8) -> u16 {
+        fn get_species_count(self: @ContractState, beast_id: u64) -> u16 {
             self.beast_counts.entry(beast_id).read()
         }
 
-        fn get_beast_metadata_bookmark(self: @ContractState, beast_id: u8) -> u16 {
+        fn get_beast_metadata_bookmark(self: @ContractState, beast_id: u64) -> u16 {
             self.beast_metadata_refresh_bookmark.entry(beast_id).read()
         }
 
@@ -637,7 +641,7 @@ pub mod beasts_nft {
         }
 
         fn generate_metadata_update_events(
-            ref self: ContractState, beast_id: u8, insertion_rank: u16,
+            ref self: ContractState, beast_id: u64, insertion_rank: u16,
         ) -> bool {
             let total_beasts = self.beast_counts.entry(beast_id).read();
             let mut bookmark_set = false;

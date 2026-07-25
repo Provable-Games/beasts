@@ -2,11 +2,11 @@
 mod mint_tests {
     use beasts_nft::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait};
     use beasts_nft::pack::{PackableBeast, encode_token_id};
-    use openzeppelin_access::ownable::interface::IOwnableDispatcher;
-    use openzeppelin_token::erc721::interface::{
+    use openzeppelin_interfaces::erc721::{
         IERC721Dispatcher, IERC721DispatcherTrait, IERC721MetadataDispatcher,
         IERC721MetadataDispatcherTrait,
     };
+    use openzeppelin_interfaces::ownable::IOwnableDispatcher;
     use snforge_std::{
         ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
         start_mock_call, stop_cheat_caller_address,
@@ -91,10 +91,26 @@ mod mint_tests {
         assert(!beasts.is_minted(1, 0, 0), 'Genesis should not mark minted');
 
         let first_expected = PackableBeast {
-            id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+            id: 1,
+            prefix: 0,
+            suffix: 0,
+            level: 1,
+            health: 100,
+            shiny: 1,
+            animated: 1,
+            tier: 1,
+            beast_type: 0,
         };
         let last_expected = PackableBeast {
-            id: 75, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+            id: 75,
+            prefix: 0,
+            suffix: 0,
+            level: 1,
+            health: 100,
+            shiny: 1,
+            animated: 1,
+            tier: 5,
+            beast_type: 2,
         };
         let first_token_id = encode_token_id(first_expected);
         let last_token_id = encode_token_id(last_expected);
@@ -118,7 +134,15 @@ mod mint_tests {
         stop_cheat_caller_address(beasts.contract_address);
 
         let expected = PackableBeast {
-            id: 3, prefix: 1, suffix: 2, level: 100, health: 1000, shiny: 0, animated: 1,
+            id: 3,
+            prefix: 1,
+            suffix: 2,
+            level: 100,
+            health: 1000,
+            shiny: 0,
+            animated: 1,
+            tier: 1,
+            beast_type: 0,
         };
 
         start_cheat_caller_address(beasts.contract_address, minter);
@@ -144,7 +168,7 @@ mod mint_tests {
         let recipient = test_address('recipient');
 
         start_cheat_caller_address(beasts.contract_address, random_caller);
-        beasts.mint(recipient, 1, 0, 0, 1, 100, 0, 0);
+        beasts.mint(recipient, 1, 1, 1, 1, 100, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
     }
 
@@ -206,17 +230,49 @@ mod mint_tests {
         stop_cheat_caller_address(beasts.contract_address);
 
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(recipient, 5, 0, 0, 100, 200, 0, 0);
-        beasts.mint(recipient, 5, 1, 0, 100, 200, 0, 0);
-        beasts.mint(recipient, 5, 0, 1, 100, 200, 0, 0);
+        beasts.mint(recipient, 5, 1, 1, 100, 200, 0, 0);
+        beasts.mint(recipient, 5, 2, 1, 100, 200, 0, 0);
+        beasts.mint(recipient, 5, 1, 2, 100, 200, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
 
         assert(erc721.balance_of(recipient) == 3, 'Should have 3 NFTs');
-        assert(beasts.is_minted(5, 0, 0), 'First should be minted');
-        assert(beasts.is_minted(5, 1, 0), 'Second should be minted');
-        assert(beasts.is_minted(5, 0, 1), 'Third should be minted');
-        assert(!beasts.is_minted(5, 1, 1), 'Fourth should not be minted');
+        assert(beasts.is_minted(5, 1, 1), 'First should be minted');
+        assert(beasts.is_minted(5, 2, 1), 'Second should be minted');
+        assert(beasts.is_minted(5, 1, 2), 'Third should be minted');
+        assert(!beasts.is_minted(5, 2, 2), 'Fourth should not be minted');
         assert(beasts.total_supply() == 78, 'Supply should be 78');
+    }
+
+    #[test]
+    #[should_panic(expected: ('Invalid prefix',))]
+    fn test_mint_zero_affixes_reserved_for_genesis() {
+        let (beasts, _, _, _, owner) = deploy_contract();
+        let minter = test_address('minter');
+        let recipient = test_address('recipient');
+
+        start_cheat_caller_address(beasts.contract_address, owner);
+        beasts.set_dungeon_address(minter);
+        stop_cheat_caller_address(beasts.contract_address);
+
+        start_cheat_caller_address(beasts.contract_address, minter);
+        beasts.mint(recipient, 5, 0, 0, 100, 200, 0, 0);
+        stop_cheat_caller_address(beasts.contract_address);
+    }
+
+    #[test]
+    #[should_panic(expected: ('Invalid suffix',))]
+    fn test_mint_zero_suffix_rejected() {
+        let (beasts, _, _, _, owner) = deploy_contract();
+        let minter = test_address('minter');
+        let recipient = test_address('recipient');
+
+        start_cheat_caller_address(beasts.contract_address, owner);
+        beasts.set_dungeon_address(minter);
+        stop_cheat_caller_address(beasts.contract_address);
+
+        start_cheat_caller_address(beasts.contract_address, minter);
+        beasts.mint(recipient, 5, 1, 0, 100, 200, 0, 0);
+        stop_cheat_caller_address(beasts.contract_address);
     }
 
     #[test]
@@ -238,11 +294,11 @@ mod mint_tests {
 
         let token_uri = metadata.token_uri(token_id);
 
-        assert(find_substring(@token_uri, @"Jiangshi").is_some(), 'Should contain beast name');
-        assert(find_substring(@token_uri, @"Agony").is_some(), 'Should contain prefix');
-        assert(find_substring(@token_uri, @"Root").is_some(), 'Should contain suffix');
-        assert(find_substring(@token_uri, @"42").is_some(), 'Should contain level');
-        assert(find_substring(@token_uri, @"1337").is_some(), 'Should contain health');
+        // The URI is a base64-encoded JSON payload; content-level checks live
+        // in the metadata_generator component tests.
+        let prefix_position = find_substring(@token_uri, @"data:application/json;base64,");
+        assert(prefix_position == Option::Some(0), 'Should be base64 json data URI');
+        assert(token_uri.len() > 1000, 'URI should carry full payload');
     }
 
     #[test]
@@ -250,7 +306,15 @@ mod mint_tests {
     fn test_unowned_packed_token_id_fails_ownership_check() {
         let (beasts, _, _, _, _) = deploy_contract();
         let unowned = PackableBeast {
-            id: 4, prefix: 1, suffix: 1, level: 2, health: 3, shiny: 0, animated: 0,
+            id: 4,
+            prefix: 1,
+            suffix: 1,
+            level: 2,
+            health: 3,
+            shiny: 0,
+            animated: 0,
+            tier: 1,
+            beast_type: 0,
         };
 
         beasts.get_beast(encode_token_id(unowned));

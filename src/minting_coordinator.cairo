@@ -4,7 +4,7 @@ use super::pack::{PackableBeast, encode_token_id};
 /// Represents a mint request
 #[derive(Drop, Copy, Serde)]
 pub struct MintRequest {
-    pub beast_id: u8,
+    pub beast_id: u64,
     pub prefix: u8,
     pub suffix: u8,
     pub level: u16,
@@ -55,7 +55,7 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
     }
 
     /// Prepares data for genesis mint
-    fn prepare_genesis_mint(beast_id: u8) -> BeastResult<MintData> {
+    fn prepare_genesis_mint(beast_id: u64) -> BeastResult<MintData> {
         // Create genesis beast
         match BeastManagerTrait::create_genesis_beast(beast_id) {
             BeastResult::Ok(beast) => {
@@ -72,7 +72,7 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
     /// Prepares batch genesis mint data
     fn prepare_genesis_batch() -> Array<BeastResult<MintData>> {
         let mut results = array![];
-        let mut beast_id: u8 = 1;
+        let mut beast_id: u64 = 1;
 
         loop {
             if beast_id > 75 {
@@ -90,7 +90,7 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
 
     /// Validates that a mint won't create a duplicate
     fn validate_uniqueness(
-        beast_id: u8, prefix: u8, suffix: u8, existing_hashes: @Array<felt252>,
+        beast_id: u64, prefix: u8, suffix: u8, existing_hashes: @Array<felt252>,
     ) -> bool {
         let hash = BeastManagerTrait::get_beast_hash(beast_id, prefix, suffix);
 
@@ -129,7 +129,15 @@ mod tests {
         match MintingCoordinatorTrait::prepare_mint(request) {
             BeastResult::Ok(data) => {
                 let expected_beast = PackableBeast {
-                    id: 3, prefix: 1, suffix: 2, level: 100, health: 1000, shiny: 0, animated: 1,
+                    id: 3,
+                    prefix: 1,
+                    suffix: 2,
+                    level: 100,
+                    health: 1000,
+                    shiny: 0,
+                    animated: 1,
+                    tier: 1,
+                    beast_type: 0,
                 };
                 assert(data.beast.id == 3, 'Beast ID mismatch');
                 assert(data.beast.prefix == 1, 'Prefix mismatch');
@@ -162,7 +170,15 @@ mod tests {
         match MintingCoordinatorTrait::prepare_genesis_mint(25) {
             BeastResult::Ok(data) => {
                 let expected_beast = PackableBeast {
-                    id: 25, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+                    id: 25,
+                    prefix: 0,
+                    suffix: 0,
+                    level: 1,
+                    health: 100,
+                    shiny: 1,
+                    animated: 1,
+                    tier: 5,
+                    beast_type: 0,
                 };
                 assert(data.beast.id == 25, 'Beast ID mismatch');
                 assert(data.beast.prefix == 0, 'Prefix should be 0');
@@ -187,7 +203,15 @@ mod tests {
         match batch.at(0) {
             BeastResult::Ok(data) => {
                 let expected_beast = PackableBeast {
-                    id: 1, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+                    id: 1,
+                    prefix: 0,
+                    suffix: 0,
+                    level: 1,
+                    health: 100,
+                    shiny: 1,
+                    animated: 1,
+                    tier: 1,
+                    beast_type: 0,
                 };
                 assert(*data.beast.id == 1, 'First beast should be ID 1');
                 assert(*data.token_id == encode_token_id(expected_beast), 'First token ID');
@@ -199,7 +223,15 @@ mod tests {
         match batch.at(74) {
             BeastResult::Ok(data) => {
                 let expected_beast = PackableBeast {
-                    id: 75, prefix: 0, suffix: 0, level: 1, health: 100, shiny: 1, animated: 1,
+                    id: 75,
+                    prefix: 0,
+                    suffix: 0,
+                    level: 1,
+                    health: 100,
+                    shiny: 1,
+                    animated: 1,
+                    tier: 5,
+                    beast_type: 2,
                 };
                 assert(*data.beast.id == 75, 'Last beast should be ID 75');
                 assert(*data.token_id == encode_token_id(expected_beast), 'Last token ID');

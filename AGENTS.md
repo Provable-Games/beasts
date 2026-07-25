@@ -24,11 +24,13 @@
 - Prefer traits over free helpers; use `panic` only for invariant checks.
 
 ## Beast Token ID Design
-- `PackableBeast` in `src/pack.cairo` defines the canonical 53-bit token ID format. Use `encode_token_id(beast)` and `decode_token_id(token_id)`; do not duplicate the bit math elsewhere.
-- ERC721 token IDs are deterministic, not sequential: `token_id == encode_token_id(PackableBeast)` for both genesis and non-genesis Beasts.
+- `PackableBeast` in `src/pack.cairo` defines the canonical 116-bit token ID format (`id: u64`, plus tier/type/affixes/stats/variant flags). Use `encode_token_id(beast)` and `decode_token_id(token_id)`; do not duplicate the bit math elsewhere.
+- ERC721 token IDs are deterministic, not sequential: `token_id == encode_token_id(PackableBeast)` for both genesis and non-genesis Beasts. Token IDs fit `u128`.
+- Tier and type are encoded in the token ID and resolved by the contract at mint time (from `beast_definitions` for species 1-75), never caller-supplied. `get_beast_power` is a pure function of the decoded token ID.
 - The contract intentionally has no `Storage.beasts` map. Decode token IDs only after ERC721 ownership/existence checks where user-facing existence matters.
 - `total_supply()` is backed by `supply_count` and is a count of minted NFTs, not the largest token ID.
-- Genesis Beasts are minted in the constructor, have rank `0`, and must not rely on `token_id <= 75`. They remain excluded from the `minted` uniqueness map.
+- Genesis Beasts are minted in the constructor, have rank `0`, and must not rely on `token_id <= 75`. They remain excluded from the `minted` uniqueness map. Genesis status is derived from the token ID: `prefix == 0 && suffix == 0`.
+- The `(id, 0, 0)` affix slot is reserved for the Genesis Beast of each species: non-genesis mints require `prefix >= 1 && suffix >= 1` (max supply per species is exactly 1,243).
 - Non-genesis uniqueness remains based on `(beast_id, prefix, suffix)` via `minted`; ranking, metadata bookmarks, and manual refresh timestamps still index by packed token ID.
 - This storage/token-ID design is for fresh deployments only. Do not add migration behavior for legacy sequential token IDs unless explicitly requested.
 
