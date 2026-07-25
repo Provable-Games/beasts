@@ -266,6 +266,16 @@ species only, and only the artist's own pointer choice causes it. Factory
 providers are canonical-class and cannot revert. The web app badges
 "verified art" only for canonical-class providers.
 
+**Render-time output validation (PR 4)**: `token_uri` validates whatever a
+custom provider returns before embedding it — an exact
+`data:image/{png,gif,svg+xml,webp};base64,` prefix plus base64-charset body
+(same validator family as the factory provider, with a wider mime allowlist
+to preserve dynamic-art optionality). A misbehaving custom provider can
+therefore revert its own species' rendering (accepted: self-inflicted and
+contained) but can never inject markup into the SVG or JSON. Factory
+providers guarantee inertness at write time; custom providers get it
+enforced at read time.
+
 ## StoredArtProvider (canonical class)
 
 - Storage: 4 `ByteArray` data URIs + `registry` + `beast_id`.
