@@ -1,0 +1,180 @@
+name: Codex Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: codex-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has-reviews: ${{ steps.set-matrix.outputs.has-reviews }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: set-matrix
+        run: |
+          ./.github/scripts/build-review-matrix.sh \
+            .github/review-agents.json \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}"
+
+  review:
+    needs: changes
+    if: needs.changes.outputs.has-reviews == 'true'
+    name: Codex - ${{ matrix.agent_name }}
+    runs-on: ubuntu-latest
+    env:
+      CODEX_NPM_SPEC: "@openai/codex@latest"
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Enable Codex sandbox prerequisites
+        run: |
+          # Codex's Linux sandbox uses its bundled bubblewrap, which needs
+          # unprivileged user namespaces. Ubuntu 24.04 runner images block
+          # those via AppArmor (kernel.apparmor_restrict_unprivileged_userns=1),
+          # making every sandboxed command fail with:
+          #   bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted
+          # Same workaround as openai/codex-action uses on GitHub-hosted runners.
+          current_userns="$(sysctl -n kernel.unprivileged_userns_clone 2>/dev/null || true)"
+          if [ -n "$current_userns" ] && [ "$current_userns" != "1" ]; then
+            sudo sysctl -w kernel.unprivileged_userns_clone=1
+          fi
+          current_apparmor="$(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null || true)"
+          if [ -n "$current_apparmor" ] && [ "$current_apparmor" != "0" ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+
+      - name: Verify Codex sandbox
+        run: |
+          # codex exec exits 0 even when its sandbox is broken (the model just
+          # sees every command fail and posts a degraded review), so prove the
+          # sandbox can actually run a command before spending a review on it.
+          npx -y "$CODEX_NPM_SPEC" sandbox -c 'sandbox_mode="read-only"' -- true
+
+      - name: Inject OAuth Session
+        env:
+          CODEX_AUTH_DOT_JSON: ${{ secrets.CODEX_AUTH_DOT_JSON }}
+        run: |
+          mkdir -p ~/.codex
+          printf '%s' "$CODEX_AUTH_DOT_JSON" > ~/.codex/auth.json
+          chmod 600 ~/.codex/auth.json
+
+      - name: Build review prompt
+        env:
+          PROMPT_FILE: ${{ matrix.prompt_file }}
+          DIFF_PATHS_STR: ${{ matrix.diff_paths_str }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+          AGENT_NAME: ${{ matrix.agent_name }}
+          COMMENT_HEADER: GPT Code Review
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          ./.github/scripts/build-review-prompt.sh codex /tmp/prompt.txt
+
+      - name: Run Codex review
+        id: codex-review
+        run: |
+          set +e
+          # read-only is deliberate: the review only needs git reads, and it
+          # keeps a prompt-injected review run from touching the workspace.
+          npx -y "$CODEX_NPM_SPEC" exec \
+            --sandbox read-only \
+            -c 'model="gpt-5.6-sol"' \
+            -c 'model_reasoning_effort="xhigh"' \
+            -o /tmp/review.txt \
+            -- "$(cat /tmp/prompt.txt)" > /tmp/review-run.log 2>&1
+          EXIT_CODE=$?
+          set -e
+
+          if [ -s /tmp/review.txt ]; then
+            cat /tmp/review.txt
+          fi
+
+          if [ -s /tmp/review-run.log ]; then
+            echo ""
+            echo "---- codex-cli log (truncated) ----"
+            sed -n '1,200p' /tmp/review-run.log
+          fi
+
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+
+      - name: Upsert review comment
+        # Guard against earlier-step failures: if the codex step never ran,
+        # don't overwrite a previously posted review with a failure stub.
+        if: always() && steps.codex-review.outcome != 'skipped'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMENT_HEADER: GPT Code Review
+        run: |
+          MARKER="<!-- codex-review:${{ matrix.agent_id }} -->"
+          REVIEW_BODY_FILE="/tmp/review-body.txt"
+
+          if [ -s /tmp/review.txt ] && \
+             [ "$(head -n 1 /tmp/review.txt)" = "## $COMMENT_HEADER" ]; then
+            # Drop duplicate top-level heading when model echoes the same title.
+            sed '1d;/./,$!d' /tmp/review.txt > "$REVIEW_BODY_FILE"
+          elif [ -s /tmp/review.txt ]; then
+            cp /tmp/review.txt "$REVIEW_BODY_FILE"
+          else
+            : > "$REVIEW_BODY_FILE"
+          fi
+
+          {
+            echo "## $COMMENT_HEADER"
+            echo ""
+
+            if [ "${{ steps.codex-review.outputs.exit_code }}" != "0" ]; then
+              echo "**Review execution failed** (exit code ${{ steps.codex-review.outputs.exit_code }})."
+              echo ""
+              if [ -s /tmp/review-run.log ]; then
+                echo "```text"
+                sed -n '1,160p' /tmp/review-run.log
+                echo "```"
+              fi
+            elif [ -s "$REVIEW_BODY_FILE" ]; then
+              cat "$REVIEW_BODY_FILE"
+            else
+              echo "No review output was produced."
+            fi
+
+            echo ""
+            echo "$MARKER"
+          } > /tmp/review-formatted.txt
+
+          ./.github/scripts/upsert-pr-comment.sh \
+            "${{ github.repository }}" \
+            "${{ github.event.pull_request.number }}" \
+            "$MARKER" \
+            /tmp/review-formatted.txt
+
+      - name: Fail on Codex runtime error
+        if: steps.codex-review.outputs.exit_code != '0'
+        run: exit 1
