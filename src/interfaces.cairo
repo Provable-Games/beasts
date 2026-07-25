@@ -47,7 +47,6 @@ pub trait IBeasts<TContractState> {
     fn get_regular_gif_provider(self: @TContractState) -> ContractAddress;
     fn get_shiny_png_provider(self: @TContractState) -> ContractAddress;
     fn get_shiny_gif_provider(self: @TContractState) -> ContractAddress;
-    fn get_terminal_time(self: @TContractState) -> u64;
 }
 
 

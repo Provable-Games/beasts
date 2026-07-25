@@ -152,7 +152,7 @@ This keeps every valid Beast token ID below `2^116`, so it fits in `u128` (two 6
 
 Because the token ID is the source of the Beast attributes, contract reads such as `get_beast(token_id)`, `token_uri(token_id)`, and ranking comparisons decode the token ID after verifying ERC721 ownership/existence. There is no separate onchain map from `token_id` to `PackableBeast`.
 
-Genesis Beasts are minted in the constructor to the owner with `prefix = 0`, `suffix = 0`, `level = 1`, `health = 100`, `shiny = 1`, and `animated = 1`. Genesis Beasts have rank `0` and are not entered into the non-genesis uniqueness map. The `(id, 0, 0)` affix slot is reserved for the Genesis Beast of each species: non-genesis mints require `prefix >= 1` and `suffix >= 1`, so genesis status is derived directly from the token ID and every species has a maximum supply of exactly 1,243 (69 prefixes × 18 suffixes + 1 genesis). Non-genesis Beast uniqueness is tracked by `(beast_id, prefix, suffix)`, while ranking and metadata refresh state continue to index by packed token ID.
+Genesis Beasts are minted in the constructor to the owner with `prefix = 0`, `suffix = 0`, `level = 1`, `health = 100`, `shiny = 1`, and `animated = 1`. Genesis Beasts have rank `0` and are entered into the uniqueness map at construction. The `(id, 0, 0)` affix slot is reserved for the Genesis Beast of each species: non-genesis mints require `prefix >= 1` and `suffix >= 1`, so genesis status is derived directly from the token ID and every species has a maximum supply of exactly 1,243 (69 prefixes × 18 suffixes + 1 genesis). Non-genesis Beast uniqueness is tracked by `(beast_id, prefix, suffix)`, while ranking and metadata refresh state continue to index by packed token ID.
 
 `total_supply()` is a count of minted NFTs, not the largest token ID.
 
@@ -207,7 +207,6 @@ Required in `.env` (no defaults are assumed):
 - `RPC_URL` (e.g., Sepolia or Mainnet endpoint)
 - `NAME`, `SYMBOL`
 - `OWNER`, `ROYALTY_RECEIVER`, `ROYALTY_FRACTION` (u128, denominator 10,000)
-- `TERMINAL_TIMESTAMP` (u64): UNIX timestamp in seconds after which `token_uri` is disabled and calls revert. Use `0` to keep `token_uri` active indefinitely.
 
 Optional in `.env`:
 
@@ -223,7 +222,7 @@ Notes:
 
 - The script declares and deploys the four image data provider contracts, then deploys the core NFT with their addresses passed to the constructor.
 - The script fails with a descriptive error if any required `.env` value is missing.
-- The deploy script reads `TERMINAL_TIMESTAMP` and `DEATH_MOUNTAIN_ADDRESS` and appends them to the constructor. If `TERMINAL_TIMESTAMP > 0`, after that time, `token_uri` calls revert with `Terminal: token_uri disabled`.
+- The deploy script reads `DEATH_MOUNTAIN_ADDRESS` and appends it to the constructor.
 
 ## 🛠️ Development
 

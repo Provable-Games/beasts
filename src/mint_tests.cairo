@@ -45,7 +45,6 @@ mod mint_tests {
         mock_provider.serialize(ref calldata);
         mock_provider.serialize(ref calldata);
         0.serialize(ref calldata);
-        0.serialize(ref calldata);
 
         let (contract_address, _) = contract.deploy(@calldata).unwrap();
 
@@ -88,7 +87,11 @@ mod mint_tests {
 
         assert(beasts.total_supply() == 75, 'Initial supply should be 75');
         assert(erc721.balance_of(owner) == 75, 'Owner should have genesis');
-        assert(!beasts.is_minted(1, 0, 0), 'Genesis should not mark minted');
+        // The (id, 0, 0) slot is reserved: genesis beasts enter the
+        // uniqueness map so duplicate genesis attempts fail.
+        assert(beasts.is_minted(1, 0, 0), 'Genesis should mark minted');
+        assert(beasts.is_minted(75, 0, 0), 'Genesis 75 should mark minted');
+        assert(!beasts.is_minted(1, 1, 1), 'Named slot should be free');
 
         let first_expected = PackableBeast {
             id: 1,

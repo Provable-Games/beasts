@@ -6,11 +6,9 @@ name = "beasts_nft"
 version = "0.1.0"
 dependencies = [
  "openzeppelin_access",
- "openzeppelin_governance",
  "openzeppelin_interfaces",
  "openzeppelin_introspection",
  "openzeppelin_token",
- "openzeppelin_utils",
  "snforge_std",
 ]
 
@@ -21,18 +19,6 @@ source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v3.0.0#ddd
 dependencies = [
  "openzeppelin_interfaces",
  "openzeppelin_introspection",
-]
-
-[[package]]
-name = "openzeppelin_governance"
-version = "3.0.0"
-source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v3.0.0#ddd3338e787a3fbf4a92b366640a57ee364390cb"
-dependencies = [
- "openzeppelin_access",
- "openzeppelin_interfaces",
- "openzeppelin_introspection",
- "openzeppelin_token",
- "openzeppelin_utils",
 ]
 
 [[package]]

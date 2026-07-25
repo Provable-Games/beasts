@@ -79,7 +79,6 @@ mod tests {
         mock_provider.serialize(ref calldata);
         mock_provider.serialize(ref calldata);
         0.serialize(ref calldata);
-        0.serialize(ref calldata);
 
         let (contract_address, _) = contract.deploy(@calldata).unwrap();
         let metadata_dispatcher = IERC721MetadataDispatcher { contract_address };
