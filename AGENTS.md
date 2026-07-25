@@ -14,7 +14,7 @@
 - `snforge test --max-n-steps 4294967295` - Match the CI test command.
 - `snforge test --fuzzer-runs 500 --coverage` - Run fuzz-capable tests with 500 fuzzer runs and create `coverage/coverage.lcov`.
 - `lcov --summary coverage/coverage.lcov` - Summarize coverage locally.
-- Deploy with `bash scripts/deploy.sh` using `.env`: `STARKNET_ACCOUNT`, `STARKNET_PRIVATE_KEY`, `RPC_URL`, `NAME`, `SYMBOL`, `OWNER`, `ROYALTY_RECEIVER`, `ROYALTY_FRACTION`, `TERMINAL_TIMESTAMP`; optional `DEATH_MOUNTAIN_ADDRESS` defaults to `0`.
+- Deploy with `bash scripts/deploy.sh` using `.env`: `STARKNET_ACCOUNT`, `STARKNET_PRIVATE_KEY`, `RPC_URL`, `NAME`, `SYMBOL`, `OWNER`, `ROYALTY_RECEIVER`, `ROYALTY_FRACTION`; optional `DEATH_MOUNTAIN_ADDRESS` defaults to `0`.
 - Tool versions are pinned in `.tool-versions`; deployment also requires `starkli`, and coverage summaries require `cairo-coverage` plus `lcov`.
 
 ## Coding Style & Naming Conventions
@@ -29,7 +29,7 @@
 - Tier and type are encoded in the token ID and resolved by the contract at mint time (from `beast_definitions` for species 1-75), never caller-supplied. `get_beast_power` is a pure function of the decoded token ID.
 - The contract intentionally has no `Storage.beasts` map. Decode token IDs only after ERC721 ownership/existence checks where user-facing existence matters.
 - `total_supply()` is backed by `supply_count` and is a count of minted NFTs, not the largest token ID.
-- Genesis Beasts are minted in the constructor, have rank `0`, and must not rely on `token_id <= 75`. They remain excluded from the `minted` uniqueness map. Genesis status is derived from the token ID: `prefix == 0 && suffix == 0`.
+- Genesis Beasts are minted in the constructor, have rank `0`, and must not rely on `token_id <= 75`. They are entered into the `minted` uniqueness map, so the `(id, 0, 0)` slot is permanently reserved per species. Genesis status is derived from the token ID: `prefix == 0 && suffix == 0`.
 - The `(id, 0, 0)` affix slot is reserved for the Genesis Beast of each species: non-genesis mints require `prefix >= 1 && suffix >= 1` (max supply per species is exactly 1,243).
 - Non-genesis uniqueness remains based on `(beast_id, prefix, suffix)` via `minted`; ranking, metadata bookmarks, and manual refresh timestamps still index by packed token ID.
 - This storage/token-ID design is for fresh deployments only. Do not add migration behavior for legacy sequential token IDs unless explicitly requested.

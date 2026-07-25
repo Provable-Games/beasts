@@ -61,22 +61,32 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         last_killed_by_adventurer: u64,
         last_killed_timestamp: u64,
     ) -> MetadataComponents {
-        // Description
-        let description =
-            "The Beasts are a collection of digital native creatures, born onchain and built for battle.
-            
-            With 1,243 variants across 75 species, the fixed supply of 93,225 Beasts strikes a balance between abundance and scarcity: ample supply for onchain fun, paired with distinctive visual and non-visual traits that give collectors endless reasons to obsess over this rich collection.
-
-            Beasts carry two sets of traits: visual and combat. Visual traits make collecting exciting, with Shiny and Animated forms that activate unique, pixel-perfect effects. Each Beast also features live traits, such as a built-in ranking system that places every Beast between 1 and 1,243 based on its power relative to others of its species. Rankings update automatically with each newly minted Beast until all 1,243 of that species are collected, at which point a King Beast is crowned.
-
-            When collected, a Beast is minted with its level and health. Combined with its type and tier, these traits define a combat profile that allows Beasts to canonically battle onchain using the same combat system that first brought them into the world - Loot Survivor. Beasts also evolve through live traits such as the number of Adventurers they have slain, the last Adventurer who defeated them, and the timestamp of that defeat. These provide long-term, credibly neutral building blocks for future systems of growth and leveling, intentionally omitted from the base layer to support and promote emergence.
-
-            Beasts are not purchased, they are earned by worthy Adventurers in the dungeons of Loot Survivor, a fully onchain game powered by verifiable randomness. The story of every Beast begins not at its mint, but with the Adventurer who braved the dungeon. It is the combination of decisions and chance that ultimately leads to the creation of each Beast. Every step of that journey is etched onto an incorruptible, indestructible ledger, ensuring those stories remain accessible as long as the network exists.
-
-            For collectors, Beasts offer a generative art collection with verifiable scarcity, issuance, and provenance. 
-            For players, Beasts deliver endless and timeless opportunities for onchain fun.
-
-            Beast artwork courtesy of the legends at 1337 Skulls (:5ku11u73:)";
+        // Description. Newlines are JSON-escaped (literal backslash-n) so the
+        // resulting metadata is valid JSON.
+        let mut description: ByteArray =
+            "The Beasts are an infinitely expandable onchain bestiary - digital native creatures, born onchain and built for battle.";
+        description
+            .append(
+                @"\\n\\nEvery Beast lives entirely on the blockchain: species, name, combat stats, artwork, and history are encoded on an incorruptible, indestructible ledger. Each species is capped at exactly 1,243 Beasts - 1,242 named variants plus a single Genesis Beast, the creator's token - and a built-in ranking system places every Beast among its kin by power. Rankings update automatically with each newly minted Beast until all 1,243 of a species are collected, at which point a King Beast is crowned.",
+            );
+        description
+            .append(
+                @"\\n\\nBeasts carry two sets of traits: visual and combat. Visual traits make collecting exciting, with Shiny and Animated forms that activate unique, pixel-perfect effects. Combat traits - level, health, type, and tier - define a battle profile compatible with the fully onchain combat system that first brought Beasts into the world: Loot Survivor. Live traits, such as the Adventurers a Beast has slain and the last Adventurer to defeat it, evolve with the Beast's onchain life.",
+            );
+        description
+            .append(
+                @"\\n\\nBeasts are not purchased, they are earned - captured in onchain dungeons by worthy Adventurers, with verifiable randomness deciding every encounter. The story of each Beast begins not at its mint, but with the journey that created it, etched forever onto the ledger.",
+            );
+        description
+            .append(
+                @"\\n\\nFor collectors, an ever-growing bestiary with verifiable scarcity, issuance, and provenance. For players, endless and timeless opportunities for onchain fun.",
+            );
+        if beast.id <= 75 {
+            description
+                .append(
+                    @"\\n\\nArtwork for the original 75 species courtesy of the legends at 1337 Skulls (:5ku11u73:)",
+                );
+        }
         // Get beast names
         let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
 
@@ -336,9 +346,9 @@ mod tests {
         }
     }
 
-    // Helper: deploy contract with provided terminal timestamp and mocked providers
-    fn deploy_beasts_with_terminal(
-        terminal_ts: u64, mock_provider_addr: ContractAddress,
+    // Helper: deploy contract with mocked providers
+    fn deploy_beasts(
+        mock_provider_addr: ContractAddress,
     ) -> (IBeastsDispatcher, IERC721MetadataDispatcher, ContractAddress, ContractAddress) {
         let owner = test_address('owner');
         let royalty_receiver: ContractAddress = test_address('royalty_receiver');
@@ -375,9 +385,6 @@ mod tests {
         // death_mountain_address
         calldata.append(0);
 
-        // terminal timestamp
-        calldata.append(terminal_ts.into());
-
         let (contract_address, _) = contract.deploy(@calldata).unwrap();
         (
             IBeastsDispatcher { contract_address },
@@ -389,15 +396,14 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn token_uri_allowed_when_not_terminal() {
+    fn token_uri_returns_data() {
         // Mock provider to avoid external calls
         let mock_provider: ContractAddress = 'mock_provider'.try_into().unwrap();
         let mock_img: ByteArray =
             "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAEElEQVR4nGP4z8DAwMAAAgABAAJcQp0pAAAAAElFTkSuQmCC";
         start_mock_call(mock_provider, selector!("get_data_uri"), mock_img);
 
-        // Deploy with terminal disabled (0)
-        let (beasts, metadata, owner, _addr) = deploy_beasts_with_terminal(0_u64, mock_provider);
+        let (beasts, metadata, owner, _addr) = deploy_beasts(mock_provider);
 
         // Set minter
         let minter = test_address('minter');
@@ -413,36 +419,7 @@ mod tests {
 
         // Should not panic and should return non-empty URI
         let uri = metadata.token_uri(token_id);
-        assert!(uri.len() != 0, "token_uri should return data when not terminal");
-    }
-
-    #[test]
-    #[ignore]
-    #[fork("mainnet")]
-    #[should_panic(expected: ('Terminal: token_uri disabled',))]
-    fn token_uri_panics_after_terminal_time() {
-        // Mock provider (won't be used because call should revert before)
-        let mock_provider: ContractAddress = 'mock_provider'.try_into().unwrap();
-        let mock_img: ByteArray = "data:image/png;base64,AA==";
-        start_mock_call(mock_provider, selector!("get_data_uri"), mock_img);
-
-        // Deploy with terminal set in the past (1)
-        let (beasts, metadata, owner, _addr) = deploy_beasts_with_terminal(1_u64, mock_provider);
-
-        // Set minter
-        let minter = test_address('minter');
-        start_cheat_caller_address(beasts.contract_address, owner);
-        beasts.set_dungeon_address(minter);
-        stop_cheat_caller_address(beasts.contract_address);
-
-        // Mint a beast so token exists
-        let recipient = test_address('recipient');
-        start_cheat_caller_address(beasts.contract_address, minter);
-        let (token_id, _, _) = beasts.mint(recipient, 3, 1, 2, 10, 100, 0, 0);
-        stop_cheat_caller_address(beasts.contract_address);
-
-        // Expect panic due to terminal
-        let _ = metadata.token_uri(token_id);
+        assert!(uri.len() != 0, "token_uri should return data");
     }
 
     #[test]

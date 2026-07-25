@@ -29,14 +29,10 @@ pub trait IBeastsAnimation<TContractState> {
 pub mod beasts_nft {
     use core::num::traits::Zero;
     use openzeppelin_access::ownable::OwnableComponent;
-    use openzeppelin_governance::votes::VotesComponent;
     use openzeppelin_interfaces::erc721::IERC721Metadata;
     use openzeppelin_introspection::src5::SRC5Component;
     use openzeppelin_token::common::erc2981::ERC2981Component;
-    use openzeppelin_token::erc721::ERC721Component;
-    use openzeppelin_utils::contract_clock::ERC6372TimestampClock;
-    use openzeppelin_utils::cryptography::nonces::NoncesComponent;
-    use openzeppelin_utils::cryptography::snip12::SNIP12Metadata;
+    use openzeppelin_token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
     use starknet::ContractAddress;
     use starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
@@ -55,8 +51,6 @@ pub mod beasts_nft {
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
     component!(path: ERC2981Component, storage: erc2981, event: ERC2981Event);
-    component!(path: VotesComponent, storage: erc721_votes, event: ERC721VotesEvent);
-    component!(path: NoncesComponent, storage: nonces, event: NoncesEvent);
 
     // Ownable Mixin
     #[abi(embed_v0)]
@@ -69,19 +63,6 @@ pub mod beasts_nft {
     #[abi(embed_v0)]
     impl ERC721CamelOnlyImpl = ERC721Component::ERC721CamelOnlyImpl<ContractState>;
     impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
-
-    // ERC6372 Clock implementation (required for VotesComponent)
-    impl Clock = ERC6372TimestampClock;
-
-    // Votes Implementation
-    #[abi(embed_v0)]
-    impl VotesImpl = VotesComponent::VotesImpl<ContractState>;
-    impl VotesInternalImpl = VotesComponent::InternalImpl<ContractState>;
-
-    // Nonces
-    #[abi(embed_v0)]
-    impl NoncesImpl = NoncesComponent::NoncesImpl<ContractState>;
-    impl NoncesInternalImpl = NoncesComponent::InternalImpl<ContractState>;
 
     // SRC5 Implementation
     #[abi(embed_v0)]
@@ -107,13 +88,9 @@ pub mod beasts_nft {
         #[substorage(v0)]
         pub erc721: ERC721Component::Storage,
         #[substorage(v0)]
-        pub erc721_votes: VotesComponent::Storage,
-        #[substorage(v0)]
         pub src5: SRC5Component::Storage,
         #[substorage(v0)]
         pub erc2981: ERC2981Component::Storage,
-        #[substorage(v0)]
-        pub nonces: NoncesComponent::Storage,
         // Beast-specific storage
         pub beast_token_ranks: Map<u256, u16>, // token_id -> current rank (for tokenURI)
         pub beast_species_lists: Map<
@@ -131,8 +108,6 @@ pub mod beasts_nft {
         pub regular_gif_provider: IBeastImageDataProviderDispatcher,
         pub shiny_gif_provider: IBeastImageDataProviderDispatcher,
         pub death_mountain_dispatcher: IBeastSystemsDispatcher,
-        // If non-zero, contract becomes terminal after this timestamp
-        pub terminal_timestamp: u64,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -149,46 +124,10 @@ pub mod beasts_nft {
         #[flat]
         ERC721Event: ERC721Component::Event,
         #[flat]
-        ERC721VotesEvent: VotesComponent::Event,
-        #[flat]
         SRC5Event: SRC5Component::Event,
         #[flat]
         ERC2981Event: ERC2981Component::Event,
-        #[flat]
-        NoncesEvent: NoncesComponent::Event,
         MetadataUpdate: MetadataUpdate,
-    }
-
-    /// Required for hash computation.
-    pub impl SNIP12MetadataImpl of SNIP12Metadata {
-        fn name() -> felt252 {
-            'Beasts'
-        }
-        fn version() -> felt252 {
-            '1.0.0'
-        }
-    }
-
-    // We need to call the `transfer_voting_units` function after
-    // every mint, burn and transfer.
-    // For this, we use the `before_update` hook of the
-    //`ERC721Component::ERC721HooksTrait`.
-    // This hook is called before the transfer is executed.
-    // This gives us access to the previous owner.
-    impl ERC721VotesHooksImpl of ERC721Component::ERC721HooksTrait<ContractState> {
-        fn before_update(
-            ref self: ERC721Component::ComponentState<ContractState>,
-            to: ContractAddress,
-            token_id: u256,
-            auth: ContractAddress,
-        ) {
-            let mut contract_state = self.get_contract_mut();
-
-            // We use the internal function here since it does not check if the token
-            // id exists which is necessary for mints
-            let previous_owner = self._owner_of(token_id);
-            contract_state.erc721_votes.transfer_voting_units(previous_owner, to, 1);
-        }
     }
 
     /// Assigns `owner` as the contract owner.
@@ -208,7 +147,6 @@ pub mod beasts_nft {
         regular_gif_provider: ContractAddress,
         shiny_gif_provider: ContractAddress,
         death_mountain_address: ContractAddress,
-        terminal_timestamp: u64,
     ) {
         self.ownable.initializer(owner);
         self.erc721.initializer(name, symbol, "");
@@ -238,9 +176,6 @@ pub mod beasts_nft {
                 .death_mountain_dispatcher
                 .write(IBeastSystemsDispatcher { contract_address: death_mountain_address });
         }
-
-        // Configure terminal timestamp (0 means disabled)
-        self.terminal_timestamp.write(terminal_timestamp);
 
         InternalTrait::mint_genesis_beasts(ref self, owner);
     }
@@ -513,10 +448,6 @@ pub mod beasts_nft {
             self.shiny_gif_provider.read().contract_address
         }
 
-        fn get_terminal_time(self: @ContractState) -> u64 {
-            self.terminal_timestamp.read()
-        }
-
         fn get_token_id_at_rank(self: @ContractState, beast_id: u64, rank: u16) -> u256 {
             self.beast_species_lists.entry(beast_id).entry(rank).read()
         }
@@ -552,6 +483,10 @@ pub mod beasts_nft {
 
                 match batch.at(i) {
                     BeastResult::Ok(mint_data) => {
+                        // Reserve the (id, 0, 0) affix slot: every species has
+                        // exactly one Genesis Beast in the uniqueness map.
+                        self.minted.entry(*mint_data.hash).write(true);
+
                         // Mint NFT
                         self.erc721.mint(to, *mint_data.token_id);
                     },
@@ -573,13 +508,6 @@ pub mod beasts_nft {
         fn build_metadata_uri(self: @ContractState, token_id: u256) -> ByteArray {
             // Ensure token exists
             self.erc721._require_owned(token_id);
-
-            // If terminal timestamp is set and passed, disallow metadata
-            let terminal_ts = self.terminal_timestamp.read();
-            if terminal_ts != 0_u64 {
-                let now = starknet::get_block_timestamp();
-                assert(now <= terminal_ts, 'Terminal: token_uri disabled');
-            }
 
             // Get beast data
             let beast = decode_token_id(token_id);

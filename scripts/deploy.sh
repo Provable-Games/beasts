@@ -4,7 +4,7 @@ set -euo pipefail
 # Single deploy script for any network. Configure via .env
 # Required in .env: STARKNET_ACCOUNT, STARKNET_PRIVATE_KEY, RPC_URL,
 # NAME, SYMBOL, OWNER, ROYALTY_RECEIVER, ROYALTY_FRACTION
-# Optional: TERMINAL_TIMESTAMP (u64, defaults to 0), DEATH_MOUNTAIN_ADDRESS (defaults to 0)
+# Optional: DEATH_MOUNTAIN_ADDRESS (defaults to 0)
 
 # Load environment variables
 if [ -f .env ]; then
@@ -26,7 +26,6 @@ fi
 : "${OWNER:?OWNER is required in .env (contract owner address)}"
 : "${ROYALTY_RECEIVER:?ROYALTY_RECEIVER is required in .env}"
 : "${ROYALTY_FRACTION:?ROYALTY_FRACTION is required in .env (u128, denominator 10,000)}"
-: "${TERMINAL_TIMESTAMP:?TERMINAL_TIMESTAMP is required in .env (u64, default 0)}"
 
 echo "Using RPC_URL=$RPC_URL"
 
@@ -40,10 +39,6 @@ command -v starkli >/dev/null 2>&1 || { echo >&2 "Error: starkli is required but
 # Basic input validation to catch common errors early
 if ! [[ "$ROYALTY_FRACTION" =~ ^[0-9]+$ ]]; then
   echo "Error: ROYALTY_FRACTION must be a decimal integer (u128). Got: '$ROYALTY_FRACTION'" >&2
-  exit 1
-fi
-if ! [[ "$TERMINAL_TIMESTAMP" =~ ^[0-9]+$ ]]; then
-  echo "Error: TERMINAL_TIMESTAMP must be a decimal integer (u64). Got: '$TERMINAL_TIMESTAMP'" >&2
   exit 1
 fi
 for addr_var in OWNER ROYALTY_RECEIVER; do
@@ -159,8 +154,7 @@ NFT_DEPLOY_CMD="starkli deploy --watch --account \"$STARKNET_ACCOUNT\" --rpc \"$
     \"$SHINY_PNG_PROVIDER\" \\
     \"$REGULAR_GIF_PROVIDER\" \\
     \"$SHINY_GIF_PROVIDER\" \\
-    \"$DEATH_MOUNTAIN_ADDRESS\" \\
-    \"$TERMINAL_TIMESTAMP\""
+    \"$DEATH_MOUNTAIN_ADDRESS\""
 echo "NFT deploy command (no key): $NFT_DEPLOY_CMD"
 DEPLOY_OUTPUT=$(starkli deploy --watch --account "$STARKNET_ACCOUNT" --private-key "$STARKNET_PRIVATE_KEY" --rpc "$RPC_URL" "$CLASS_HASH" \
     bytearray:str:"$NAME" \
@@ -172,8 +166,7 @@ DEPLOY_OUTPUT=$(starkli deploy --watch --account "$STARKNET_ACCOUNT" --private-k
     "$SHINY_PNG_PROVIDER" \
     "$REGULAR_GIF_PROVIDER" \
     "$SHINY_GIF_PROVIDER" \
-    "$DEATH_MOUNTAIN_ADDRESS" \
-    "$TERMINAL_TIMESTAMP" 2>&1 || true)
+    "$DEATH_MOUNTAIN_ADDRESS" 2>&1 || true)
 
 echo "$DEPLOY_OUTPUT"
 
@@ -196,7 +189,6 @@ echo "  SHINY_GIF_PROVIDER=$SHINY_GIF_PROVIDER"
 {
   echo "nft_address=$DEPLOYED_ADDRESS"
   echo "nft_deploy_cmd=$NFT_DEPLOY_CMD"
-  echo "terminal_timestamp=$TERMINAL_TIMESTAMP"
   echo "death_mountain_address=$DEATH_MOUNTAIN_ADDRESS"
 } >> "$DEPLOY_LOG"
 
