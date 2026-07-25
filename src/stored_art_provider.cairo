@@ -110,10 +110,12 @@ pub mod stored_art_provider {
 
         /// The renderer embeds these URIs verbatim inside a single-quoted SVG
         /// attribute, and the factory provider carries the trusted
-        /// "verified art" designation — so the content must be provably
-        /// inert: an exact image data-URI prefix followed by a non-empty
-        /// standard-base64 payload. Quotes, markup, and control bytes cannot
-        /// pass the base64 charset.
+        /// "verified art" designation — so the content must be provably an
+        /// inert image: an exact data-URI prefix, a structurally valid
+        /// standard-base64 payload (length multiple of 4, padding only at
+        /// the end), and the encoded PNG/GIF magic bytes. The magic bytes
+        /// need no decoding: PNG's 8-byte signature always base64-encodes to
+        /// the prefix "iVBORw0KGgo", and GIF87a/89a headers to "R0lGOD".
         fn assert_valid_data_uri(uri: @ByteArray, is_gif: bool) {
             let prefix: ByteArray = if is_gif {
                 "data:image/gif;base64,"
@@ -130,20 +132,52 @@ pub mod stored_art_provider {
             }
 
             let total_len = uri.len();
+            let payload_len = total_len - prefix_len;
+            assert(payload_len % 4 == 0, 'Provider: bad art length');
+
+            // Encoded image magic bytes.
+            let magic: ByteArray = if is_gif {
+                "R0lGOD"
+            } else {
+                "iVBORw0KGgo"
+            };
+            let magic_len = magic.len();
+            assert(payload_len >= magic_len, 'Provider: bad art magic');
+            let mut m: u32 = 0;
+            while m < magic_len {
+                assert(
+                    uri.at(prefix_len + m).unwrap() == magic.at(m).unwrap(),
+                    'Provider: bad art magic',
+                );
+                m += 1;
+            }
+
+            // Base64 body: '=' padding may only appear in the final two
+            // positions, and "=X" is never valid.
             let mut j = prefix_len;
-            while j < total_len {
+            while j < total_len - 2 {
                 assert(Self::is_base64_char(uri.at(j).unwrap()), 'Provider: bad art payload');
                 j += 1;
             }
+            let second_last = uri.at(total_len - 2).unwrap();
+            let last = uri.at(total_len - 1).unwrap();
+            assert(
+                Self::is_base64_char(second_last) || second_last == '=',
+                'Provider: bad art payload',
+            );
+            assert(Self::is_base64_char(last) || last == '=', 'Provider: bad art payload');
+            if second_last == '=' {
+                assert(last == '=', 'Provider: bad art payload');
+            }
         }
 
+        /// Strict base64 alphabet, excluding padding.
         fn is_base64_char(byte: u8) -> bool {
             (byte >= 'A' && byte <= 'Z')
                 || (byte >= 'a' && byte <= 'z')
                 || (byte >= '0' && byte <= '9')
                 || byte == '+'
                 || byte == '/'
-                || byte == '='
         }
     }
 }

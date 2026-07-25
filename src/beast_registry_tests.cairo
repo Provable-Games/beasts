@@ -109,12 +109,14 @@ mod tests {
         address.try_into().unwrap()
     }
 
+    // Payloads carry the encoded PNG ("iVBORw0KGgo") / GIF ("R0lGOD") magic
+    // bytes and valid base64 structure, as the provider now enforces.
     fn sample_art() -> (ByteArray, ByteArray, ByteArray, ByteArray) {
         (
-            "data:image/png;base64,PNGREG",
-            "data:image/png;base64,PNGSHINY",
-            "data:image/gif;base64,GIFREG",
-            "data:image/gif;base64,GIFSHINY",
+            "data:image/png;base64,iVBORw0KGgoAAAA1",
+            "data:image/png;base64,iVBORw0KGgoAAAA2",
+            "data:image/gif;base64,R0lGODdhAAA1",
+            "data:image/gif;base64,R0lGODdhAAA2",
         )
     }
 
@@ -218,22 +220,15 @@ mod tests {
         assert(stored.get_species_id() == beast_id, 'Provider species');
 
         let art = IBeastArtProviderDispatcher { contract_address: provider_addr };
+        let (png_regular, png_shiny, gif_regular, gif_shiny) = sample_art();
         assert(
-            art.get_data_uri(community_beast(beast_id, 0, 0)) == "data:image/png;base64,PNGREG",
-            'regular png variant',
+            art.get_data_uri(community_beast(beast_id, 0, 0)) == png_regular, 'regular png variant',
         );
+        assert(art.get_data_uri(community_beast(beast_id, 1, 0)) == png_shiny, 'shiny png variant');
         assert(
-            art.get_data_uri(community_beast(beast_id, 1, 0)) == "data:image/png;base64,PNGSHINY",
-            'shiny png variant',
+            art.get_data_uri(community_beast(beast_id, 0, 1)) == gif_regular, 'regular gif variant',
         );
-        assert(
-            art.get_data_uri(community_beast(beast_id, 0, 1)) == "data:image/gif;base64,GIFREG",
-            'regular gif variant',
-        );
-        assert(
-            art.get_data_uri(community_beast(beast_id, 1, 1)) == "data:image/gif;base64,GIFSHINY",
-            'shiny gif variant',
-        );
+        assert(art.get_data_uri(community_beast(beast_id, 1, 1)) == gif_shiny, 'shiny gif variant');
     }
 
     #[test]
@@ -414,16 +409,19 @@ mod tests {
         registry
             .update_art(
                 beast_id,
-                "data:image/png;base64,NEW",
-                "data:image/png;base64,NEWSHINY",
-                "data:image/gif;base64,NEWGIF",
-                "data:image/gif;base64,NEWGIFSHINY",
+                "data:image/png;base64,iVBORw0KGgoBBBB1",
+                "data:image/png;base64,iVBORw0KGgoBBBB2",
+                "data:image/gif;base64,R0lGODdhBBB1",
+                "data:image/gif;base64,R0lGODdhBBB2",
             );
         stop_cheat_caller_address(registry.contract_address);
 
         let art = IBeastArtProviderDispatcher { contract_address: provider_addr };
         assert(
-            art.get_data_uri(community_beast(beast_id, 0, 0)) == "data:image/png;base64,NEW",
+            art
+                .get_data_uri(
+                    community_beast(beast_id, 0, 0),
+                ) == "data:image/png;base64,iVBORw0KGgoBBBB1",
             'Art updated',
         );
         assert(nft.fan_out_count() == 1, 'Fan-out triggered');
@@ -641,7 +639,64 @@ mod tests {
         registry
             .update_art(
                 beast_id,
-                "data:image/png;base64,AA'onload='evil",
+                "data:image/png;base64,iVBORw0KGgo'AAAA",
+                "data:image/png;base64,AA==",
+                "data:image/gif;base64,AA==",
+                "data:image/gif;base64,AA==",
+            );
+    }
+
+    #[test]
+    #[should_panic(expected: 'Provider: bad art length')]
+    fn test_update_art_bad_base64_length_rejected() {
+        let (registry, _, _) = setup();
+        let artist = test_address('artist');
+        let beast_id = register_default(registry, artist, test_address('dungeon'));
+
+        start_cheat_caller_address(registry.contract_address, artist);
+        // 13-character payload: not a multiple of 4.
+        registry
+            .update_art(
+                beast_id,
+                "data:image/png;base64,iVBORw0KGgoAA",
+                "data:image/png;base64,AA==",
+                "data:image/gif;base64,AA==",
+                "data:image/gif;base64,AA==",
+            );
+    }
+
+    #[test]
+    #[should_panic(expected: 'Provider: bad art payload')]
+    fn test_update_art_mid_padding_rejected() {
+        let (registry, _, _) = setup();
+        let artist = test_address('artist');
+        let beast_id = register_default(registry, artist, test_address('dungeon'));
+
+        start_cheat_caller_address(registry.contract_address, artist);
+        // '=' before the final two positions is structurally invalid base64.
+        registry
+            .update_art(
+                beast_id,
+                "data:image/png;base64,iVBORw0KGgo=AAAA",
+                "data:image/png;base64,AA==",
+                "data:image/gif;base64,AA==",
+                "data:image/gif;base64,AA==",
+            );
+    }
+
+    #[test]
+    #[should_panic(expected: 'Provider: bad art magic')]
+    fn test_update_art_wrong_magic_rejected() {
+        let (registry, _, _) = setup();
+        let artist = test_address('artist');
+        let beast_id = register_default(registry, artist, test_address('dungeon'));
+
+        start_cheat_caller_address(registry.contract_address, artist);
+        // Valid base64, but not a PNG: missing the encoded PNG signature.
+        registry
+            .update_art(
+                beast_id,
+                "data:image/png;base64,QUJDREVGR0hJSks=",
                 "data:image/png;base64,AA==",
                 "data:image/gif;base64,AA==",
                 "data:image/gif;base64,AA==",
