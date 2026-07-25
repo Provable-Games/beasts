@@ -67,9 +67,143 @@ pub trait IBeasts<TContractState> {
 }
 
 
+/// Legacy image data provider interface, keyed by u8 genesis species IDs.
+/// Used by the four deployed art data contracts for species 1-75.
 #[starknet::interface]
 pub trait IBeastImageDataProvider<TContractState> {
     fn get_data_uri(self: @TContractState, beast_id: u8) -> ByteArray;
+}
+
+/// Art provider interface for community species. Receives the full decoded
+/// beast so providers can select variants (shiny/animated are in the struct)
+/// and customize rendering by prefix, suffix, tier, or level.
+#[starknet::interface]
+pub trait IBeastArtProvider<TContractState> {
+    fn get_data_uri(self: @TContractState, beast: PackableBeast) -> ByteArray;
+}
+
+/// Management interface of the canonical factory-deployed art provider.
+#[starknet::interface]
+pub trait IStoredArtProvider<TContractState> {
+    fn set_art(
+        ref self: TContractState,
+        beast_id: u64,
+        png_regular: ByteArray,
+        png_shiny: ByteArray,
+        gif_regular: ByteArray,
+        gif_shiny: ByteArray,
+    );
+    fn get_registry(self: @TContractState) -> ContractAddress;
+    fn get_species_id(self: @TContractState) -> u64;
+}
+
+/// Beast type codes as encoded in token IDs: Magic = 0, Hunter = 1, Brute = 2.
+#[derive(Drop, Copy, Serde, PartialEq)]
+pub enum BeastType {
+    Magic,
+    Hunter,
+    Brute,
+}
+
+pub impl BeastTypeIntoU8 of Into<BeastType, u8> {
+    fn into(self: BeastType) -> u8 {
+        match self {
+            BeastType::Magic => 0,
+            BeastType::Hunter => 1,
+            BeastType::Brute => 2,
+        }
+    }
+}
+
+/// Full definition of a registered community species.
+#[derive(Drop, Serde)]
+pub struct BeastDefinition {
+    pub name: felt252,
+    pub beast_type: u8, // type code: 0 = Magic, 1 = Hunter, 2 = Brute
+    pub tier: u8, // 1..=5
+    pub minter: ContractAddress, // dungeon allowed to mint this species; 0 = paused
+    pub artist: ContractAddress, // registrant; per-species admin
+    pub art_provider: ContractAddress,
+    pub stats_source: ContractAddress, // 0 = no kill stats
+    pub factory_provider: bool,
+    pub art_locked: bool,
+    pub minter_locked: bool,
+}
+
+/// Permissionless registry for community Beast species.
+#[starknet::interface]
+pub trait IBeastRegistry<TContractState> {
+    // -------- permissionless registration --------
+
+    /// Simple path: the registry deploys the canonical StoredArtProvider
+    /// holding the four supplied data URIs. One transaction, no contract
+    /// knowledge needed.
+    fn register_beast_with_art(
+        ref self: TContractState,
+        name: felt252,
+        beast_type: BeastType,
+        tier: u8,
+        minter: ContractAddress,
+        png_regular: ByteArray,
+        png_shiny: ByteArray,
+        gif_regular: ByteArray,
+        gif_shiny: ByteArray,
+    ) -> u64;
+
+    /// Advanced path: artist supplies their own IBeastArtProvider (non-zero).
+    fn register_beast(
+        ref self: TContractState,
+        name: felt252,
+        beast_type: BeastType,
+        tier: u8,
+        minter: ContractAddress,
+        art_provider: ContractAddress,
+    ) -> u64;
+
+    // -------- per-species admin (artist only) --------
+    fn set_minter(ref self: TContractState, beast_id: u64, minter: ContractAddress);
+    fn lock_minter(ref self: TContractState, beast_id: u64);
+    fn update_art(
+        ref self: TContractState,
+        beast_id: u64,
+        png_regular: ByteArray,
+        png_shiny: ByteArray,
+        gif_regular: ByteArray,
+        gif_shiny: ByteArray,
+    );
+    fn set_art_provider(ref self: TContractState, beast_id: u64, provider: ContractAddress);
+    fn notify_art_updated(ref self: TContractState, beast_id: u64);
+    fn lock_art(ref self: TContractState, beast_id: u64);
+    fn set_stats_source(ref self: TContractState, beast_id: u64, source: ContractAddress);
+    fn transfer_artist_role(ref self: TContractState, beast_id: u64, new_artist: ContractAddress);
+
+    // -------- reads --------
+    fn get_definition(self: @TContractState, beast_id: u64) -> BeastDefinition;
+    fn get_minter(self: @TContractState, beast_id: u64) -> ContractAddress;
+    fn get_artist(self: @TContractState, beast_id: u64) -> ContractAddress;
+    fn get_art_provider(self: @TContractState, beast_id: u64) -> ContractAddress;
+    fn get_stats_source(self: @TContractState, beast_id: u64) -> ContractAddress;
+    fn get_species_traits(self: @TContractState, beast_id: u64) -> (u8, u8); // (tier, type)
+    fn get_species_name(self: @TContractState, beast_id: u64) -> felt252;
+    fn is_registered(self: @TContractState, beast_id: u64) -> bool;
+    fn is_art_locked(self: @TContractState, beast_id: u64) -> bool;
+    fn is_minter_locked(self: @TContractState, beast_id: u64) -> bool;
+    fn species_count(self: @TContractState) -> u64;
+    fn get_nft_address(self: @TContractState) -> ContractAddress;
+    fn get_stored_art_class_hash(self: @TContractState) -> starknet::ClassHash;
+
+    // -------- owner levers --------
+    fn set_nft_address(ref self: TContractState, nft: ContractAddress);
+    fn set_stored_art_class_hash(ref self: TContractState, class_hash: starknet::ClassHash);
+}
+
+/// Registry-facing entrypoints implemented by the Beasts NFT contract.
+#[starknet::interface]
+pub trait IBeastsProvenance<TContractState> {
+    /// Mints the species' Genesis Beast (id, 0, 0) to the artist.
+    fn mint_provenance(ref self: TContractState, artist: ContractAddress, beast_id: u64);
+    /// Fans out MetadataUpdate events for a species after an art change.
+    fn emit_species_metadata_update(ref self: TContractState, beast_id: u64);
 }
 
 #[starknet::interface]

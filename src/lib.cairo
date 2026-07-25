@@ -6,6 +6,9 @@ pub mod beast_manager;
 pub mod beast_png_regular_data;
 pub mod beast_png_shiny_data;
 pub mod beast_ranking;
+pub mod beast_registry;
+#[cfg(test)]
+mod beast_registry_tests;
 pub mod beast_svg;
 pub mod encoding;
 pub mod enumerable;
@@ -17,6 +20,7 @@ pub mod metadata_generator;
 mod mint_tests;
 pub mod minting_coordinator;
 pub mod pack;
+pub mod stored_art_provider;
 #[cfg(test)]
 mod tests;
 pub mod utils;
