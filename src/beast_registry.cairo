@@ -13,12 +13,13 @@
 pub mod beast_registry {
     use core::num::traits::Zero;
     use openzeppelin_access::ownable::OwnableComponent;
+    use openzeppelin_interfaces::introspection::{ISRC5Dispatcher, ISRC5DispatcherTrait};
     use starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
     use starknet::{ClassHash, ContractAddress};
     use super::super::interfaces::{
-        BeastDefinition, BeastType, IBeastRegistry, IBeastsProvenanceDispatcher,
+        BeastDefinition, BeastType, IBEAST_STATS_ID, IBeastRegistry, IBeastsProvenanceDispatcher,
         IBeastsProvenanceDispatcherTrait, IStoredArtProviderDispatcher,
         IStoredArtProviderDispatcherTrait,
     };
@@ -239,6 +240,11 @@ pub mod beast_registry {
             let mut meta = self.metas.entry(beast_id).read();
             assert(!meta.art_locked, 'Registry: art locked');
             assert(provider.is_non_zero(), 'Registry: zero art provider');
+            // A provider swap changes every existing token's rendered art, so
+            // it shares the refresh cooldown and fans out atomically with the
+            // pointer change — otherwise a swap followed by lock_art would
+            // leave marketplaces permanently stale.
+            InternalTrait::assert_refresh_cooldown(ref self, beast_id);
 
             // The factory flag is recomputed against the species' canonical
             // factory deploy on every swap; it can never be true while
@@ -253,6 +259,7 @@ pub mod beast_registry {
                         beast_id, art_provider: provider, factory_provider: meta.factory_provider,
                     },
                 );
+            InternalTrait::notify_nft_art_updated(ref self, beast_id);
         }
 
         fn notify_art_updated(ref self: ContractState, beast_id: u64) {
@@ -277,6 +284,14 @@ pub mod beast_registry {
 
         fn set_stats_source(ref self: ContractState, beast_id: u64, source: ContractAddress) {
             InternalTrait::assert_only_artist(@self, beast_id);
+
+            // Verified once, at set time: a non-zero source must be a
+            // deployed contract registering IBEAST_STATS_ID via SRC5.
+            // Zero clears the source (stats off).
+            if source.is_non_zero() {
+                let src5 = ISRC5Dispatcher { contract_address: source };
+                assert(src5.supports_interface(IBEAST_STATS_ID), 'Registry: bad stats source');
+            }
 
             self.stats_sources.entry(beast_id).write(source);
             self.emit(StatsSourceUpdated { beast_id, stats_source: source });

@@ -59,6 +59,36 @@ pub mod mock_beasts_nft {
     }
 }
 
+/// Mock kill-stats source with a configurable SRC5 answer, for testing the
+/// registry's set-time interface verification.
+#[starknet::contract]
+pub mod mock_stats_source {
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
+    use super::super::interfaces::IBEAST_STATS_ID;
+
+    #[starknet::interface]
+    pub trait ISRC5Like<TContractState> {
+        fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
+    }
+
+    #[storage]
+    struct Storage {
+        compliant: bool,
+    }
+
+    #[constructor]
+    fn constructor(ref self: ContractState, compliant: bool) {
+        self.compliant.write(compliant);
+    }
+
+    #[abi(embed_v0)]
+    impl SRC5Impl of ISRC5Like<ContractState> {
+        fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
+            interface_id == IBEAST_STATS_ID && self.compliant.read()
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use beasts_nft::beast_registry::beast_registry::ART_REFRESH_COOLDOWN_SECONDS;
@@ -407,9 +437,10 @@ mod tests {
         let artist = test_address('artist');
         let beast_id = register_default(registry, artist, test_address('dungeon'));
 
+        let (png_regular, png_shiny, gif_regular, gif_shiny) = sample_art();
         start_cheat_block_timestamp(registry.contract_address, 1000);
         start_cheat_caller_address(registry.contract_address, artist);
-        registry.update_art(beast_id, "data:a", "data:b", "data:c", "data:d");
+        registry.update_art(beast_id, png_regular, png_shiny, gif_regular, gif_shiny);
         // notify shares the same per-species cooldown as update_art.
         registry.notify_art_updated(beast_id);
     }
@@ -447,26 +478,46 @@ mod tests {
 
     #[test]
     fn test_set_art_provider_recomputes_factory_flag() {
-        let (registry, _, _) = setup();
+        let (registry, nft, _) = setup();
         let artist = test_address('artist');
         let beast_id = register_default(registry, artist, test_address('dungeon'));
         let factory_addr = registry.get_art_provider(beast_id);
 
+        start_cheat_block_timestamp(registry.contract_address, 1000);
         start_cheat_caller_address(registry.contract_address, artist);
 
-        // Swap to a custom provider: factory flag drops.
+        // Swap to a custom provider: factory flag drops, marketplaces are
+        // refreshed atomically with the pointer change.
         registry.set_art_provider(beast_id, test_address('custom'));
         let def = registry.get_definition(beast_id);
         assert(def.art_provider == test_address('custom'), 'Swapped to custom');
         assert(!def.factory_provider, 'Factory flag cleared');
+        assert(nft.fan_out_count() == 1, 'Swap fans out');
 
-        // Swap back to the canonical factory deploy: flag restored.
+        // Swap back to the canonical factory deploy: flag restored. Swaps
+        // share the art refresh cooldown, so advance past it first.
+        start_cheat_block_timestamp(registry.contract_address, 1000 + ART_REFRESH_COOLDOWN_SECONDS);
         registry.set_art_provider(beast_id, factory_addr);
         let def = registry.get_definition(beast_id);
         assert(def.art_provider == factory_addr, 'Swapped back');
         assert(def.factory_provider, 'Factory flag restored');
+        assert(nft.fan_out_count() == 2, 'Second swap fans out');
 
         stop_cheat_caller_address(registry.contract_address);
+    }
+
+    #[test]
+    #[should_panic(expected: 'Registry: refresh cooldown')]
+    fn test_provider_swap_shares_refresh_cooldown() {
+        let (registry, _, _) = setup();
+        let artist = test_address('artist');
+        let beast_id = register_default(registry, artist, test_address('dungeon'));
+
+        start_cheat_block_timestamp(registry.contract_address, 1000);
+        start_cheat_caller_address(registry.contract_address, artist);
+        registry.notify_art_updated(beast_id);
+        // A provider swap inside the cooldown window is rejected.
+        registry.set_art_provider(beast_id, test_address('custom'));
     }
 
     #[test]
@@ -536,18 +587,122 @@ mod tests {
     }
 
     #[test]
-    fn test_set_stats_source() {
+    fn test_set_stats_source_src5_verified() {
         let (registry, _, _) = setup();
         let artist = test_address('artist');
         let beast_id = register_default(registry, artist, test_address('dungeon'));
 
         assert(registry.get_stats_source(beast_id) == 0.try_into().unwrap(), 'Stats default off');
 
-        start_cheat_caller_address(registry.contract_address, artist);
-        registry.set_stats_source(beast_id, test_address('stats'));
-        stop_cheat_caller_address(registry.contract_address);
+        let stats_class = declare("mock_stats_source").unwrap().contract_class();
+        let (stats_addr, _) = stats_class.deploy(@array![1]).unwrap(); // compliant = true
 
-        assert(registry.get_stats_source(beast_id) == test_address('stats'), 'Stats source set');
+        start_cheat_caller_address(registry.contract_address, artist);
+        registry.set_stats_source(beast_id, stats_addr);
+        assert(registry.get_stats_source(beast_id) == stats_addr, 'Stats source set');
+
+        // Zero clears without any external call.
+        registry.set_stats_source(beast_id, 0.try_into().unwrap());
+        stop_cheat_caller_address(registry.contract_address);
+        assert(registry.get_stats_source(beast_id) == 0.try_into().unwrap(), 'Stats cleared');
+    }
+
+    #[test]
+    #[should_panic(expected: 'Registry: bad stats source')]
+    fn test_set_stats_source_non_compliant_rejected() {
+        let (registry, _, _) = setup();
+        let artist = test_address('artist');
+        let beast_id = register_default(registry, artist, test_address('dungeon'));
+
+        let stats_class = declare("mock_stats_source").unwrap().contract_class();
+        let (stats_addr, _) = stats_class.deploy(@array![0]).unwrap(); // compliant = false
+
+        start_cheat_caller_address(registry.contract_address, artist);
+        registry.set_stats_source(beast_id, stats_addr);
+    }
+
+    // Note: setting an undeployed address as stats source reverts on-network
+    // (the SRC5 probe is a call to a non-existent contract). snforge surfaces
+    // that as a runner-level error rather than a catchable panic, so it is
+    // not expressible as a #[should_panic] test.
+
+    // ---------------- art content validation ----------------
+
+    #[test]
+    #[should_panic(expected: 'Provider: bad art payload')]
+    fn test_update_art_quote_payload_rejected() {
+        let (registry, _, _) = setup();
+        let artist = test_address('artist');
+        let beast_id = register_default(registry, artist, test_address('dungeon'));
+
+        start_cheat_caller_address(registry.contract_address, artist);
+        // A single quote would escape the SVG src attribute the renderer
+        // embeds this URI into.
+        registry
+            .update_art(
+                beast_id,
+                "data:image/png;base64,AA'onload='evil",
+                "data:image/png;base64,AA==",
+                "data:image/gif;base64,AA==",
+                "data:image/gif;base64,AA==",
+            );
+    }
+
+    #[test]
+    #[should_panic(expected: 'Provider: bad art prefix')]
+    fn test_update_art_wrong_prefix_rejected() {
+        let (registry, _, _) = setup();
+        let artist = test_address('artist');
+        let beast_id = register_default(registry, artist, test_address('dungeon'));
+
+        start_cheat_caller_address(registry.contract_address, artist);
+        // A GIF data URI in a PNG slot fails the exact-prefix check.
+        registry
+            .update_art(
+                beast_id,
+                "data:image/gif;base64,AA==",
+                "data:image/png;base64,AA==",
+                "data:image/gif;base64,AA==",
+                "data:image/gif;base64,AA==",
+            );
+    }
+
+    #[test]
+    #[should_panic(expected: 'Provider: bad art prefix')]
+    fn test_update_art_empty_payload_rejected() {
+        let (registry, _, _) = setup();
+        let artist = test_address('artist');
+        let beast_id = register_default(registry, artist, test_address('dungeon'));
+
+        start_cheat_caller_address(registry.contract_address, artist);
+        registry
+            .update_art(
+                beast_id,
+                "data:image/png;base64,",
+                "data:image/png;base64,AA==",
+                "data:image/gif;base64,AA==",
+                "data:image/gif;base64,AA==",
+            );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_register_with_markup_art_rejected() {
+        let (registry, _, _) = setup();
+        // Validation also runs in the factory provider's constructor, so a
+        // registration carrying active content fails outright.
+        start_cheat_caller_address(registry.contract_address, test_address('artist'));
+        registry
+            .register_beast_with_art(
+                'Gloomfang',
+                BeastType::Hunter,
+                3,
+                test_address('dungeon'),
+                "data:image/svg+xml,<svg onload=evil>",
+                "data:image/png;base64,AA==",
+                "data:image/gif;base64,AA==",
+                "data:image/gif;base64,AA==",
+            );
     }
 
     // ---------------- stored art provider gating ----------------

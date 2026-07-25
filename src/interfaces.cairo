@@ -197,6 +197,27 @@ pub trait IBeastRegistry<TContractState> {
     fn set_stored_art_class_hash(ref self: TContractState, class_hash: starknet::ClassHash);
 }
 
+/// Live combat stats served by an opt-in per-species stats source.
+#[derive(Drop, Copy, Serde)]
+pub struct BeastLiveStats {
+    pub adventurers_killed: u64,
+    pub last_killed_by: u64,
+    pub last_killed_timestamp: u64,
+}
+
+/// SRC5 interface ID a compliant stats source must register. The registry
+/// verifies it once, at `set_stats_source` time. Ecosystem-defined ID:
+/// sn_keccak("beast_stats_v1").
+pub const IBEAST_STATS_ID: felt252 = selector!("beast_stats_v1");
+
+/// Opt-in per-species kill-stats source (implemented by Death Mountain v2 or
+/// any community dungeon). Stats are consumed by the NFT's cached
+/// refresh-stats flow, never live from `token_uri`.
+#[starknet::interface]
+pub trait IBeastStats<TContractState> {
+    fn get_beast_stats(self: @TContractState, entity_hash: felt252) -> BeastLiveStats;
+}
+
 /// Registry-facing entrypoints implemented by the Beasts NFT contract.
 #[starknet::interface]
 pub trait IBeastsProvenance<TContractState> {
