@@ -531,6 +531,41 @@ mod tests {
     }
 
     #[test]
+    fn test_notify_allowed_after_lock_for_custom_provider() {
+        let (registry, nft, _) = setup();
+        let artist = test_address('artist');
+
+        start_cheat_caller_address(registry.contract_address, artist);
+        let beast_id = registry
+            .register_beast(
+                'Voidling', BeastType::Magic, 1, test_address('dungeon'), test_address('custom'),
+            );
+
+        // Locking a custom provider freezes the pointer, not the provider's
+        // output, so the refresh path must stay open.
+        registry.lock_art(beast_id);
+        registry.notify_art_updated(beast_id);
+        stop_cheat_caller_address(registry.contract_address);
+
+        assert(registry.is_art_locked(beast_id), 'Art still locked');
+        assert(nft.fan_out_count() == 1, 'Refresh still available');
+    }
+
+    #[test]
+    #[should_panic(expected: 'Registry: art locked')]
+    fn test_notify_blocked_after_lock_for_factory_provider() {
+        let (registry, _, _) = setup();
+        let artist = test_address('artist');
+        let beast_id = register_default(registry, artist, test_address('dungeon'));
+
+        // A locked factory provider is genuinely frozen: a refresh could
+        // never carry new art.
+        start_cheat_caller_address(registry.contract_address, artist);
+        registry.lock_art(beast_id);
+        registry.notify_art_updated(beast_id);
+    }
+
+    #[test]
     #[should_panic(expected: 'Registry: art locked')]
     fn test_lock_art_blocks_provider_swap() {
         let (registry, _, _) = setup();
@@ -681,6 +716,76 @@ mod tests {
                 "data:image/png;base64,AA==",
                 "data:image/gif;base64,AA==",
                 "data:image/gif;base64,AA==",
+            );
+    }
+
+    #[test]
+    #[should_panic(expected: 'Provider: bad art magic')]
+    fn test_update_art_invalid_gif_version_rejected() {
+        let (registry, _, _) = setup();
+        let artist = test_address('artist');
+        let beast_id = register_default(registry, artist, test_address('dungeon'));
+
+        start_cheat_caller_address(registry.contract_address, artist);
+        // "R0lGODAAAAAA" starts with the shared "R0lGOD" prefix but decodes
+        // to the invalid header "GIF80"; only GIF87a ("R0lGODdh") and GIF89a
+        // ("R0lGODlh") are legal.
+        registry
+            .update_art(
+                beast_id,
+                "data:image/png;base64,iVBORw0KGgoAAAA1",
+                "data:image/png;base64,iVBORw0KGgoAAAA2",
+                "data:image/gif;base64,R0lGODAAAAAA",
+                "data:image/gif;base64,R0lGODdhAAA2",
+            );
+    }
+
+    #[test]
+    fn test_update_art_accepts_both_gif_versions() {
+        let (registry, _, _) = setup();
+        let artist = test_address('artist');
+        let beast_id = register_default(registry, artist, test_address('dungeon'));
+
+        start_cheat_caller_address(registry.contract_address, artist);
+        // GIF87a in one slot, GIF89a in the other.
+        registry
+            .update_art(
+                beast_id,
+                "data:image/png;base64,iVBORw0KGgoAAAA1",
+                "data:image/png;base64,iVBORw0KGgoAAAA2",
+                "data:image/gif;base64,R0lGODdhAAA1",
+                "data:image/gif;base64,R0lGODlhAAA2",
+            );
+        stop_cheat_caller_address(registry.contract_address);
+
+        let art = IBeastArtProviderDispatcher {
+            contract_address: registry.get_art_provider(beast_id),
+        };
+        assert(
+            art
+                .get_data_uri(
+                    community_beast(beast_id, 1, 1),
+                ) == "data:image/gif;base64,R0lGODlhAAA2",
+            'GIF89a accepted',
+        );
+    }
+
+    #[test]
+    #[should_panic(expected: 'Provider: bad art magic')]
+    fn test_update_art_truncated_gif_magic_rejected() {
+        let (registry, _, _) = setup();
+        let artist = test_address('artist');
+        let beast_id = register_default(registry, artist, test_address('dungeon'));
+
+        start_cheat_caller_address(registry.contract_address, artist);
+        // Payload shorter than the 8-character encoded GIF signature.
+        registry
+            .update_art(
+                beast_id,
+                "data:image/png;base64,iVBORw0KGgoAAAA1",
+                "data:image/png;base64,iVBORw0KGgoAAAA2",
+                "data:image/gif;base64,R0lG",
+                "data:image/gif;base64,R0lGODdhAAA2",
             );
     }
 

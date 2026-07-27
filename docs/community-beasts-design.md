@@ -306,6 +306,12 @@ enforced at read time.
   the provider's internal behavior (it may be upgradable). Only
   factory-provider + locked = provably frozen art; the web app badges
   accordingly.
+- Because of that asymmetry, `lock_art` gates `notify_art_updated` **only for
+  factory providers**, where a locked provider genuinely cannot produce new
+  art. A locked *custom* species keeps its refresh path: its provider can
+  still change what it returns, so blocking notification would strand
+  ERC-4906 consumers on permanently stale metadata. The cooldown still
+  applies.
 
 ## Kill stats — opt-in, cached, never live in token_uri
 

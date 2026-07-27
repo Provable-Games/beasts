@@ -135,22 +135,7 @@ pub mod stored_art_provider {
             let payload_len = total_len - prefix_len;
             assert(payload_len % 4 == 0, 'Provider: bad art length');
 
-            // Encoded image magic bytes.
-            let magic: ByteArray = if is_gif {
-                "R0lGOD"
-            } else {
-                "iVBORw0KGgo"
-            };
-            let magic_len = magic.len();
-            assert(payload_len >= magic_len, 'Provider: bad art magic');
-            let mut m: u32 = 0;
-            while m < magic_len {
-                assert(
-                    uri.at(prefix_len + m).unwrap() == magic.at(m).unwrap(),
-                    'Provider: bad art magic',
-                );
-                m += 1;
-            }
+            Self::assert_valid_magic(uri, prefix_len, payload_len, is_gif);
 
             // Base64 body: '=' padding may only appear in the final two
             // positions, and "=X" is never valid.
@@ -169,6 +154,45 @@ pub mod stored_art_provider {
             if second_last == '=' {
                 assert(last == '=', 'Provider: bad art payload');
             }
+        }
+
+        /// A fixed leading image signature always base64-encodes to a fixed
+        /// character prefix, so magic-byte verification is a prefix
+        /// comparison with no on-chain decoding:
+        ///   PNG  89 50 4E 47 0D 0A 1A 0A + IHDR length -> "iVBORw0KGgo"
+        ///   GIF  "GIF87a" -> "R0lGODdh", "GIF89a" -> "R0lGODlh"
+        /// The GIF version characters must be checked too: "R0lGOD" alone
+        /// admits payloads like "R0lGODAAAAAA", which decodes to the invalid
+        /// header "GIF80".
+        fn assert_valid_magic(uri: @ByteArray, prefix_len: u32, payload_len: u32, is_gif: bool) {
+            if is_gif {
+                assert(payload_len >= 8, 'Provider: bad art magic');
+                assert(Self::matches_at(uri, prefix_len, @"R0lGOD"), 'Provider: bad art magic');
+                let version = uri.at(prefix_len + 6).unwrap();
+                assert(version == 'd' || version == 'l', 'Provider: bad art magic');
+                assert(uri.at(prefix_len + 7).unwrap() == 'h', 'Provider: bad art magic');
+            } else {
+                assert(payload_len >= 11, 'Provider: bad art magic');
+                assert(
+                    Self::matches_at(uri, prefix_len, @"iVBORw0KGgo"), 'Provider: bad art magic',
+                );
+            }
+        }
+
+        /// Caller must guarantee `uri` has at least `offset + needle.len()`
+        /// bytes.
+        fn matches_at(uri: @ByteArray, offset: u32, needle: @ByteArray) -> bool {
+            let needle_len = needle.len();
+            let mut i: u32 = 0;
+            let mut matched = true;
+            while i < needle_len {
+                if uri.at(offset + i).unwrap() != needle.at(i).unwrap() {
+                    matched = false;
+                    break;
+                }
+                i += 1;
+            }
+            matched
         }
 
         /// Strict base64 alphabet, excluding padding.

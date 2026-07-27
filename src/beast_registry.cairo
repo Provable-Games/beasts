@@ -265,7 +265,14 @@ pub mod beast_registry {
         fn notify_art_updated(ref self: ContractState, beast_id: u64) {
             InternalTrait::assert_only_artist(@self, beast_id);
             let meta = self.metas.entry(beast_id).read();
-            assert(!meta.art_locked, 'Registry: art locked');
+            // `lock_art` means different things per provider kind. A locked
+            // factory provider is genuinely frozen (its only mutator is
+            // registry-gated `set_art`), so a refresh could never carry new
+            // art and is rejected. A locked CUSTOM provider only has its
+            // pointer frozen — the provider contract may still change what it
+            // returns — so the refresh path must stay open, or ERC-4906
+            // consumers would be permanently stale for that species.
+            assert(!(meta.art_locked && meta.factory_provider), 'Registry: art locked');
             InternalTrait::assert_refresh_cooldown(ref self, beast_id);
 
             self.emit(ArtUpdated { beast_id });
