@@ -1,7 +1,7 @@
 use starknet::ContractAddress;
 
 #[derive(Drop, Copy, Serde, PartialEq)]
-pub struct TiddyMun {
+pub struct BlackShuck {
     pub id: u8,
     pub prefix: u8,
     pub suffix: u8,
@@ -11,8 +11,8 @@ pub struct TiddyMun {
     pub shiny: bool,
 }
 
-pub impl TiddyMunStorePacking of starknet::storage_access::StorePacking<TiddyMun, felt252> {
-    fn pack(value: TiddyMun) -> felt252 {
+pub impl BlackShuckStorePacking of starknet::storage_access::StorePacking<BlackShuck, felt252> {
+    fn pack(value: BlackShuck) -> felt252 {
         let animated: u128 = if value.animated {
             1
         } else {
@@ -34,8 +34,8 @@ pub impl TiddyMunStorePacking of starknet::storage_access::StorePacking<TiddyMun
         packed.into()
     }
 
-    fn unpack(value: felt252) -> TiddyMun {
-        let mut packed: u128 = value.try_into().expect('unpack tiddy');
+    fn unpack(value: felt252) -> BlackShuck {
+        let mut packed: u128 = value.try_into().expect('unpack shuck');
 
         let id = (packed % 0x80).try_into().expect('unpack id');
         packed = packed / 0x80;
@@ -52,14 +52,14 @@ pub impl TiddyMunStorePacking of starknet::storage_access::StorePacking<TiddyMun
         let shiny = (packed % 2) == 1;
         packed = packed / 2;
 
-        assert(packed == 0, 'invalid tiddy data');
+        assert(packed == 0, 'invalid shuck data');
 
-        TiddyMun { id, prefix, suffix, health, level, animated, shiny }
+        BlackShuck { id, prefix, suffix, health, level, animated, shiny }
     }
 }
 
 #[starknet::interface]
-pub trait ITiddyMunNft<TContractState> {
+pub trait IBlackShuckNft<TContractState> {
     fn set_minter_address(ref self: TContractState, address: ContractAddress);
     fn get_minter_address(self: @TContractState) -> ContractAddress;
     fn mint(
@@ -73,22 +73,23 @@ pub trait ITiddyMunNft<TContractState> {
         animated: bool,
         shiny: bool,
     ) -> u256;
-    fn get_tiddy_mun(self: @TContractState, token_id: u256) -> TiddyMun;
+    fn get_black_shuck(self: @TContractState, token_id: u256) -> BlackShuck;
     fn is_minted(self: @TContractState, prefix: u8, suffix: u8) -> bool;
     fn total_supply(self: @TContractState) -> u256;
 }
 
 #[starknet::interface]
-pub trait ITiddyMunAnimation<TContractState> {
+pub trait IBlackShuckAnimation<TContractState> {
     fn animation_url(self: @TContractState, token_id: u256) -> ByteArray;
 }
 
 #[starknet::contract]
-pub mod tiddy_mun_nft {
+pub mod black_shuck_nft {
     use openzeppelin_access::ownable::OwnableComponent;
     use openzeppelin_interfaces::erc721::IERC721Metadata;
     use openzeppelin_interfaces::upgrades::IUpgradeable;
     use openzeppelin_introspection::src5::SRC5Component;
+    use openzeppelin_token::common::erc2981::ERC2981Component;
     use openzeppelin_token::erc721::ERC721Component;
     use openzeppelin_upgrades::UpgradeableComponent;
     use starknet::storage::{
@@ -98,12 +99,12 @@ pub mod tiddy_mun_nft {
     use super::super::beast_card::{BeastCardAttributes, BeastCardTrait};
     use super::super::encoding::bytes_base64_encode;
     use super::super::utils::felt252_to_byte_array;
-    use super::super::{beast_definitions, tiddy_mun_assets};
-    use super::{ITiddyMunAnimation, ITiddyMunNft, TiddyMun};
+    use super::super::{beast_definitions, black_shuck_assets};
+    use super::{BlackShuck, IBlackShuckAnimation, IBlackShuckNft};
 
-    const TIDDY_MUN_BEAST_ID: u8 = 76;
-    const TIDDY_MUN_TIER: u8 = 1;
-    const TIDDY_MUN_TYPE: felt252 = 'Magic';
+    const BLACK_SHUCK_BEAST_ID: u8 = 77;
+    const BLACK_SHUCK_TIER: u8 = 1;
+    const BLACK_SHUCK_TYPE: felt252 = 'Hunter';
     const GENESIS_TOKEN_ID: u256 = 1;
     const FIRST_LIVE_TOKEN_ID: u256 = 2;
     const MAX_PREFIX: u8 = 69;
@@ -117,6 +118,7 @@ pub mod tiddy_mun_nft {
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
+    component!(path: ERC2981Component, storage: erc2981, event: ERC2981Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
     #[abi(embed_v0)]
@@ -132,6 +134,17 @@ pub mod tiddy_mun_nft {
     #[abi(embed_v0)]
     impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
     impl SRC5InternalImpl = SRC5Component::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl ERC2981Impl = ERC2981Component::ERC2981Impl<ContractState>;
+    #[abi(embed_v0)]
+    impl ERC2981AdminOwnableImpl =
+        ERC2981Component::ERC2981AdminOwnableImpl<ContractState>;
+    impl ERC2981InternalImpl = ERC2981Component::InternalImpl<ContractState>;
+
+    impl ERC2981ImmutableConfig of ERC2981Component::ImmutableConfig {
+        const FEE_DENOMINATOR: u128 = 10_000; // 10,000 = 100% (so 500 = 5%)
+    }
 
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
@@ -153,12 +166,14 @@ pub mod tiddy_mun_nft {
         #[substorage(v0)]
         pub src5: SRC5Component::Storage,
         #[substorage(v0)]
+        pub erc2981: ERC2981Component::Storage,
+        #[substorage(v0)]
         pub upgradeable: UpgradeableComponent::Storage,
         pub minter_address: ContractAddress,
         pub next_token_id: u256,
         pub supply_count: u256,
         pub minted: Map<felt252, bool>,
-        pub tiddy_muns: Map<u256, TiddyMun>,
+        pub black_shucks: Map<u256, BlackShuck>,
     }
 
     #[event]
@@ -171,9 +186,13 @@ pub mod tiddy_mun_nft {
         #[flat]
         SRC5Event: SRC5Component::Event,
         #[flat]
+        ERC2981Event: ERC2981Component::Event,
+        #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
     }
 
+    /// `royalty_fraction` is denominated in FEE_DENOMINATOR (10,000), so 500 = 5%. The receiver
+    /// and fraction can both be changed later by the owner through ERC2981AdminOwnableImpl.
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -181,13 +200,16 @@ pub mod tiddy_mun_nft {
         symbol: ByteArray,
         owner: ContractAddress,
         minter_address: ContractAddress,
+        royalty_receiver: ContractAddress,
+        royalty_fraction: u128,
     ) {
         self.ownable.initializer(owner);
         self.erc721.initializer(name, symbol, "");
+        self.erc2981.initializer(royalty_receiver, royalty_fraction);
         self.minter_address.write(minter_address);
 
-        let genesis = TiddyMun {
-            id: TIDDY_MUN_BEAST_ID,
+        let genesis = BlackShuck {
+            id: BLACK_SHUCK_BEAST_ID,
             prefix: 0,
             suffix: 0,
             health: GENESIS_HEALTH,
@@ -195,7 +217,7 @@ pub mod tiddy_mun_nft {
             animated: GENESIS_ANIMATED,
             shiny: GENESIS_SHINY,
         };
-        self.tiddy_muns.entry(GENESIS_TOKEN_ID).write(genesis);
+        self.black_shucks.entry(GENESIS_TOKEN_ID).write(genesis);
         self.minted.entry(InternalTrait::minted_key(0, 0)).write(true);
         self.erc721.mint(owner, GENESIS_TOKEN_ID);
         self.next_token_id.write(FIRST_LIVE_TOKEN_ID);
@@ -211,7 +233,7 @@ pub mod tiddy_mun_nft {
     }
 
     #[abi(embed_v0)]
-    impl TiddyMunImpl of ITiddyMunNft<ContractState> {
+    impl BlackShuckImpl of IBlackShuckNft<ContractState> {
         fn set_minter_address(ref self: ContractState, address: ContractAddress) {
             self.ownable.assert_only_owner();
             self.minter_address.write(address);
@@ -236,19 +258,19 @@ pub mod tiddy_mun_nft {
                 starknet::get_caller_address() == self.minter_address.read(),
                 'Not authorized to mint',
             );
-            assert(beast_id == TIDDY_MUN_BEAST_ID, 'Invalid beast ID');
+            assert(beast_id == BLACK_SHUCK_BEAST_ID, 'Invalid beast ID');
             InternalTrait::assert_live_prefix_suffix(prefix, suffix);
             assert(self.supply_count.read() < TOTAL_CAPACITY, 'Collection full');
 
             let key = InternalTrait::minted_key(prefix, suffix);
-            assert(!self.minted.entry(key).read(), 'Tiddy Mun already minted');
+            assert(!self.minted.entry(key).read(), 'Black Shuck already minted');
             self.minted.entry(key).write(true);
 
             let token_id = self.next_token_id.read();
-            let tiddy_mun = TiddyMun {
+            let black_shuck = BlackShuck {
                 id: beast_id, prefix, suffix, health, level, animated, shiny,
             };
-            self.tiddy_muns.entry(token_id).write(tiddy_mun);
+            self.black_shucks.entry(token_id).write(black_shuck);
             self.erc721.mint(to, token_id);
             self.next_token_id.write(token_id + 1);
             self.supply_count.write(self.supply_count.read() + 1);
@@ -256,9 +278,9 @@ pub mod tiddy_mun_nft {
             token_id
         }
 
-        fn get_tiddy_mun(self: @ContractState, token_id: u256) -> TiddyMun {
+        fn get_black_shuck(self: @ContractState, token_id: u256) -> BlackShuck {
             self.erc721._require_owned(token_id);
-            self.tiddy_muns.entry(token_id).read()
+            self.black_shucks.entry(token_id).read()
         }
 
         fn is_minted(self: @ContractState, prefix: u8, suffix: u8) -> bool {
@@ -283,18 +305,18 @@ pub mod tiddy_mun_nft {
             assert(suffix <= MAX_SUFFIX, 'Invalid suffix');
         }
 
-        fn selected_asset_uri(tiddy_mun: TiddyMun) -> ByteArray {
-            if tiddy_mun.animated {
-                if tiddy_mun.shiny {
-                    tiddy_mun_assets::shiny_animated_uri()
+        fn selected_asset_uri(black_shuck: BlackShuck) -> ByteArray {
+            if black_shuck.animated {
+                if black_shuck.shiny {
+                    black_shuck_assets::shiny_animated_uri()
                 } else {
-                    tiddy_mun_assets::regular_animated_uri()
+                    black_shuck_assets::regular_animated_uri()
                 }
             } else {
-                if tiddy_mun.shiny {
-                    tiddy_mun_assets::shiny_static_uri()
+                if black_shuck.shiny {
+                    black_shuck_assets::shiny_static_uri()
                 } else {
-                    tiddy_mun_assets::regular_static_uri()
+                    black_shuck_assets::regular_static_uri()
                 }
             }
         }
@@ -322,7 +344,7 @@ pub mod tiddy_mun_nft {
 
         fn build_metadata_uri(self: @ContractState, token_id: u256) -> ByteArray {
             self.erc721._require_owned(token_id);
-            let tiddy_mun = self.tiddy_muns.entry(token_id).read();
+            let black_shuck = self.black_shucks.entry(token_id).read();
             let is_genesis = token_id == GENESIS_TOKEN_ID;
 
             let mut name: ByteArray = "";
@@ -332,42 +354,42 @@ pub mod tiddy_mun_nft {
             let mut suffix_name: felt252 = 0;
 
             if is_genesis {
-                name.append(@"Tiddy Mun");
+                name.append(@"Black Shuck");
                 prefix_value.append(@"Genesis");
                 suffix_value.append(@"Genesis");
             } else {
-                prefix_name = beast_definitions::get_prefix(tiddy_mun.prefix);
-                suffix_name = beast_definitions::get_suffix(tiddy_mun.suffix);
+                prefix_name = beast_definitions::get_prefix(black_shuck.prefix);
+                suffix_name = beast_definitions::get_suffix(black_shuck.suffix);
                 prefix_value = felt252_to_byte_array(prefix_name);
                 suffix_value = felt252_to_byte_array(suffix_name);
-                name.append(@format!("\\\"{} {}\\\" Tiddy Mun", prefix_value, suffix_value));
+                name.append(@format!("\\\"{} {}\\\" Black Shuck", prefix_value, suffix_value));
             }
 
-            let card_asset = Self::selected_asset_uri(tiddy_mun);
-            let raw_asset = Self::selected_asset_uri(tiddy_mun);
-            let tier_value: u16 = TIDDY_MUN_TIER.into();
-            let power = (6 - tier_value) * tiddy_mun.level;
+            let card_asset = Self::selected_asset_uri(black_shuck);
+            let raw_asset = Self::selected_asset_uri(black_shuck);
+            let tier_value: u16 = BLACK_SHUCK_TIER.into();
+            let power = (6 - tier_value) * black_shuck.level;
             let card_attrs = BeastCardAttributes {
-                tier: TIDDY_MUN_TIER,
-                level: tiddy_mun.level,
-                beast_type: TIDDY_MUN_TYPE,
+                tier: BLACK_SHUCK_TIER,
+                level: black_shuck.level,
+                beast_type: BLACK_SHUCK_TYPE,
                 power,
-                health: tiddy_mun.health,
-                shiny: tiddy_mun.shiny,
+                health: black_shuck.health,
+                shiny: black_shuck.shiny,
             };
             let svg = BeastCardTrait::generate_svg(
-                prefix_name, suffix_name, 'Tiddy Mun', 0, card_attrs, card_asset,
+                prefix_name, suffix_name, 'Black Shuck', 0, card_attrs, card_asset,
             );
             let image = format!("data:image/svg+xml;base64,{}", bytes_base64_encode(svg));
 
             let mut level_value: ByteArray = "";
-            level_value.append(@format!("{}", tiddy_mun.level));
+            level_value.append(@format!("{}", black_shuck.level));
             let mut health_value: ByteArray = "";
-            health_value.append(@format!("{}", tiddy_mun.health));
+            health_value.append(@format!("{}", black_shuck.health));
             let mut id_value: ByteArray = "";
-            id_value.append(@format!("{}", tiddy_mun.id));
-            let shiny_value = Self::bool_value(tiddy_mun.shiny);
-            let animated_value = Self::bool_value(tiddy_mun.animated);
+            id_value.append(@format!("{}", black_shuck.id));
+            let shiny_value = Self::bool_value(black_shuck.shiny);
+            let animated_value = Self::bool_value(black_shuck.animated);
             let genesis_value = Self::bool_value(is_genesis);
 
             let mut json: ByteArray = "";
@@ -377,7 +399,7 @@ pub mod tiddy_mun_nft {
             json.append(@"\",");
             json
                 .append(
-                    @"\"description\":\"A grey-gowned bog spirit from the Lincolnshire carrs, Tiddy Mun slips through fen mist with white tangled hair and a peewit laugh. Loved as well as feared, he was called on at the new moon to draw back floodwaters, yet old tales say he cursed the land when his watery home was drained.\",",
+                    @"\"description\":\"Shuck - from the Old English scucca, a fiend - is the black dog of East Anglia: a great shaggy hound that keeps to the coast roads and marshes of Norfolk and Suffolk, the churchyards, the crossroads, the sea fret coming off the North Sea. One eye burning in his head, or two as wide as saucers; the tellings disagree. They agree on the price. Meet his gaze and you have a year to put your affairs in order. Gentler stories make him an escort instead, walking a lone traveller home and asking nothing for it. On 4 August 1577 a storm broke over Blythburgh and a black dog was said to tear through Holy Trinity church, killing as it went; the scorch marks on the north door are still shown to visitors as the devil's fingerprints.\",",
                 );
             json.append(@"\"image\":\"");
             json.append(@image);
@@ -386,7 +408,7 @@ pub mod tiddy_mun_nft {
             json.append(@raw_asset);
             json.append(@"\",");
             json.append(@"\"attributes\":[");
-            Self::append_attribute(ref json, "Beast", "Tiddy Mun", true);
+            Self::append_attribute(ref json, "Beast", "Black Shuck", true);
             Self::append_attribute(ref json, "Beast ID", id_value, true);
             Self::append_attribute(ref json, "Prefix", prefix_value, true);
             Self::append_attribute(ref json, "Suffix", suffix_value, true);
@@ -416,7 +438,7 @@ pub mod tiddy_mun_nft {
     }
 
     #[abi(embed_v0)]
-    impl TiddyMunAnimation of ITiddyMunAnimation<ContractState> {
+    impl BlackShuckAnimation of IBlackShuckAnimation<ContractState> {
         fn animation_url(self: @ContractState, token_id: u256) -> ByteArray {
             InternalTrait::build_metadata_uri(self, token_id)
         }

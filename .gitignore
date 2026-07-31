@@ -9,3 +9,7 @@ snfoundry_cache/
 accounts/
 .snfoundry_cache/
 coverage/
+
+# Python bytecode from scripts/
+__pycache__/
+*.pyc

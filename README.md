@@ -264,3 +264,54 @@ The project uses GitHub Actions for:
 - Minter: `0x0` until the owner enables live minting.
 - ABI: `abis/tiddy_mun_nft.json`
 - Address manifest: `addresses/tiddy_mun_mainnet.json`
+
+## Black Shuck
+
+A second standalone collection built to the same shape as Tiddy Mun: sequential token IDs, a
+constructor-minted Genesis token, owner-managed minter configuration, minter-gated live minting,
+prefix/suffix range and uniqueness checks, and upgradeability.
+
+| | Tiddy Mun | Black Shuck |
+| --- | --- | --- |
+| Contract | `tiddy_mun_nft` | `black_shuck_nft` |
+| Beast ID | 76 | 77 |
+| Tier / type | 1 / Magic | 1 / Hunter |
+| Symbol | `TIDDY` | `SHUCK` |
+| Capacity | 1,243 | 1,243 |
+
+Both collections render through the shared card in `src/beast_card.cairo` — the species supplies
+only its name, attributes and artwork. Power is `(6 - tier) * level` for both.
+
+Unlike Tiddy Mun, this collection implements **ERC2981** royalties: the constructor takes
+`royalty_receiver` and `royalty_fraction`, the fraction denominated in 10,000 (so `500` = 5%).
+Both are changeable afterwards by the owner, and `supports_interface` advertises ERC2981 so
+marketplaces pick the royalty up.
+
+Deploy with `bash scripts/deploy_black_shuck.sh`. The script declares the class and then deploys
+it; the declare step is idempotent, so re-running against a network that already has the class
+is reported and skipped rather than failing. Set `DRY_RUN=1` to skip both and print the command.
+
+It reads `NAME`, `SYMBOL`, `OWNER`, `MINTER_ADDRESS`, `ROYALTY_RECEIVER` and `ROYALTY_FRACTION`
+from `.env`, and honours `BLACK_SHUCK_`-prefixed overrides for each so both collections can be
+configured side by side. Addresses are validated as hex and the royalty fraction is rejected if
+it is non-numeric or above 100%.
+
+### Artwork
+
+All four variants are final and embedded in `src/black_shuck_assets.cairo` (3,856 base64 chars
+total). The regular sprites were authored by hand; both shiny variants were derived from them
+with `scripts/make_shiny.py`:
+
+```
+python3 scripts/make_shiny.py assets/black_shuck/t1_black-shuck.png
+python3 scripts/make_shiny.py assets/black_shuck/t1_black-shuck.gif
+```
+
+The script recolours only the tier-accent outline, sampling the card's own pastel ramp on the
+row index (`t = y / 31`); the silhouette and body are untouched. It reproduces the collection's
+shipped shiny art exactly — 6/6 sampled PNGs and 51 of 75 GIFs, frame for frame. The 24 GIFs
+that differ were hand-retouched after generation (rakshasa by a single pixel); the ramp colour
+itself is never wrong in any of the 75.
+
+Rendered cards for every variant live in `assets/examples/black_shuck_*.svg`, captured from
+real `token_uri` output.

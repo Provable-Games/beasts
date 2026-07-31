@@ -1,0 +1,30 @@
+// Black Shuck artwork, embedded as base64 data URIs and rendered into the card's pixel slot.
+//
+// All four variants are final art. The two shiny variants were derived from their regular
+// counterparts by scripts/make_shiny.py, which recolours the tier-accent outline along the
+// pastel ramp (t = y / 31) and reproduces the collection's shipped shiny art exactly.
+//
+// Invariants the contract and its tests rely on:
+//   - static variants MUST stay `data:image/png;base64,...`
+//   - animated variants MUST stay `data:image/gif;base64,...`
+//   - all four MUST be distinct, so `selected_asset_uri` is observable per variant
+//
+// Note the two formats store non-outline pixels differently, matching the rest of the
+// collection: the PNGs keep an opaque black body, the GIFs leave body and field transparent.
+// Both look identical on the card, which paints a black plate behind the art.
+
+pub fn regular_static_uri() -> ByteArray {
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAAXNSR0IArs4c6QAAAAlQTFRFAAAAAAAA/4AABnhFZgAAAAN0Uk5TAP//RFDWIQAAAMBJREFUOI2Fk1kSxCAIRPHd/9BTY1gaohU/1NAtS0NsfSw7GZGbqTkByNMELYbfCA+UpRiwjdaCCiF2k9gMfIUHNljwY/p/4x5WA4vy6IDWLSmDl0nHd+6pw3oRwp/oIEV46aFUy4GZZxEuVUiZ6/I2lfTMJ0mUPDXjQqBhFeL18uWBvul42AiQCobepngoiXekhNJpEYYqSStVOhojp11qBtMRz6dUJYMwhqFNdRzUOBHz0BiqI+mBPDrO+e/W9QPgaQTWf38luQAAAABJRU5ErkJggg=="
+}
+
+pub fn shiny_static_uri() -> ByteArray {
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAYFBMVEUAAAAAAACK/3Og/3O3/3PN/3Pk/3P6/3P/93P/7HP/4nP/13P/zXP/wnP/t3P/q3P/n3P/knP/hnP/enP7c3rxc4vnc5zcc63Sc77Ic86+c92xc+Olc+iYc+6Mc/R/c/kfXADuAAAAIHRSTlMA/////////////////////////////////////////5KarXYAAAEhSURBVHjahVOLcsIwDIvHRum7HaxpB4P//8vJr6Q5uENKLNvRhbQNgd4gvGp+7LKd4QB6ekjqhk9jrkzE8CWUxIAa4Fp3OFrf1ZKjHrICBVXl61VW3uHEE9g9x4k7IjDUGPXTo9Yy2NAQjx0aITU6A7XgDi3XrbVa3qEDMzrS0kIHQw8KeoYVor2eYSAZw1AeUtvyFCPG+PzFuDfqe5jKlSl1Jv/c80xzaZqT2Nf8plJzaYZzIZ6e8426vL5vFzf8lAExFWJY1L94uigXv7RR1yPFGKXgjDRlwyrL62q/u8pEufq13zC2TVQgKbi54RfUQKpFI9AVBFQ4XnMqhhsIJMnhZj/xB1IWQM+ijUB3RJ4I9/I9SgM7PIQuGdoI7/7+/4E0EbohK7m6AAAAAElFTkSuQmCC"
+}
+
+pub fn regular_animated_uri() -> ByteArray {
+    "data:image/gif;base64,R0lGODdhIAAgAJEAAAAAAAAAAP+AAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQJFAAAACwAAAAAIAAgAAACh4yPqcu90qCDUol6LqOB2454GYhhYXeJ5/ckpmpoLTvGqQOi8SrjvLvzcSSyYm4yNB1hrNKJeMykYJ5X8ObLKYlKIXQlDIJDzA0NeJ6Y0esoO5sWR63OeMWZnD01dx3z1dXHN4MVuENhCEVHcviBN4K45KZCOfY3N4f1BPaYVVnFiDMER4pQAAAh+QQJFAAAACwAAAAAIAAgAAACiYyPqcvt30SQiS6LpJ68YiN8xzYqJNiVYppN4dmazLdi78qW8Qt1IdrCOSgiImRDTKoeP00xaLoBpxwLSRpb5nzCGYrWm8FG4wpVJ0ub12r0xc0Ox902c709rSNrMp7VVYX3o+a0xWWUtvdmJHS1BQMZ+Aemt4QYaAeVR5lVCTLYB8VomNklx1AAACH5BAkUAAAALAAAAAAgACAAAAKJjI+py+0PlWgzMlERXjVnHXzTFxrbWEohhkqiySUkfKn24b3xStPb+qP0cKkHqoMkzmTH2WsJHD6VJlaQ1HJWLcQSlusqalo1cfcGQg/T7J25DV5L4eT32wNqupUnvlcdlJa0hNSxo6diCPXHmOcYg/c1xdRTBzN5OacjRoYnw8l4hBOYuRi3UAAAIfkECRQAAAAsAAAAACAAIAAAAoiMj6nL7Q+XUDM6UQ+OM6P+MWAAehqJjRQarm1onklMujNds7lspHgbq6QuNaGxh7yUgqffcAcdqXybZNOafFpyKuhW0+1tflyJyGzjzdI255eN9Zi6NGa8qFuvh5lOiV2ld1QnJuRiGAiDhDPlhXd1CCn5KDi5qLgiF6UWxqL5WRb2h0f2plAAADs="
+}
+
+pub fn shiny_animated_uri() -> ByteArray {
+    "data:image/gif;base64,R0lGODlhIAAgAMQAAAAAAIr/c6D/c7f/c83/c+T/c/r/c//3c//sc//ic//Xc//Nc//Cc/+3c/+rc/+fc/+Sc/+Gc/96c/tzevFzi+dznNxzrdJzvshzzr5z3bFz46Vz6Jhz7oxz9H9z+QAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQJFAAAACwAAAAAIAAgAAAF/yAgjmRpnmh6BimrCgB8CjJJowOQ7yc/+iMCQCgMooiE5PBUYKKaJOjIAKCWDFZTlrQFHEaH8Fc1DovGIkRarTKx2aOESN4GyO9zeoKuAPTbCn2CfySECwCHKomJIoyIjwAMkSYMlZWTJJKSmCMNIp4ADaJ1n6UlDiIOqKQkqqklD6yxALMktSQQEAC6pLy4KBEnwaTDJhLGKsciyicTrCjOJhQk0yPV1gDX2ScVJt0i3+AA3eThJBYm6BbrAOgi6urtJhclF/TzI/T2APclGCIYAgI88Q/Av4MFS2QAsJChQxILIz6UWEIDAIsjLGK8yFGDxowcSWwAMHLEyJIiUC2SFLmyBAcAL0e8jCmCg02aMmGS6DCCZ08APuvwDArAQ9GjR40abaMU6bOnIQAAIfkECRQAAAAsAAAAACAAIAAABf8gII5kaZ5oqq6pALglfMrkANj4bQ52yaMEQHA0JAWLwiSpAGCanCVmYSo9GayoK0lbOpAOYO9J3C0hRIg0C3Bmt9ujBEC+JtHpJIVIv9L793wKfAALhCsLhYmFJYsiDACPJQyTk44kkZaYDQCbnA2fJZ0jm52iIw4iDqh1qa2rIw+sJg+xsSYQEAC5Kbu7Jb4lESfCJsQkxiUSJsopzADOJhOy0ScUJNYj2NkA2twnFSbgIuLjAODn5CQWJusW7gDrIu3t8CYXJRf39iP3+QD6JTCIwEBw4AmBAAQqRFgiAwCHDyOicAiRogkNADCOwKhRBMeMID2GHLEBQEmSJlEwljx5MmXLERwAxIQpk6YIDjNp5gTQYURPnzx9dvhpoidRAB6QKlWaNOmKpkun1QkBACH5BAkUAAAALAAAAAAgACAAAAX/ICCOZGmeaKqurCmkb4sOg0mfhJjrOLDzP1FBOCwChqZiYXk8GQwkKEBaooqso0NKW+J2S4gRIixGkccisiixZgMScHfKLR8pAHfWfS9S5P0jCwCCKguCh4QkiQAMjCgMkCKNI5OSjiINAJmaDZ2dI5ugmpgmDiIOpjKnq6kjD6omD6+vJhAQALcpubklvCURJ8AmwiTEJRImyCnKAMwmE7DPJxQk1CPW1wDY2icVJt4i4OEA3uXiJBYm6RbsAOki6+vuJhclF/X0Ivj3APglGCIwCAx4AiAAgAgNlsgAgGHDhygYOpRoQgMAiyMsYqx4MWNHEhsAhBwRciTIkSZLLprgAIDlCJYuRcCUSWLmiA43SeDEKYInAJ85gXoAMHQo0aNGiXpIOqLo0WiqQgAAIfkECRQAAAAsAAAAACAAIAAABf8gII5kaZ5oqq7sKZhvqw5DSbcEkJv5LvqlAkA4LBKDw4KyeDIADM5RtDQVVUUHQPa0JXW9JsQJIR6LyOdSgpRor1fvN0khUthV9HydDrgDFiKAKguAhYIkhwwAiigMjiKMkCSKjA0AliINmpsjmJ2XmSUOIg6lMiOjAKOpIg+nJw+uriUQtQAQKri3J7omESe/vsInEibFKccAySYTr8wnFCTRI9PUANXXJxUm2yLd3gDb4t8kFibmFukA5iLo6OsmFyUX8vEi9fQA9SUYIhj//kz0AzCwH0ATGQAkVMjwRMKFDCGO0ACA4sSKJyxaxLhRxAYAH0d8DFkiJMmRJjgqAFA5QiXLEi5JxBzRgSaJmjVLdMB5E0BOER4ABA0qtCjREUOLGlXqTEYIADs="
+}
