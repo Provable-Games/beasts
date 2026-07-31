@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Derive a beast's shiny sprite from its regular sprite. Handles both PNG and animated GIF.
 
-Reverse-engineered from the regular/shiny pairs shipped in src/beast_png_*_data.cairo and
-src/beast_gif_*_data.cairo. In both formats the rule is the same recolour, sampled purely on
-the row index - t = y / (height - 1) - using the six pastel stops that `logo_pastel_rainbow`
-and `shinyRim` already use in src/beast_card.cairo. Horizontal position plays no part, and the
-silhouette is never altered.
+Reverse-engineered from the regular/shiny sprite pairs of the main Beast collection, which
+ships them in src/beast_png_*_data.cairo and src/beast_gif_*_data.cairo on `main`. Those files
+are not part of this branch, so the validation below cannot be reproduced from this tree - see
+`main` for the reference art.
+
+In both formats the rule is the same recolour, sampled purely on the row index -
+t = y / (height - 1) - using the six pastel stops that `logo_pastel_rainbow` and `shinyRim`
+already use in src/beast_card.cairo. Horizontal position plays no part, and the silhouette is
+never altered.
 
 The two formats differ only in how the non-outline pixels are stored, and this mirrors what the
 shipped art actually does:
@@ -15,7 +19,7 @@ shipped art actually does:
         an opaque black field, shiny GIFs drop it. Both render identically inside the card,
         which paints a black plate behind the art.
 
-Verified by regenerating this repo's own shiny art from its own regular art:
+Verified by regenerating the main collection's shiny art from its regular art:
 
   PNG   70/73 beasts exact. Only chimera and hippogriff (5px each) and rakshasa (1px) differ,
         and 2 sprites are skipped for using an encoding this script does not read.
@@ -50,7 +54,7 @@ STOPS = [
 ]
 
 # Tier accent colours: any of these reads as "outline" and gets recoloured. Taken from the
-# palettes actually shipped in src/beast_png_regular_data.cairo rather than from
+# palettes the main collection's sprites are actually authored with, rather than from
 # beast_card.cairo::get_tier_color - the art and the card disagree on T1, which appears as both
 # #ff8000 (5 sprites) and #ff8800 (3 sprites). A regular sprite is only ever black plus its
 # accent, so matching on colour is unambiguous.
