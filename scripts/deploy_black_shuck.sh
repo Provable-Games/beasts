@@ -168,17 +168,30 @@ fi
 } > "$DEPLOY_LOG"
 
 echo "Deploying black_shuck_nft with sncast profile '$SNCAST_PROFILE'..."
+# Capture rather than let `set -e` abort on a non-zero exit: on a failed mainnet deploy the
+# sncast output is the only diagnostic there is, and aborting here would discard it unprinted
+# and unlogged. Mirrors the declare step above.
+set +e
 DEPLOY_OUTPUT=$("${deploy_cmd[@]}" 2>&1)
+DEPLOY_STATUS=$?
+set -e
 echo "$DEPLOY_OUTPUT"
 printf '%s\n' "$DEPLOY_OUTPUT" >> "$DEPLOY_LOG"
+
+if [ "$DEPLOY_STATUS" -ne 0 ]; then
+  echo "Error: deploy failed (sncast exit $DEPLOY_STATUS)." >&2
+  echo "Full output written to: $DEPLOY_LOG" >&2
+  exit 1
+fi
 
 CONTRACT_ADDRESS=$(printf '%s\n' "$DEPLOY_OUTPUT" | sed -n 's/.*contract_address: *//p' | tail -1)
 TRANSACTION_HASH=$(printf '%s\n' "$DEPLOY_OUTPUT" | sed -n 's/.*transaction_hash: *//p' | tail -1)
 
 if [[ "$DRY_RUN" != "1" && "$DRY_RUN" != "true" ]]; then
   if [ -z "${CONTRACT_ADDRESS:-}" ] || [ -z "${TRANSACTION_HASH:-}" ]; then
-    echo "Error: failed to extract deployed contract address or transaction hash." >&2
-    echo "Wrote deploy output to: $DEPLOY_LOG" >&2
+    echo "Error: deploy reported success but no contract address or transaction hash was" >&2
+    echo "found in its output. Do NOT re-run blindly - the deploy may have landed." >&2
+    echo "Full output written to: $DEPLOY_LOG" >&2
     exit 1
   fi
 

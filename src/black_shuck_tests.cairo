@@ -197,6 +197,60 @@ mod black_shuck_tests {
         stop_cheat_caller_address(shuck.contract_address);
     }
 
+    /// Power is (6 - tier) * level as a u16, so level 13107 is the largest that still renders
+    /// (5 * 13107 = 65535). One above it used to mint happily and then leave token_uri and
+    /// animation_url reverting forever, with no way back short of an upgrade.
+    #[test]
+    fn test_mint_accepts_highest_renderable_level() {
+        let (shuck, _, metadata, _, _, _, _, minter) = deploy_contract();
+        let recipient = test_address('recipient');
+
+        start_cheat_caller_address(shuck.contract_address, minter);
+        let token = shuck.mint(recipient, BEAST_ID, 1, 1, 500, 13107, false, false);
+        stop_cheat_caller_address(shuck.contract_address);
+
+        // The card must actually render at the boundary, not merely mint. Power lives only
+        // inside the base64-encoded SVG, so rebuild the expected card and match on that.
+        let expected_svg = BeastCardTrait::generate_svg(
+            beast_definitions::get_prefix(1),
+            beast_definitions::get_suffix(1),
+            'Black Shuck',
+            0,
+            BeastCardAttributes {
+                tier: 1,
+                level: 13107,
+                beast_type: 'Hunter',
+                power: 65535,
+                health: 500,
+                shiny: false,
+            },
+            black_shuck_assets::regular_static_uri(),
+        );
+        let expected_image = format!(
+            "data:image/svg+xml;base64,{}", bytes_base64_encode(expected_svg),
+        );
+        let uri = metadata.token_uri(token);
+        assert(find_substring(@uri, @expected_image).is_some(), 'Boundary card mismatch');
+    }
+
+    #[test]
+    #[should_panic(expected: ('Invalid level',))]
+    fn test_mint_rejects_level_that_would_overflow_power() {
+        let (shuck, _, _, _, _, _, _, minter) = deploy_contract();
+        start_cheat_caller_address(shuck.contract_address, minter);
+        shuck.mint(test_address('recipient'), BEAST_ID, 1, 1, 500, 13108, false, false);
+        stop_cheat_caller_address(shuck.contract_address);
+    }
+
+    #[test]
+    #[should_panic(expected: ('Invalid level',))]
+    fn test_mint_rejects_max_u16_level() {
+        let (shuck, _, _, _, _, _, _, minter) = deploy_contract();
+        start_cheat_caller_address(shuck.contract_address, minter);
+        shuck.mint(test_address('recipient'), BEAST_ID, 1, 1, 500, 65535, false, false);
+        stop_cheat_caller_address(shuck.contract_address);
+    }
+
     #[test]
     #[should_panic(expected: ('Black Shuck already minted',))]
     fn test_duplicate_prefix_suffix_rejected_even_with_different_traits() {

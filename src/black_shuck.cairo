@@ -109,6 +109,12 @@ pub mod black_shuck_nft {
     const FIRST_LIVE_TOKEN_ID: u256 = 2;
     const MAX_PREFIX: u8 = 69;
     const MAX_SUFFIX: u8 = 18;
+    // Power is (6 - tier) * level and is rendered onto the card as a u16. Tier 1 carries the
+    // largest multiplier in the table, 5, so 13107 is the highest level whose power still fits:
+    // 5 * 13107 = 65535, while 5 * 13108 overflows. Rejecting at mint means a token can never
+    // exist whose token_uri and animation_url are permanently unrenderable - there is no setter
+    // for stored beast data, so such a token could only be salvaged by a contract upgrade.
+    const MAX_LEVEL: u16 = 13107;
     const TOTAL_CAPACITY: u256 = 1243;
     const GENESIS_HEALTH: u16 = 100;
     const GENESIS_LEVEL: u16 = 1;
@@ -260,6 +266,7 @@ pub mod black_shuck_nft {
             );
             assert(beast_id == BLACK_SHUCK_BEAST_ID, 'Invalid beast ID');
             InternalTrait::assert_live_prefix_suffix(prefix, suffix);
+            assert(level <= MAX_LEVEL, 'Invalid level');
             assert(self.supply_count.read() < TOTAL_CAPACITY, 'Collection full');
 
             let key = InternalTrait::minted_key(prefix, suffix);
