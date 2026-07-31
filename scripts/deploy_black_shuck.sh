@@ -60,10 +60,12 @@ ACCOUNT_FILE="${ACCOUNT_FILE/#\~/$HOME}"
 [ -f "$KEYSTORE" ] || { echo "Error: keystore not found at '$KEYSTORE'." >&2; exit 1; }
 [ -f "$ACCOUNT_FILE" ] || { echo "Error: account file not found at '$ACCOUNT_FILE'." >&2; exit 1; }
 
-# snfoundry.toml interpolates these into every profile. sncast fails to load the config file if
-# they are undefined, even though keystore mode never reads them - so give them inert values.
-export SNCAST_ACCOUNT="${SNCAST_ACCOUNT:-unused-in-keystore-mode}"
-export SNCAST_ACCOUNTS_FILE="${SNCAST_ACCOUNTS_FILE:-/dev/null}"
+# snfoundry.toml interpolates the url of every profile, and sncast fails to load the config file
+# outright if any referenced variable is undefined - even profiles this run will not use.
+#
+# Do NOT reintroduce SNCAST_ACCOUNT / SNCAST_ACCOUNTS_FILE here or in snfoundry.toml. Once
+# accounts-file is configured, sncast treats --account as a name to look up inside it rather
+# than as a path, and the declare fails with 'Network ... does not exist in accounts file'.
 export SEPOLIA_RPC_URL="${SEPOLIA_RPC_URL:-${RPC_URL:-}}"
 export MAINNET_RPC_URL="${MAINNET_RPC_URL:-${RPC_URL:-}}"
 
