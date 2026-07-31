@@ -13,9 +13,8 @@ pub struct BeastCardAttributes {
 
 #[generate_trait]
 pub impl BeastCardImpl of BeastCardTrait {
-    /// Generates the same SVG card used by the original Beast collection. Shared by every
-    /// standalone collection (Tiddy Mun, Black Shuck, ...); a species supplies only its name,
-    /// attributes and artwork.
+    /// Generates the same SVG card used by the original Beast collection. The species supplies
+    /// only its name, attributes and artwork; everything else about the card is fixed.
     fn generate_svg(
         prefix_name: felt252,
         suffix_name: felt252,

@@ -249,52 +249,41 @@ The project uses GitHub Actions for:
 - [Play Loot Survivor](https://lootsurvivor.io)
 - [Discord Community](https://discord.gg/lootsurvivor)
 - [Twitter](https://x.com/lootsurvivor)
-- [Tiddy Mun NFT](https://voyager.online/contract/0x0202d78ebda24bde4e44434bcfd2b329d6c0dde25eb2b713a8e7c3e8f4e1a8bb)
 - [Beast NFT](https://voyager.online/contract/0x046da8955829adf2bda310099a0063451923f02e648cf25a1203aac6335cf0e4)
 - [Regular PNG URI](https://voyager.online/contract/0x07bcd91940f5a2640437c764815b6a8a173f09fff991420b691713bebd82f7bf)
 - [Shiny PNG URI](https://voyager.online/contract/0x03bdFdEeA997CA7C7b1d66590a541FC559cE5A742e0162fE98Fe371E70709444)
 - [Regular GIF URI](https://voyager.online/contract/0x012F11AD850839d27351Bbf49858A3180AdB1C30d9942423FD089F5740776293)
 - [Shiny GIF URI](https://voyager.online/contract/0x0700f224e6fcb344c27f29e62687333b589b3be39a2c026ede5968bf53b6bb2a)
 
-## Tiddy Mun Mainnet
-
-- Contract: `0x0202d78ebda24bde4e44434bcfd2b329d6c0dde25eb2b713a8e7c3e8f4e1a8bb`
-- Class hash: `0x078d71aeb3bc7d2d4df98b0f11b7a4004a4e22f44a724f47e1c7aed92ba3046e`
-- Owner: `0x0245939b4a0a2a05b3721ca530342c61e4291ccd6d71ab829ee7dbe8b6e23bca`
-- Minter: `0x0` until the owner enables live minting.
-- ABI: `abis/tiddy_mun_nft.json`
-- Address manifest: `addresses/tiddy_mun_mainnet.json`
-
 ## Black Shuck
 
-A second standalone collection built to the same shape as Tiddy Mun: sequential token IDs, a
-constructor-minted Genesis token, owner-managed minter configuration, minter-gated live minting,
-prefix/suffix range and uniqueness checks, and upgradeability.
+A standalone collection: sequential token IDs, a constructor-minted Genesis token,
+owner-managed minter configuration, minter-gated live minting, prefix/suffix range and
+uniqueness checks, and upgradeability.
 
-| | Tiddy Mun | Black Shuck |
-| --- | --- | --- |
-| Contract | `tiddy_mun_nft` | `black_shuck_nft` |
-| Beast ID | 76 | 77 |
-| Tier / type | 1 / Magic | 1 / Hunter |
-| Symbol | `TIDDY` | `SHUCK` |
-| Capacity | 1,243 | 1,243 |
+| | |
+| --- | --- |
+| Contract | `black_shuck_nft` |
+| Beast ID | 77 |
+| Tier / type | 1 / Hunter |
+| Symbol | `SHUCK` |
+| Capacity | 1,243 |
 
-Both collections render through the shared card in `src/beast_card.cairo` — the species supplies
-only its name, attributes and artwork. Power is `(6 - tier) * level` for both.
+Cards render through `src/beast_card.cairo` — the species supplies only its name, attributes
+and artwork. Power is `(6 - tier) * level`.
 
-Unlike Tiddy Mun, this collection implements **ERC2981** royalties: the constructor takes
-`royalty_receiver` and `royalty_fraction`, the fraction denominated in 10,000 (so `500` = 5%).
-Both are changeable afterwards by the owner, and `supports_interface` advertises ERC2981 so
-marketplaces pick the royalty up.
+The collection implements **ERC2981** royalties: the constructor takes `royalty_receiver` and
+`royalty_fraction`, the fraction denominated in 10,000 (so `500` = 5%). Both are changeable
+afterwards by the owner, and `supports_interface` advertises ERC2981 so marketplaces pick the
+royalty up.
 
 Deploy with `bash scripts/deploy_black_shuck.sh`. The script declares the class and then deploys
 it; the declare step is idempotent, so re-running against a network that already has the class
 is reported and skipped rather than failing. Set `DRY_RUN=1` to skip both and print the command.
 
 It reads `NAME`, `SYMBOL`, `OWNER`, `MINTER_ADDRESS`, `ROYALTY_RECEIVER` and `ROYALTY_FRACTION`
-from `.env`, and honours `BLACK_SHUCK_`-prefixed overrides for each so both collections can be
-configured side by side. Addresses are validated as hex and the royalty fraction is rejected if
-it is non-numeric or above 100%.
+from `.env`, and also honours `BLACK_SHUCK_`-prefixed overrides for each. Addresses are
+validated as hex and the royalty fraction is rejected if it is non-numeric or above 100%.
 
 ### Artwork
 
@@ -308,10 +297,9 @@ python3 scripts/make_shiny.py assets/black_shuck/t1_black-shuck.gif
 ```
 
 The script recolours only the tier-accent outline, sampling the card's own pastel ramp on the
-row index (`t = y / 31`); the silhouette and body are untouched. It reproduces the collection's
-shipped shiny art exactly — 6/6 sampled PNGs and 51 of 75 GIFs, frame for frame. The 24 GIFs
-that differ were hand-retouched after generation (rakshasa by a single pixel); the ramp colour
-itself is never wrong in any of the 75.
+row index (`t = y / 31`); the silhouette and body are untouched. It was derived from, and
+validated against, the main Beast collection's regular/shiny pairs — 70/73 PNGs and 51/75 GIFs
+reproduce exactly, and every miss is a sprite that was hand-retouched after generation.
 
 Rendered cards for every variant live in `assets/examples/black_shuck_*.svg`, captured from
 real `token_uri` output.

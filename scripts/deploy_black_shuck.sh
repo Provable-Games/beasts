@@ -10,11 +10,10 @@ set -euo pipefail
 # reported and skipped rather than treated as a failure, so the script is safe to retry after a
 # deploy that failed for an unrelated reason.
 #
-# Because this repo now ships two standalone collections that share the same .env keys, each
-# value may be overridden per collection with a BLACK_SHUCK_ prefix (BLACK_SHUCK_NAME,
+# Every value may also be given with a BLACK_SHUCK_ prefix (BLACK_SHUCK_NAME,
 # BLACK_SHUCK_SYMBOL, BLACK_SHUCK_OWNER, BLACK_SHUCK_MINTER_ADDRESS,
 # BLACK_SHUCK_ROYALTY_RECEIVER, BLACK_SHUCK_ROYALTY_FRACTION). The prefixed value wins when set,
-# so a .env left configured for Tiddy Mun cannot silently deploy a mislabelled Black Shuck.
+# so a .env shared with another collection's deploy cannot silently mislabel this one.
 
 if [ -f .env ]; then
   set -a

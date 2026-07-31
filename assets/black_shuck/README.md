@@ -43,4 +43,4 @@ is what the rest of the collection's regular GIFs do.
 - All four URIs must stay distinct; `test_asset_variants_are_distinct` catches a half-finished
   swap.
 - Keep them small. The whole URI is stored on-chain and rebuilt on every `token_uri` call. The
-  current four total 3,856 base64 chars, in line with Tiddy Mun's 283–1,036 byte sprites.
+  current four total 3,856 base64 chars.
