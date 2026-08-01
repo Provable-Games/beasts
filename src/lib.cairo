@@ -8,6 +8,9 @@ pub mod beast_png_shiny_data;
 pub mod beast_ranking;
 pub mod beast_svg;
 pub mod encoding;
+pub mod enumerable;
+#[cfg(test)]
+mod enumerable_tests;
 pub mod interfaces;
 pub mod metadata_generator;
 #[cfg(test)]
@@ -32,13 +35,14 @@ pub mod beasts_nft {
     use openzeppelin_interfaces::erc721::IERC721Metadata;
     use openzeppelin_introspection::src5::SRC5Component;
     use openzeppelin_token::common::erc2981::ERC2981Component;
-    use openzeppelin_token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
+    use openzeppelin_token::erc721::ERC721Component;
     use starknet::ContractAddress;
     use starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
     use super::beast_manager::{BeastManagerTrait, BeastResult};
     use super::beast_ranking::BeastRankingManagerTrait;
+    use super::enumerable::EnumerableComponent;
     use super::interfaces::{
         IBeastImageDataProviderDispatcher, IBeastSystemsDispatcher, IBeastSystemsDispatcherTrait,
         IBeasts, IBeastsAnimation,
@@ -51,6 +55,7 @@ pub mod beasts_nft {
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
     component!(path: ERC2981Component, storage: erc2981, event: ERC2981Event);
+    component!(path: EnumerableComponent, storage: erc721_enumerable, event: EnumerableEvent);
 
     // Ownable Mixin
     #[abi(embed_v0)]
@@ -63,6 +68,26 @@ pub mod beasts_nft {
     #[abi(embed_v0)]
     impl ERC721CamelOnlyImpl = ERC721Component::ERC721CamelOnlyImpl<ContractState>;
     impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
+
+    // Owner enumeration
+    #[abi(embed_v0)]
+    impl EnumerableImpl = EnumerableComponent::EnumerableImpl<ContractState>;
+    impl EnumerableInternalImpl = EnumerableComponent::InternalImpl<ContractState>;
+
+    /// Keeps the owner index in step with every mint and transfer. The
+    /// component reads pre-update balances, so it must run in `before_update`
+    /// and not `after_update`.
+    impl ERC721EnumerableHooks of ERC721Component::ERC721HooksTrait<ContractState> {
+        fn before_update(
+            ref self: ERC721Component::ComponentState<ContractState>,
+            to: ContractAddress,
+            token_id: u256,
+            auth: ContractAddress,
+        ) {
+            let mut contract_state = self.get_contract_mut();
+            contract_state.erc721_enumerable.before_update(to, token_id);
+        }
+    }
 
     // SRC5 Implementation
     #[abi(embed_v0)]
@@ -91,6 +116,8 @@ pub mod beasts_nft {
         pub src5: SRC5Component::Storage,
         #[substorage(v0)]
         pub erc2981: ERC2981Component::Storage,
+        #[substorage(v0)]
+        pub erc721_enumerable: EnumerableComponent::Storage,
         // Beast-specific storage
         pub beast_token_ranks: Map<u256, u16>, // token_id -> current rank (for tokenURI)
         pub beast_species_lists: Map<
@@ -127,6 +154,8 @@ pub mod beasts_nft {
         SRC5Event: SRC5Component::Event,
         #[flat]
         ERC2981Event: ERC2981Component::Event,
+        #[flat]
+        EnumerableEvent: EnumerableComponent::Event,
         MetadataUpdate: MetadataUpdate,
     }
 
@@ -150,6 +179,7 @@ pub mod beasts_nft {
     ) {
         self.ownable.initializer(owner);
         self.erc721.initializer(name, symbol, "");
+        self.erc721_enumerable.initializer();
         self.erc2981.initializer(royalty_receiver, royalty_fraction);
 
         // Store external image data dispatchers
