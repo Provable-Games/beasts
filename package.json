@@ -1,0 +1,12 @@
+{
+  "name": "beasts-monorepo",
+  "private": true,
+  "scripts": {
+    "test:sdk": "pnpm --filter @provable-games/beasts-sdk test",
+    "build:sdk": "pnpm --filter @provable-games/beasts-sdk build",
+    "dev:app": "pnpm --filter @provable-games/beasts-app dev",
+    "build:app": "pnpm --filter @provable-games/beasts-app build",
+    "typecheck": "pnpm -r typecheck",
+    "gen:tables": "node scripts/gen-tables.mjs"
+  }
+}

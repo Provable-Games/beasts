@@ -1,0 +1,50 @@
+import { chromium } from 'playwright';
+
+const browser = await chromium.launch({
+  executablePath:
+    '/home/ubuntu/.cache/ms-playwright/chromium_headless_shell-1228/chrome-headless-shell-linux64/chrome-headless-shell',
+});
+const page = await browser.newPage({ viewport: { width: 1280, height: 1400 } });
+const errors = [];
+page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+
+await page.goto('http://localhost:4173/', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(5000);
+
+console.log('H1:', await page.textContent('h1'));
+const body = await page.textContent('body');
+const m = body.match(/(\d+) species in the bestiary so far/);
+console.log('LIVE CHAIN READ:', m ? m[0] : 'FAILED — no species count rendered');
+console.log('art slots:', await page.locator('.art-slot').count());
+console.log('preview card:', await page.locator('.card').count());
+
+// Client-side name validation, no wallet needed.
+await page.fill('input[placeholder="Gloomfang"]', 'bad"name');
+await page.waitForTimeout(200);
+console.log('rejects injection name:', JSON.stringify(await page.locator('.field__error').first().textContent()));
+
+await page.fill('input[placeholder="Gloomfang"]', 'Gloomfang');
+await page.waitForTimeout(200);
+console.log('accepts valid name — card title:', JSON.stringify(await page.textContent('.card__title')));
+
+// Tier drives the power number on the preview card.
+await page.selectOption('select >> nth=1', '1');
+await page.waitForTimeout(200);
+const power = await page.locator('.stat', { hasText: 'Power' }).textContent();
+console.log('tier 1 power (level 10 x 5):', JSON.stringify(power));
+
+await page.screenshot({ path: 'smoke-register.png', fullPage: true });
+
+// Dashboard for the live species 76.
+await page.fill('input[placeholder="Species #"]', '76');
+await page.click('.lookup button');
+await page.waitForTimeout(5000);
+console.log('dashboard heading:', JSON.stringify(await page.textContent('.dashboard__header h2').catch(() => null)));
+console.log('dashboard meta:', JSON.stringify(await page.textContent('.dashboard__header p').catch(() => null)));
+console.log('badges:', await page.locator('.badge').allTextContents());
+console.log('read-only notice:', JSON.stringify(await page.textContent('.notice').catch(() => null)));
+await page.screenshot({ path: 'smoke-dashboard.png', fullPage: true });
+
+console.log('CONSOLE ERRORS:', errors.length ? errors.slice(0, 4) : 'none');
+await browser.close();
