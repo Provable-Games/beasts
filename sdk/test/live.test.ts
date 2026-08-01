@@ -77,4 +77,43 @@ live('Sepolia deployment', () => {
     const owner = await client.ownerOf(GENESIS_WARLOCK);
     expect(BigInt(owner)).not.toBe(0n);
   }, 30_000);
+
+  // ---------------------------------------------------- artist lookup
+
+  const DEPLOYER = '0x736faa0dca6a4569bf22471b574ddf42107f5af81d67e2cb9e1aa9bba7de76b';
+
+  it('finds the species an artist registered', async () => {
+    const owned = await client.getSpeciesByArtist(DEPLOYER);
+
+    // Non-empty is the point of the assertion, not a detail. A scan starting
+    // before `fromBlock` comes back EMPTY rather than erroring on some public
+    // nodes, so "artist owns nothing" is exactly what a broken range looks
+    // like — this is the guard against that failure being silent.
+    expect(owned.length).toBeGreaterThan(0);
+    expect(owned).toContain(76n);
+  }, 60_000);
+
+  it('returns nothing for an address that never registered', async () => {
+    expect(await client.getSpeciesByArtist('0xdead')).toEqual([]);
+  }, 60_000);
+
+  it('derives a real Genesis Beast token for each owned species', async () => {
+    const owned = await client.getOwnedSpecies(DEPLOYER);
+    expect(owned.length).toBeGreaterThan(0);
+
+    for (const species of owned) {
+      // The derived ID must decode back to the same species with the traits
+      // the registry reports — that is what makes deriving it safe instead of
+      // reading it from the chain.
+      const beast = decodeTokenId(species.genesisTokenId);
+      expect(beast.id).toBe(species.beastId);
+      expect(beast.tier).toBe(species.definition.tier);
+      expect(beast.beastType).toBe(species.definition.beastType);
+      expect(beast.prefix).toBe(0);
+      expect(beast.suffix).toBe(0);
+
+      // And it must actually exist: ownerOf reverts for an unminted token.
+      expect(BigInt(await client.ownerOf(species.genesisTokenId))).not.toBe(0n);
+    }
+  }, 60_000);
 });

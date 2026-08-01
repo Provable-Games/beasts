@@ -1,16 +1,13 @@
 import { useAccount, useDisconnect } from '@starknet-react/core';
-import {
-  BeastsClient,
-  FIRST_COMMUNITY_ID,
-  type BeastDefinition,
-} from '@provable-games/beasts-sdk';
+import { BeastsClient, type BeastDefinition } from '@provable-games/beasts-sdk';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ADDRESSES, provider } from './lib/chain';
 import { ConnectModal } from './components/ConnectModal';
 import { Dashboard } from './components/Dashboard';
+import { MySpecies } from './components/MySpecies';
 import { RegisterForm, type RegistrationInput } from './components/RegisterForm';
 
-type View = { kind: 'register' } | { kind: 'species'; id: bigint };
+type View = { kind: 'register' } | { kind: 'mine' } | { kind: 'species'; id: bigint };
 
 export function App() {
   const { address, account } = useAccount();
@@ -22,12 +19,8 @@ export function App() {
   const [error, setError] = useState<string | undefined>();
   const [definition, setDefinition] = useState<BeastDefinition | null>(null);
   const [speciesCount, setSpeciesCount] = useState<bigint | null>(null);
-  const [lookup, setLookup] = useState('');
 
-  const client = useMemo(
-    () => new BeastsClient(provider(), ADDRESSES, account),
-    [account],
-  );
+  const client = useMemo(() => new BeastsClient(provider(), ADDRESSES, account), [account]);
 
   const refresh = useCallback(async () => {
     setSpeciesCount(await client.speciesCount().catch(() => null));
@@ -47,6 +40,12 @@ export function App() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // Managing means signing, so a disconnect has to drop out of those views
+  // rather than leave dead controls on screen.
+  useEffect(() => {
+    if (!address && view.kind !== 'register') setView({ kind: 'register' });
+  }, [address, view.kind]);
 
   async function register(input: RegistrationInput) {
     setSubmitting(true);
@@ -71,8 +70,12 @@ export function App() {
     }
   }
 
-  const isArtist =
-    !!address && !!definition && BigInt(definition.artist) === BigInt(address);
+  const isArtist = !!address && !!definition && BigInt(definition.artist) === BigInt(address);
+
+  function openManage() {
+    if (address) setView({ kind: 'mine' });
+    else setConnecting(true);
+  }
 
   return (
     <div className="app">
@@ -82,22 +85,9 @@ export function App() {
         </button>
 
         <div className="topbar__right">
-          <form
-            className="lookup"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const id = BigInt(lookup || '0');
-              if (id >= FIRST_COMMUNITY_ID) setView({ kind: 'species', id });
-            }}
-          >
-            <input
-              value={lookup}
-              placeholder="Species #"
-              inputMode="numeric"
-              onChange={(e) => setLookup(e.target.value.replace(/\D/g, ''))}
-            />
-            <button type="submit">Manage</button>
-          </form>
+          <button onClick={openManage} title="Species you control">
+            Manage
+          </button>
 
           {address ? (
             <button onClick={() => disconnect()} title="Disconnect">
@@ -112,15 +102,14 @@ export function App() {
       </header>
 
       <main>
-        {view.kind === 'register' ? (
+        {view.kind === 'register' && (
           <>
             <div className="hero">
               <h1>Put your Beast onchain</h1>
               <p>
-                Anyone can add a species to the bestiary. Upload pixel art, name
-                it, pick where it lives — one transaction, no permission needed.
-                You keep the Genesis Beast: the creator's token, one per species,
-                forever.
+                Anyone can add a species to the bestiary. Upload pixel art, name it,
+                pick where it lives — one transaction, no permission needed. You keep
+                the Genesis Beast: the creator's token, one per species, forever.
               </p>
               {speciesCount !== null && (
                 <p className="muted">
@@ -130,22 +119,39 @@ export function App() {
             </div>
             <RegisterForm onSubmit={register} submitting={submitting} error={error} />
           </>
-        ) : definition ? (
-          <Dashboard
-            beastId={view.id}
-            definition={definition}
-            client={client}
-            isArtist={isArtist}
-            onChanged={() => void refresh()}
-          />
-        ) : (
-          <div className="empty">
-            <p>{error ?? 'Loading…'}</p>
-            <button onClick={() => setView({ kind: 'register' })}>
-              Register a new Beast
-            </button>
-          </div>
         )}
+
+        {view.kind === 'mine' && address && (
+          <MySpecies
+            client={client}
+            address={address}
+            onOpen={(id) => setView({ kind: 'species', id })}
+            onRegister={() => setView({ kind: 'register' })}
+          />
+        )}
+
+        {view.kind === 'species' &&
+          (definition ? (
+            <>
+              <button className="backlink" onClick={openManage}>
+                ← Your Beasts
+              </button>
+              <Dashboard
+                beastId={view.id}
+                definition={definition}
+                client={client}
+                isArtist={isArtist}
+                onChanged={() => void refresh()}
+              />
+            </>
+          ) : (
+            <div className="empty">
+              <p>{error ?? 'Loading…'}</p>
+              <button onClick={() => setView({ kind: 'register' })}>
+                Register a new Beast
+              </button>
+            </div>
+          ))}
       </main>
 
       <footer className="footer">

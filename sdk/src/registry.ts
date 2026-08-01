@@ -1,18 +1,44 @@
 import type { AccountInterface, Call, ProviderInterface } from 'starknet';
-import { CallData, byteArray, shortString } from 'starknet';
-import { decodeTokenId } from './tokenId.js';
+import { CallData, byteArray, hash, shortString } from 'starknet';
+import { decodeTokenId, encodeTokenId, genesisBeast } from './tokenId.js';
 import { BeastType, type ArtSet, type Beast, type BeastDefinition } from './types.js';
+
+/** A species the connected wallet controls, with its provenance token. */
+export interface OwnedSpecies {
+  beastId: bigint;
+  definition: BeastDefinition;
+  /** Token ID of the species' Genesis Beast — the artist's provenance token. */
+  genesisTokenId: bigint;
+}
 
 /** Addresses of a deployed Beasts stack. */
 export interface BeastsAddresses {
   nft: string;
   registry: string;
+  /**
+   * Block to start event scans from.
+   *
+   * Not just an optimisation. Public RPC nodes routinely cap how far back
+   * `starknet_getEvents` will look, and at least one returns an **empty
+   * result rather than an error** for a range it will not serve — so a scan
+   * from genesis reports "this wallet owns nothing" instead of failing.
+   * Anchoring to deployment keeps every query inside a range nodes will
+   * actually answer.
+   */
+  fromBlock: number;
 }
 
-/** Deployed stacks, from `docs/sepolia-v3-deployment.md`. */
+/**
+ * Deployed stacks, from `docs/sepolia-v3-deployment.md`.
+ *
+ * `fromBlock` is the block of `set_nft_address`. That is a provably safe
+ * floor rather than an estimate: the registry rejects every registration
+ * until the NFT is wired, so no `BeastRegistered` event can predate it.
+ */
 export const SEPOLIA_ADDRESSES: BeastsAddresses = {
   nft: '0x01dac77837c6751777d917051a6e405967c5c75f46df5ab7c635e52819634bfd',
   registry: '0x06d46c98087a1246182c6cd8ef144ee0a67da6e6cc9e44e39aef08cf92d30045',
+  fromBlock: 12_757_974,
 };
 
 export interface RegisterWithArtParams {
@@ -164,6 +190,84 @@ export class BeastsClient {
       ]),
     })) as string[];
     return byteArray.stringFromByteArray(decodeByteArray(raw));
+  }
+
+  // ------------------------------------------------- artist enumeration
+
+  /**
+   * Species IDs an address is currently the artist for.
+   *
+   * Derived from events rather than by scanning IDs: the registry has no
+   * artist index, and `species_count` grows without bound, so a scan would
+   * cost one call per species forever. Two event streams are enough —
+   * `BeastRegistered` establishes the original artist and
+   * `ArtistTransferred` moves it — and applying them in block order
+   * reproduces the current holder exactly.
+   */
+  async getSpeciesByArtist(artist: string): Promise<bigint[]> {
+    const target = BigInt(artist);
+    const current = new Map<string, bigint>();
+
+    // Registration: keys [selector, beast_id], data [name, artist, ...].
+    for (const event of await this.collectEvents('BeastRegistered')) {
+      current.set(BigInt(event.keys[1]).toString(), BigInt(event.data[1]));
+    }
+
+    // Transfer: keys [selector, beast_id], data [previous, new]. Events
+    // arrive in block order, so later transfers overwrite earlier ones.
+    for (const event of await this.collectEvents('ArtistTransferred')) {
+      current.set(BigInt(event.keys[1]).toString(), BigInt(event.data[1]));
+    }
+
+    return [...current.entries()]
+      .filter(([, holder]) => holder === target)
+      .map(([beastId]) => BigInt(beastId))
+      .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  }
+
+  /**
+   * Full detail for everything an address controls, ready to render. Each
+   * definition is re-read from storage rather than taken from the
+   * registration event, so art swaps, minter changes and locks are current.
+   */
+  async getOwnedSpecies(artist: string): Promise<OwnedSpecies[]> {
+    const ids = await this.getSpeciesByArtist(artist);
+    return Promise.all(
+      ids.map(async (beastId) => {
+        const definition = await this.getDefinition(beastId);
+        return {
+          beastId,
+          definition,
+          genesisTokenId: encodeTokenId(
+            genesisBeast(beastId, definition.tier, definition.beastType),
+          ),
+        };
+      }),
+    );
+  }
+
+  /** Pages through every event of one kind emitted by the registry. */
+  private async collectEvents(
+    eventName: string,
+  ): Promise<Array<{ keys: string[]; data: string[] }>> {
+    const selector = hash.getSelectorFromName(eventName);
+    const events: Array<{ keys: string[]; data: string[] }> = [];
+    let continuationToken: string | undefined;
+
+    do {
+      const page = await this.provider.getEvents({
+        address: this.addresses.registry,
+        from_block: { block_number: this.addresses.fromBlock },
+        to_block: 'latest',
+        keys: [[selector]],
+        chunk_size: 100,
+        continuation_token: continuationToken,
+      });
+      events.push(...page.events.map((e) => ({ keys: e.keys, data: e.data })));
+      continuationToken = page.continuation_token;
+    } while (continuationToken);
+
+    return events;
   }
 
   // ------------------------------------------------------ call builders

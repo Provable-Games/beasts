@@ -60,22 +60,15 @@ console.log('preview art fits its frame:',
 
 await page.screenshot({ path: 'smoke-register.png', fullPage: true });
 
-// Dashboard for the live species 76.
-await page.fill('input[placeholder="Species #"]', '76');
-await page.click('.lookup button');
-await page.waitForTimeout(5000);
-console.log('dashboard heading:', JSON.stringify(await page.textContent('.dashboard__header h2').catch(() => null)));
-console.log('dashboard meta:', JSON.stringify(await page.textContent('.dashboard__header p').catch(() => null)));
-console.log('badges:', await page.locator('.badge').allTextContents());
-console.log('read-only notice:', JSON.stringify(await page.textContent('.notice').catch(() => null)));
-await page.screenshot({ path: 'smoke-dashboard.png', fullPage: true });
+// Manage lists the species the connected wallet controls, so with no wallet
+// it has to ask for one rather than opening an empty page.
+await page.click('button:has-text("Manage")');
+await page.waitForTimeout(800);
+console.log('Manage without a wallet prompts connect:',
+  (await page.locator('.modal').count()) > 0 && (await page.locator('.mine').count()) === 0);
 
 // Wallet picker: both wallet families must be offered, and a wallet whose
 // extension is absent must say so rather than fail silently.
-await page.click('.brand');
-await page.waitForTimeout(500);
-await page.click('button.primary:has-text("Connect")');
-await page.waitForSelector('.modal', { state: 'visible', timeout: 5000 });
 const wallets = await page.locator('.wallet__name').allTextContents();
 const states = await page.locator('.wallet__state').allTextContents();
 console.log('wallets offered:', wallets.map((w, i) => `${w}${states[i] ? ` (${states[i]})` : ''}`));

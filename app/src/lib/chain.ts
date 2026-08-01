@@ -10,6 +10,11 @@ export const RPC_URL =
 export const ADDRESSES = {
   nft: import.meta.env.VITE_BEASTS_NFT ?? SEPOLIA_ADDRESSES.nft,
   registry: import.meta.env.VITE_BEASTS_REGISTRY ?? SEPOLIA_ADDRESSES.registry,
+  // Event scans start here. Point this at your own deployment block if you
+  // override the addresses, or artist lookups will scan a range that predates
+  // the contracts — and some public nodes answer an over-wide range with an
+  // empty result rather than an error.
+  fromBlock: Number(import.meta.env.VITE_BEASTS_FROM_BLOCK ?? SEPOLIA_ADDRESSES.fromBlock),
 };
 
 /** Sepolia only. Everything this app talks to is deployed there. */

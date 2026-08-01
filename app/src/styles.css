@@ -645,3 +645,110 @@ select:focus {
   font-size: 12px;
   color: var(--muted);
 }
+
+/* ------------------------------------------------------------ my species */
+
+.mine {
+  padding-top: 36px;
+}
+
+.mine__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mine__header h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  letter-spacing: -0.01em;
+}
+
+.mine__header p {
+  margin: 0;
+  max-width: 46ch;
+}
+
+.species-grid {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.species-card {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  align-items: center;
+  padding: 14px;
+  background: var(--panel);
+}
+
+.species-card__art {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex: none;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.species-card__art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.species-card__art-empty {
+  font-size: 10.5px;
+  color: var(--muted);
+  text-align: center;
+  padding: 0 6px;
+}
+
+.species-card__body {
+  min-width: 0;
+}
+
+.species-card__title {
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.species-card .badges {
+  margin-top: 8px;
+}
+
+.badge--ok {
+  border-color: #6f9e6a4d;
+  color: #8fbe89;
+}
+
+.backlink {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 26px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.backlink:hover {
+  color: var(--text);
+  background: none;
+}

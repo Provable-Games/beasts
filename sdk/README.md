@@ -53,6 +53,28 @@ The name charset is an injection guard, not a style rule: the contract's JSON
 and SVG builders embed names unescaped. Names are deliberately **not** unique —
 requiring uniqueness would let anyone squat the good ones.
 
+## Finding what a wallet controls
+
+```ts
+await client.getSpeciesByArtist(address); // [77n, 78n]
+await client.getOwnedSpecies(address);    // + definition and Genesis token ID
+```
+
+Derived from `BeastRegistered` and `ArtistTransferred` events rather than by
+scanning IDs: the registry keeps no artist index and `species_count` grows
+without bound, so a scan would cost one call per species forever.
+
+**"Controls" means the artist role, not the Genesis Beast.** The two start
+together but diverge the moment either is transferred, and the registry's
+permissioned entrypoints check the role.
+
+`BeastsAddresses.fromBlock` anchors those event scans. It is not just an
+optimisation: public RPC nodes cap how far back `starknet_getEvents` will
+look, and at least one returns an **empty result rather than an error** for a
+range it will not serve — so a scan from genesis reports "this wallet owns
+nothing" instead of failing. If you point the SDK at your own deployment, set
+`fromBlock` with it.
+
 ## Reads and calls
 
 `BeastsClient` returns `Call` objects rather than sending them, so the caller

@@ -29,10 +29,20 @@ enforces (media type, base64 structure, PNG/GIF magic bytes) *and* decoded by
 the browser, because a file that will not decode here renders broken for every
 holder. Registration mints the artist's Genesis Beast in the same transaction.
 
-**Manage.** Per-species controls: replace art, rotate or pause the minter, lock
-either one permanently, opt into kill stats, transfer the artist role, or
-graduate to a custom art provider. Everything is artist-only on-chain; the UI
-hides what the caller cannot do and the contract is the real gate.
+**Manage.** Lists every species the connected wallet holds the artist role for,
+with its live art, and opens the per-species controls: replace art, rotate or
+pause the minter, lock either one permanently, opt into kill stats, transfer
+the artist role, or graduate to a custom art provider.
+
+The list keys off the **artist role, not the Genesis Beast**. They start
+together but diverge the moment either is transferred, and the role is what the
+registry's permissioned entrypoints check — listing by token would offer
+controls that revert. Everything is artist-only on-chain; the UI hides what the
+caller cannot do and the contract is the real gate.
+
+Art thumbnails come from each species' own provider, which for a custom
+provider is arbitrary contract code. One that reverts costs its own thumbnail,
+not the whole list.
 
 ## The preview card is an approximation
 

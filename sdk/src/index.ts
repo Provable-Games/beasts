@@ -37,6 +37,7 @@ export {
   BeastsClient,
   SEPOLIA_ADDRESSES,
   type BeastsAddresses,
+  type OwnedSpecies,
   type RegisterParams,
   type RegisterWithArtParams,
 } from './registry.js';
