@@ -15,7 +15,7 @@ const RPC_URL = process.env.STARKNET_RPC_URL ?? 'https://api.zan.top/public/star
 const live = process.env.RUN_LIVE_TESTS ? describe : describe.skip;
 
 const GENESIS_WARLOCK = 0x7006400010000000000000000001n;
-const GLOOMFANG = 0x2e0064000a081000000000000004cn;
+const GLOOMFANG = 0x2e0064000a081000000000000004cn; // minted below if absent
 
 live('Sepolia deployment', () => {
   const client = new BeastsClient(new RpcProvider({ nodeUrl: RPC_URL }), SEPOLIA_ADDRESSES);

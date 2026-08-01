@@ -25,8 +25,8 @@ export interface BeastsAddresses {
 
 /** Deployed stacks, from `docs/sepolia-v3-deployment.md`. */
 export const SEPOLIA_ADDRESSES: BeastsAddresses = {
-  nft: '0x01dac77837c6751777d917051a6e405967c5c75f46df5ab7c635e52819634bfd',
-  registry: '0x06d46c98087a1246182c6cd8ef144ee0a67da6e6cc9e44e39aef08cf92d30045',
+  nft: '0x017e2cb5d7c4a86ff2bdee182ce53386a7cc57c63b943878de21b681e336a89a',
+  registry: '0x0797a19c0b267e91ea17f886f155310e38196261ec5683e3a12a35772718d723',
 };
 
 export interface RegisterWithArtParams {
@@ -191,16 +191,26 @@ export class BeastsClient {
    * with no affixes. A token ID carries its own species, so no registry read
    * and no event scan is involved.
    */
-  async getSpeciesByArtist(artist: string): Promise<bigint[]> {
-    const balance = await this.balanceOf(artist);
+  async getSpeciesByArtist(artist: string, concurrency = 4): Promise<bigint[]> {
+    const balance = Number(await this.balanceOf(artist));
     const ids: bigint[] = [];
 
-    for (let index = 0n; index < balance; index++) {
-      const tokenId = await this.tokenOfOwnerByIndex(artist, index);
-      const beast = decodeTokenId(tokenId);
-      // The (id, 0, 0) slot is the species' Genesis Beast, and holding it is
-      // what the registry checks. Every other token is an ordinary Beast.
-      if (isGenesis(beast)) ids.push(beast.id);
+    // Enumeration is one call per token, and the collection owner alone holds
+    // all 75 genesis Beasts — issuing those serially takes tens of seconds and
+    // trips public-node rate limits. Fetch in bounded batches instead:
+    // fast enough for a real wallet, still polite to the node.
+    for (let start = 0; start < balance; start += concurrency) {
+      const batch = await Promise.all(
+        Array.from({ length: Math.min(concurrency, balance - start) }, (_, offset) =>
+          this.tokenOfOwnerByIndex(artist, BigInt(start + offset)),
+        ),
+      );
+      for (const tokenId of batch) {
+        const beast = decodeTokenId(tokenId);
+        // The (id, 0, 0) slot is the species' Genesis Beast, and holding it is
+        // what the registry checks. Every other token is an ordinary Beast.
+        if (isGenesis(beast)) ids.push(beast.id);
+      }
     }
 
     return ids.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
@@ -258,11 +268,14 @@ export class BeastsClient {
 
   /** Owner enumeration. Order is not stable across transfers. */
   async tokenOfOwnerByIndex(owner: string, index: bigint): Promise<bigint> {
-    const raw = (await this.provider.callContract({
-      contractAddress: this.addresses.nft,
-      entrypoint: 'token_of_owner_by_index',
-      calldata: CallData.compile([owner, ...u256ToParts(index)]),
-    })) as string[];
+    const raw = (await withRateLimitRetry(
+      () =>
+        this.provider.callContract({
+          contractAddress: this.addresses.nft,
+          entrypoint: 'token_of_owner_by_index',
+          calldata: CallData.compile([owner, ...u256ToParts(index)]),
+        }) as Promise<string[]>,
+    ));
     return u256FromParts(raw[0], raw[1]);
   }
 
@@ -398,6 +411,38 @@ export class BeastsClient {
 }
 
 // ------------------------------------------------------------- helpers
+
+/**
+ * Retries a call that a public node refused for rate limiting.
+ *
+ * Enumeration is one request per token, so any wallet with a real collection
+ * will out-run a free endpoint's per-second budget. That is a transient
+ * refusal, not an answer — retrying with backoff is the difference between
+ * "this wallet holds nothing" and the truth.
+ */
+async function withRateLimitRetry<T>(fn: () => Promise<T>, attempts = 7): Promise<T> {
+  let delayMs = 250;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt >= attempts - 1 || !isRateLimited(error)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      delayMs *= 2;
+    }
+  }
+}
+
+function isRateLimited(error: unknown): boolean {
+  const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  return (
+    message.includes('-32011') ||
+    message.includes('cu limit') ||
+    message.includes('too many requests') ||
+    message.includes('rate limit') ||
+    message.includes('429')
+  );
+}
 
 function toHex(value: string): string {
   return `0x${BigInt(value).toString(16).padStart(64, '0')}`;

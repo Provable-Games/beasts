@@ -1,7 +1,8 @@
 # Beasts V3 — Sepolia deployment
 
-Deployed 2026-07-31 from branch `feat/nft-registry-integration` (PR #20,
-stacked on #19). Tooling: **sncast 0.60.0** (`--network sepolia`). Not
+Redeployed 2026-07-31 from `feat/nft-registry-integration` (PR #20) after
+owner enumeration merged (#14) and the artist role became Genesis Beast
+ownership. Supersedes the earlier deployment; those addresses are dead. Tooling: **sncast 0.60.0** (`--network sepolia`). Not
 starkli — it is unsupported and absent from this environment.
 
 Deployer / owner / royalty receiver: sncast account `commit-reveal-sepolia`
@@ -13,8 +14,8 @@ Total cost: ~10 STRK.
 
 | Contract | Address |
 |---|---|
-| **beasts_nft** | `0x01dac77837c6751777d917051a6e405967c5c75f46df5ab7c635e52819634bfd` |
-| **beast_registry** | `0x06d46c98087a1246182c6cd8ef144ee0a67da6e6cc9e44e39aef08cf92d30045` |
+| **beasts_nft** | `0x017e2cb5d7c4a86ff2bdee182ce53386a7cc57c63b943878de21b681e336a89a` |
+| **beast_registry** | `0x0797a19c0b267e91ea17f886f155310e38196261ec5683e3a12a35772718d723` |
 | beast_png_regular_data | `0x045f6cf8249ebee56f699a46cb66f02cbd23419f1c2cd3e62a3dfdedaf894279` |
 | beast_png_shiny_data | `0x0291ad81a428262fd709f0075dedf69814173bf5b60f989cf7095f5efa72c670` |
 | beast_gif_regular_data | `0x04a15db02fc7c991f2080e349cfbfb8f96f5fd61dd92c1cbe60ed7dbd4d49bfe` |
@@ -24,8 +25,8 @@ Total cost: ~10 STRK.
 
 | Contract | Class hash |
 |---|---|
-| beasts_nft | `0x350e97a3244fecad9f850d84843a0effc26a364c392c2e8c4379cb5de0193ea` |
-| beast_registry | `0x2afeefe9818b1c3fa839cef077cad5c6767bda41e6737e31ed44ed1a3fd6a97` |
+| beasts_nft | `0x20f43e08d7d6e8802809b12af5692bf596ef929079607eed48de71afceee8ff` |
+| beast_registry | `0x24809e1053dae99db897c32bb67fe323ac74d1e1fc47a26ddf7362a3f883041` |
 | stored_art_provider | `0x2e3011cf968bbea8b72e75efdfe120318ccf61fe711d2f7f927114e2d8da56e` |
 | beast_png_regular_data | `0x15d5742d2e7804531ac456b7ba82e9dc961ba154cbaaad631e2e7b4e887b68b` |
 | beast_png_shiny_data | `0x3a1bfcae2737a12df248675d57c3a1a94eeceb5a696f14fa6f23fd99bf3d247` |
@@ -41,9 +42,14 @@ Both pointers are write-once and both are required; a stack missing either
 accepts no community species at all.
 
 ```
-registry.set_nft_address(0x01dac778...)   tx 0x06a0634be77503b1e32507406b046d320098f2f17a0142cc56dba07639e22fd5
-nft.set_registry_address(0x06d46c98...)   tx 0x02af8798debaea3fbd5949bafe2b506e048a8fed8cde08101e63149fa4236ded
+registry.set_nft_address(0x017e2cb5...)   tx 0x058ba4ac366347b3271fa061219d17c29efe9b4dbe98666a1906a9a87cf059c7
+nft.set_registry_address(0x0797a19c...)   tx (same session)
 ```
+
+The four art data contracts and the `stored_art_provider` class are unchanged
+from the first deployment and were reused — `stored_art_provider` recompiled
+to a byte-identical class hash, which the network confirmed by rejecting the
+redeclare.
 
 `dungeon_address` is **unset (zero)**, so genesis species 1–75 cannot be
 minted yet. That is deliberate: it is also the state mainnet must launch in
@@ -62,6 +68,10 @@ until the `burn_and_mint` migration completes, or a dungeon could claim an
 | Provenance mint | `total_supply()` 75 → 76 |
 | Per-species mint auth | `mint(..., 76, 1, 1, 10, 100, 0, 1)` from the registered minter succeeded |
 | Community render | `"Agony Bane" Gloomfang`, Rank 1, 20,970-byte SVG |
+| Owner enumeration | `token_of_owner_by_index(owner, 0)` → `0x7006400010000000000000000001`, the genesis Warlock |
+| Artist = Genesis Beast | `get_artist(76)` returns the holder of `get_genesis_token_id(76)` |
+| Role follows the token | transferring the creator token moved `get_artist(76)` to the new holder |
+| Seller loses control | the previous holder's `set_minter` then reverted `Registry: not artist`, while the new holder's succeeded |
 
 Decoded attributes of the community mint — every value routed correctly:
 
