@@ -46,5 +46,21 @@ console.log('badges:', await page.locator('.badge').allTextContents());
 console.log('read-only notice:', JSON.stringify(await page.textContent('.notice').catch(() => null)));
 await page.screenshot({ path: 'smoke-dashboard.png', fullPage: true });
 
+// Wallet picker: both wallet families must be offered, and a wallet whose
+// extension is absent must say so rather than fail silently.
+await page.click('.brand');
+await page.waitForTimeout(500);
+await page.click('button.primary:has-text("Connect")');
+await page.waitForSelector('.modal', { state: 'visible', timeout: 5000 });
+const wallets = await page.locator('.wallet__name').allTextContents();
+const states = await page.locator('.wallet__state').allTextContents();
+console.log('wallets offered:', wallets.map((w, i) => `${w}${states[i] ? ` (${states[i]})` : ''}`));
+// A centred fixed overlay: narrow, and vertically centred in the viewport
+// whatever the page scroll position.
+const box = await page.locator('.modal').boundingBox();
+const vh = page.viewportSize().height;
+const centred = Math.abs(box.y + box.height / 2 - vh / 2) < 40;
+console.log('modal is a centred overlay:', box.width <= 400 && centred);
+
 console.log('CONSOLE ERRORS:', errors.length ? errors.slice(0, 4) : 'none');
 await browser.close();

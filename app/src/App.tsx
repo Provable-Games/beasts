@@ -1,4 +1,4 @@
-import { useAccount, useConnect, useDisconnect } from '@starknet-react/core';
+import { useAccount, useDisconnect } from '@starknet-react/core';
 import {
   BeastsClient,
   FIRST_COMMUNITY_ID,
@@ -6,6 +6,7 @@ import {
 } from '@provable-games/beasts-sdk';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ADDRESSES, provider } from './lib/chain';
+import { ConnectModal } from './components/ConnectModal';
 import { Dashboard } from './components/Dashboard';
 import { RegisterForm, type RegistrationInput } from './components/RegisterForm';
 
@@ -13,9 +14,9 @@ type View = { kind: 'register' } | { kind: 'species'; id: bigint };
 
 export function App() {
   const { address, account } = useAccount();
-  const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
 
+  const [connecting, setConnecting] = useState(false);
   const [view, setView] = useState<View>({ kind: 'register' });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -99,11 +100,11 @@ export function App() {
           </form>
 
           {address ? (
-            <button onClick={() => disconnect()}>
+            <button onClick={() => disconnect()} title="Disconnect">
               {`0x${BigInt(address).toString(16).slice(0, 6)}…`}
             </button>
           ) : (
-            <button className="primary" onClick={() => connect({ connector: connectors[0] })}>
+            <button className="primary" onClick={() => setConnecting(true)}>
               Connect
             </button>
           )}
@@ -149,10 +150,12 @@ export function App() {
 
       <footer className="footer">
         <span>
-          Registry <code>{shortAddr(ADDRESSES.registry)}</code> · Collection{' '}
+          Sepolia · Registry <code>{shortAddr(ADDRESSES.registry)}</code> · Collection{' '}
           <code>{shortAddr(ADDRESSES.nft)}</code>
         </span>
       </footer>
+
+      {connecting && <ConnectModal onClose={() => setConnecting(false)} />}
     </div>
   );
 }
