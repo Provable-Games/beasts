@@ -90,9 +90,18 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         }
 
         let (tier, beast_type) = Self::resolve_species_traits(beast_id);
+        BeastResult::Ok(Self::genesis_beast(beast_id, tier, beast_type))
+    }
 
-        // Create genesis beast with default attributes
-        let beast = PackableBeast {
+    /// The canonical Genesis Beast of a species: the reserved `(id, 0, 0)`
+    /// affix slot, always level 1, health 100, shiny and animated.
+    ///
+    /// Pure and shared on purpose. Its token ID identifies the species'
+    /// creator token, and the registry derives that ID to answer "who is the
+    /// artist" — so the shape must have exactly one definition or the two
+    /// sides would compute different tokens.
+    fn genesis_beast(beast_id: u64, tier: u8, beast_type: u8) -> PackableBeast {
+        PackableBeast {
             id: beast_id,
             prefix: 0,
             suffix: 0,
@@ -102,8 +111,7 @@ pub impl BeastManagerImpl of BeastManagerTrait {
             animated: 1,
             tier,
             beast_type,
-        };
-        BeastResult::Ok(beast)
+        }
     }
 
     /// Resolves the static tier/type for a species.

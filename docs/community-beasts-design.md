@@ -18,6 +18,7 @@ fully on-chain and are mintable through Loot Survivor dungeons.
 | 2 | Token ID encoding | all static data in a deterministic **116-bit** token ID; zero per-beast storage |
 | 3 | Art model | per-species `IBeastArtProvider` address; factory auto-deploys canonical `StoredArtProvider`; custom providers allowed |
 | 4 | Provenance | artist receives the species' Genesis Beast at registration |
+| 20 | Artist role | **the Genesis Beast IS the artist role.** No stored `artists` map: every permissioned entrypoint resolves the artist as `owner_of(genesis_token_id(beast_id))`, so control transfers with the token on any marketplace and the two can never drift apart |
 | 5 | Art locking | one-way `lock_art` |
 | 6 | Minter locking | one-way `lock_minter` |
 | 7 | Registration fee | **none** — no fee mechanism at all (no shared resource to protect once name uniqueness was dropped) |
@@ -123,14 +124,14 @@ pub struct BeastDefinition {
     pub beast_type: BeastType,
     pub tier: u8,                   // 1..=5
     pub minter: ContractAddress,    // dungeon allowed to mint this species
-    pub artist: ContractAddress,    // registrant; per-species admin
+    pub artist: ContractAddress,    // derived: holder of the Genesis Beast
     pub art_provider: ContractAddress,
     pub stats_source: ContractAddress, // 0 = no kill stats (default)
     pub factory_provider: bool,
     pub art_locked: bool,
     pub minter_locked: bool,
 }
-// Stored manually packed: name | artist | minter | art_provider = 4 slots,
+// Stored manually packed: name | minter | art_provider = 3 slots,
 // meta (tier 3b | type 3b | factory 1b | art_locked 1b | minter_locked 1b) = 1 slot.
 // stats_source gets a slot only when set (zero-default maps cost nothing unwritten).
 
@@ -172,7 +173,6 @@ pub trait IBeastRegistry<T> {
     fn notify_art_updated(ref self: T, beast_id: u64);  // custom providers: trigger refresh
     fn lock_art(ref self: T, beast_id: u64);            // one-way
     fn set_stats_source(ref self: T, beast_id: u64, source: ContractAddress);
-    fn transfer_artist_role(ref self: T, beast_id: u64, new_artist: ContractAddress); // non-zero
 
     // -------- reads --------
     fn get_definition(self: @T, beast_id: u64) -> BeastDefinition;
@@ -347,6 +347,44 @@ the canonical entity hash everywhere is `poseidon(id: u64, prefix, suffix)` —
 matching the widened `pack::get_hash`. No silent `u64 → u8` truncation
 anywhere; legacy conversions are checked.
 
+## The artist role is the Genesis Beast
+
+There is no `artists` map. Every permissioned entrypoint resolves the artist
+by asking the NFT who holds the species' Genesis Beast:
+
+```cairo
+fn artist_of(self: @ContractState, beast_id: u64) -> ContractAddress {
+    IERC721Dispatcher { contract_address: self.nft.read() }
+        .owner_of(Self::genesis_token_id(self, beast_id))
+}
+```
+
+`genesis_token_id` is derived, not stored: it is `encode_token_id` over the
+canonical `(id, 0, 0)` shape with the species' registered tier and type, so
+the registry and any client compute the same value offline.
+
+Why this over a stored role:
+
+- **The creator token means what it says.** Selling it on any marketplace
+  hands over the species; there is no second, invisible role that stays
+  behind.
+- **They cannot drift.** A stored role plus a transferable token is two
+  sources of truth, and every UI then has to explain which one governs.
+- **Enumeration answers everything.** `token_of_owner_by_index` plus a local
+  `decode_token_id` tells a client which species a wallet controls, with no
+  registry reads and no event scanning.
+- **Less state and less surface**: one storage slot per species saved, and
+  `transfer_artist_role` deleted entirely.
+
+Costs, accepted deliberately:
+
+- Each permissioned write now makes one `owner_of` call to the NFT. The NFT
+  is owner-set and write-once, so this is not an untrusted call.
+- Sending a Genesis Beast to an address nobody controls would freeze that
+  species' admin permanently. Burning cannot cause this — the enumeration
+  component rejects burns outright — but a mis-sent transfer can. This is the
+  same risk profile as any NFT and the UI warns before transfer.
+
 ## Provenance mint (community Genesis Beasts)
 
 At registration, `beasts_nft.mint_provenance(artist, beast_id)` mints the
@@ -435,7 +473,6 @@ art set.
 | Where | What | Slots |
 |---|---|---|
 | Registry | `name` | 1 |
-| Registry | `artist` | 1 |
 | Registry | `minter` | 1 |
 | Registry | `art_provider` | 1 |
 | Registry | packed meta (tier, type, factory, art_locked, minter_locked) | 1 |

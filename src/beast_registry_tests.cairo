@@ -2,11 +2,21 @@
 /// provenance mint and fan-out call so tests can verify the registry drives
 /// the NFT correctly (the real implementation lands with the NFT
 /// integration).
+///
+/// It also tracks token ownership, because the registry now resolves the
+/// artist by asking the NFT who holds the species' Genesis Beast — so a mock
+/// that cannot answer `owner_of` cannot exercise a single permissioned path.
 #[starknet::contract]
 pub mod mock_beasts_nft {
     use starknet::ContractAddress;
-    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
-    use super::super::interfaces::IBeastsProvenance;
+    use starknet::storage::{
+        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+    };
+    use super::super::beast_manager::BeastManagerTrait;
+    use super::super::interfaces::{
+        IBeastRegistryDispatcher, IBeastRegistryDispatcherTrait, IBeastsProvenance,
+    };
+    use super::super::pack::encode_token_id;
 
     #[starknet::interface]
     pub trait IMockCounters<TContractState> {
@@ -14,6 +24,10 @@ pub mod mock_beasts_nft {
         fn provenance_count(self: @TContractState) -> u64;
         fn last_fan_out(self: @TContractState) -> u64;
         fn fan_out_count(self: @TContractState) -> u64;
+        fn set_registry(ref self: TContractState, registry: ContractAddress);
+        /// Stand-in for a marketplace sale of the creator token.
+        fn transfer(ref self: TContractState, token_id: u256, to: ContractAddress);
+        fn owner_of(self: @TContractState, token_id: u256) -> ContractAddress;
     }
 
     #[storage]
@@ -23,6 +37,8 @@ pub mod mock_beasts_nft {
         provenance_count: u64,
         last_fan_out_id: u64,
         fan_out_count: u64,
+        registry: ContractAddress,
+        owners: Map<u256, ContractAddress>,
     }
 
     #[abi(embed_v0)]
@@ -31,6 +47,17 @@ pub mod mock_beasts_nft {
             self.last_provenance_artist.write(artist);
             self.last_provenance_id.write(beast_id);
             self.provenance_count.write(self.provenance_count.read() + 1);
+
+            // Mirror the real contract: the Genesis Beast lands with the
+            // registrant, which is what makes them the artist.
+            let (tier, beast_type) = IBeastRegistryDispatcher {
+                contract_address: self.registry.read(),
+            }
+                .get_species_traits(beast_id);
+            let token_id = encode_token_id(
+                BeastManagerTrait::genesis_beast(beast_id, tier, beast_type),
+            );
+            self.owners.entry(token_id).write(artist);
         }
 
         fn emit_species_metadata_update(ref self: ContractState, beast_id: u64) {
@@ -55,6 +82,18 @@ pub mod mock_beasts_nft {
 
         fn fan_out_count(self: @ContractState) -> u64 {
             self.fan_out_count.read()
+        }
+
+        fn set_registry(ref self: ContractState, registry: ContractAddress) {
+            self.registry.write(registry);
+        }
+
+        fn transfer(ref self: ContractState, token_id: u256, to: ContractAddress) {
+            self.owners.entry(token_id).write(to);
+        }
+
+        fn owner_of(self: @ContractState, token_id: u256) -> ContractAddress {
+            self.owners.entry(token_id).read()
         }
     }
 }
@@ -91,13 +130,14 @@ pub mod mock_stats_source {
 
 #[cfg(test)]
 mod tests {
+    use beasts_nft::beast_manager::BeastManagerTrait;
     use beasts_nft::beast_registry::beast_registry::ART_REFRESH_COOLDOWN_SECONDS;
     use beasts_nft::interfaces::{
         BeastType, IBeastArtProviderDispatcher, IBeastArtProviderDispatcherTrait,
         IBeastRegistryDispatcher, IBeastRegistryDispatcherTrait, IStoredArtProviderDispatcher,
         IStoredArtProviderDispatcherTrait,
     };
-    use beasts_nft::pack::PackableBeast;
+    use beasts_nft::pack::{PackableBeast, encode_token_id};
     use snforge_std::{
         ContractClassTrait, DeclareResultTrait, declare, start_cheat_block_timestamp,
         start_cheat_caller_address, stop_cheat_caller_address,
@@ -155,7 +195,12 @@ mod tests {
         registry.set_nft_address(nft_address);
         stop_cheat_caller_address(registry_address);
 
-        (registry, IMockCountersDispatcher { contract_address: nft_address }, owner)
+        // The mock reads species traits back from the registry to derive the
+        // Genesis Beast it mints, exactly as the real NFT does.
+        let nft = IMockCountersDispatcher { contract_address: nft_address };
+        nft.set_registry(registry_address);
+
+        (registry, nft, owner)
     }
 
     fn register_default(
@@ -578,45 +623,56 @@ mod tests {
     }
 
     #[test]
-    fn test_transfer_artist_role() {
-        let (registry, _, _) = setup();
+    fn test_selling_the_genesis_beast_transfers_control() {
+        // The creator token IS the artist role. Moving it on any marketplace
+        // hands over the species — there is no separate role to transfer, and
+        // no way to hold one without the other.
+        let (registry, nft, _) = setup();
         let artist = test_address('artist');
-        let new_artist = test_address('new_artist');
+        let buyer = test_address('buyer');
         let beast_id = register_default(registry, artist, test_address('dungeon'));
 
-        start_cheat_caller_address(registry.contract_address, artist);
-        registry.transfer_artist_role(beast_id, new_artist);
-        stop_cheat_caller_address(registry.contract_address);
+        assert(registry.get_artist(beast_id) == artist, 'Registrant is the artist');
 
-        assert(registry.get_artist(beast_id) == new_artist, 'Artist transferred');
+        nft.transfer(registry.get_genesis_token_id(beast_id), buyer);
 
-        // New artist has admin rights.
-        start_cheat_caller_address(registry.contract_address, new_artist);
+        assert(registry.get_artist(beast_id) == buyer, 'Buyer is now the artist');
+
+        start_cheat_caller_address(registry.contract_address, buyer);
         registry.set_minter(beast_id, test_address('their_dungeon'));
         stop_cheat_caller_address(registry.contract_address);
+        assert(registry.get_minter(beast_id) == test_address('their_dungeon'), 'Buyer can admin');
     }
 
     #[test]
     #[should_panic(expected: 'Registry: not artist')]
-    fn test_old_artist_loses_rights_after_transfer() {
-        let (registry, _, _) = setup();
+    fn test_seller_loses_control_with_the_token() {
+        let (registry, nft, _) = setup();
         let artist = test_address('artist');
         let beast_id = register_default(registry, artist, test_address('dungeon'));
 
+        nft.transfer(registry.get_genesis_token_id(beast_id), test_address('buyer'));
+
         start_cheat_caller_address(registry.contract_address, artist);
-        registry.transfer_artist_role(beast_id, test_address('new_artist'));
         registry.set_minter(beast_id, test_address('their_dungeon'));
     }
 
     #[test]
-    #[should_panic(expected: 'Registry: zero artist')]
-    fn test_transfer_artist_to_zero_rejected() {
-        let (registry, _, _) = setup();
+    fn test_genesis_token_id_is_derivable_and_matches_the_mint() {
+        // The registry derives this ID rather than storing it, so it has to
+        // agree with the token the NFT actually minted.
+        let (registry, nft, _) = setup();
         let artist = test_address('artist');
         let beast_id = register_default(registry, artist, test_address('dungeon'));
 
-        start_cheat_caller_address(registry.contract_address, artist);
-        registry.transfer_artist_role(beast_id, 0.try_into().unwrap());
+        let token_id = registry.get_genesis_token_id(beast_id);
+        assert(nft.owner_of(token_id) == artist, 'Derived ID matches the mint');
+
+        let (tier, beast_type) = registry.get_species_traits(beast_id);
+        let expected = encode_token_id(
+            BeastManagerTrait::genesis_beast(beast_id, tier, beast_type),
+        );
+        assert(token_id == expected, 'ID is a pure derivation');
     }
 
     #[test]

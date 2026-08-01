@@ -122,7 +122,7 @@ pub struct BeastDefinition {
     pub beast_type: u8, // type code: 0 = Magic, 1 = Hunter, 2 = Brute
     pub tier: u8, // 1..=5
     pub minter: ContractAddress, // dungeon allowed to mint this species; 0 = paused
-    pub artist: ContractAddress, // registrant; per-species admin
+    pub artist: ContractAddress, // holder of the Genesis Beast; per-species admin
     pub art_provider: ContractAddress,
     pub stats_source: ContractAddress, // 0 = no kill stats
     pub factory_provider: bool,
@@ -175,12 +175,17 @@ pub trait IBeastRegistry<TContractState> {
     fn notify_art_updated(ref self: TContractState, beast_id: u64);
     fn lock_art(ref self: TContractState, beast_id: u64);
     fn set_stats_source(ref self: TContractState, beast_id: u64, source: ContractAddress);
-    fn transfer_artist_role(ref self: TContractState, beast_id: u64, new_artist: ContractAddress);
 
     // -------- reads --------
     fn get_definition(self: @TContractState, beast_id: u64) -> BeastDefinition;
     fn get_minter(self: @TContractState, beast_id: u64) -> ContractAddress;
+    /// Whoever currently holds the species' Genesis Beast. The artist role is
+    /// not stored: the creator token *is* the role, so transferring it on any
+    /// marketplace transfers control of the species.
     fn get_artist(self: @TContractState, beast_id: u64) -> ContractAddress;
+    /// Token ID of the species' Genesis Beast. Derived from the species and
+    /// its traits, so clients can compute it offline too.
+    fn get_genesis_token_id(self: @TContractState, beast_id: u64) -> u256;
     fn get_art_provider(self: @TContractState, beast_id: u64) -> ContractAddress;
     fn get_stats_source(self: @TContractState, beast_id: u64) -> ContractAddress;
     fn get_species_traits(self: @TContractState, beast_id: u64) -> (u8, u8); // (tier, type)

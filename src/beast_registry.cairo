@@ -13,16 +13,19 @@
 pub mod beast_registry {
     use core::num::traits::Zero;
     use openzeppelin_access::ownable::OwnableComponent;
+    use openzeppelin_interfaces::erc721::{IERC721Dispatcher, IERC721DispatcherTrait};
     use openzeppelin_interfaces::introspection::{ISRC5Dispatcher, ISRC5DispatcherTrait};
     use starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
     use starknet::{ClassHash, ContractAddress};
+    use super::super::beast_manager::BeastManagerTrait;
     use super::super::interfaces::{
         BeastDefinition, BeastType, IBEAST_STATS_ID, IBeastRegistry, IBeastsProvenanceDispatcher,
         IBeastsProvenanceDispatcherTrait, IStoredArtProviderDispatcher,
         IStoredArtProviderDispatcherTrait,
     };
+    use super::super::pack::encode_token_id;
     use super::{SpeciesMeta, assert_valid_name};
 
     /// The first community species ID; 1-75 are genesis species.
@@ -45,7 +48,6 @@ pub mod beast_registry {
         ownable: OwnableComponent::Storage,
         // Per-species definition. `meta` packs tier/type/flags into one slot.
         names: Map<u64, felt252>,
-        artists: Map<u64, ContractAddress>,
         minters: Map<u64, ContractAddress>,
         art_providers: Map<u64, ContractAddress>,
         factory_providers: Map<u64, ContractAddress>, // canonical factory deploy, 0 if none
@@ -109,14 +111,6 @@ pub mod beast_registry {
         pub stats_source: ContractAddress,
     }
 
-    #[derive(Drop, starknet::Event)]
-    pub struct ArtistTransferred {
-        #[key]
-        pub beast_id: u64,
-        pub previous_artist: ContractAddress,
-        pub new_artist: ContractAddress,
-    }
-
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
@@ -129,7 +123,6 @@ pub mod beast_registry {
         ArtProviderUpdated: ArtProviderUpdated,
         ArtLocked: ArtLocked,
         StatsSourceUpdated: StatsSourceUpdated,
-        ArtistTransferred: ArtistTransferred,
     }
 
     #[constructor]
@@ -304,17 +297,6 @@ pub mod beast_registry {
             self.emit(StatsSourceUpdated { beast_id, stats_source: source });
         }
 
-        fn transfer_artist_role(
-            ref self: ContractState, beast_id: u64, new_artist: ContractAddress,
-        ) {
-            InternalTrait::assert_only_artist(@self, beast_id);
-            assert(new_artist.is_non_zero(), 'Registry: zero artist');
-
-            let previous_artist = self.artists.entry(beast_id).read();
-            self.artists.entry(beast_id).write(new_artist);
-            self.emit(ArtistTransferred { beast_id, previous_artist, new_artist });
-        }
-
         fn get_definition(self: @ContractState, beast_id: u64) -> BeastDefinition {
             InternalTrait::assert_registered(self, beast_id);
             let meta = self.metas.entry(beast_id).read();
@@ -324,7 +306,7 @@ pub mod beast_registry {
                 beast_type: meta.beast_type,
                 tier: meta.tier,
                 minter: self.minters.entry(beast_id).read(),
-                artist: self.artists.entry(beast_id).read(),
+                artist: InternalTrait::artist_of(self, beast_id),
                 art_provider: self.art_providers.entry(beast_id).read(),
                 stats_source: self.stats_sources.entry(beast_id).read(),
                 factory_provider: meta.factory_provider,
@@ -338,7 +320,12 @@ pub mod beast_registry {
         }
 
         fn get_artist(self: @ContractState, beast_id: u64) -> ContractAddress {
-            self.artists.entry(beast_id).read()
+            InternalTrait::artist_of(self, beast_id)
+        }
+
+        fn get_genesis_token_id(self: @ContractState, beast_id: u64) -> u256 {
+            InternalTrait::assert_registered(self, beast_id);
+            InternalTrait::genesis_token_id(self, beast_id)
         }
 
         fn get_art_provider(self: @ContractState, beast_id: u64) -> ContractAddress {
@@ -428,7 +415,6 @@ pub mod beast_registry {
             let type_code: u8 = beast_type.into();
 
             self.names.entry(beast_id).write(name);
-            self.artists.entry(beast_id).write(artist);
             self.minters.entry(beast_id).write(minter);
             self.art_providers.entry(beast_id).write(art_provider);
             self
@@ -465,10 +451,31 @@ pub mod beast_registry {
             );
         }
 
+        /// Token ID of the species' Genesis Beast — the reserved `(id, 0, 0)`
+        /// affix slot minted to the registrant. Derived, never stored: the ID
+        /// is a pure function of the species and its traits, so storing it
+        /// would only create a second source of truth.
+        fn genesis_token_id(self: @ContractState, beast_id: u64) -> u256 {
+            let meta = self.metas.entry(beast_id).read();
+            encode_token_id(BeastManagerTrait::genesis_beast(beast_id, meta.tier, meta.beast_type))
+        }
+
+        /// The artist IS whoever holds the Genesis Beast.
+        ///
+        /// The role is not stored separately, so it cannot drift from the
+        /// token: selling the creator token hands over the species, and there
+        /// is no way to end up holding one without the other. The token is
+        /// minted during registration and Beasts cannot be burned, so this
+        /// never reverts for a registered species.
+        fn artist_of(self: @ContractState, beast_id: u64) -> ContractAddress {
+            IERC721Dispatcher { contract_address: self.nft.read() }
+                .owner_of(Self::genesis_token_id(self, beast_id))
+        }
+
         fn assert_only_artist(self: @ContractState, beast_id: u64) {
             Self::assert_registered(self, beast_id);
             let caller = starknet::get_caller_address();
-            assert(caller == self.artists.entry(beast_id).read(), 'Registry: not artist');
+            assert(caller == Self::artist_of(self, beast_id), 'Registry: not artist');
         }
 
         fn assert_refresh_cooldown(ref self: ContractState, beast_id: u64) {
