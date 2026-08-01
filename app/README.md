@@ -20,6 +20,26 @@ VITE_BEASTS_NFT=0x...
 VITE_BEASTS_REGISTRY=0x...
 ```
 
+## Pages
+
+Hash routing, so every page is a real shareable URL on a static host.
+
+| URL | |
+|---|---|
+| `#/` | Add a Beast |
+| `#/collection/0xabc…` | Every Beast an address holds. **Swap the address to view any wallet** — no connection needed |
+| `#/beasts` | The bestiary, one card per species. The original 75 are behind a toggle |
+| `#/beasts/76` | Every Beast of one species, strongest first |
+| `#/manage` | Species you control |
+| `#/manage/76` | Per-species controls |
+
+Grouping the bestiary by species is the default because the collection is
+unbounded and a single species can hold 1,243 Beasts — a flat list of every
+token would be unreadable long before it was useful.
+
+Species pages read the contract's own per-species rank list rather than
+scanning, so the ordering shown is the one the collection itself uses.
+
 ## What the app does
 
 **Register.** Four art variants are required — which one a Beast shows is
@@ -47,6 +67,18 @@ spells out before it asks for a signature.
 Art thumbnails come from each species' own provider, which for a custom
 provider is arbitrary contract code. One that reverts costs its own thumbnail,
 not the whole list.
+
+## Art loading
+
+Art is fetched per Beast, not per species. A community provider receives the
+whole decoded Beast, so it may legitimately vary art by affix, tier or level —
+caching by species would show the wrong picture for exactly the providers that
+make the interface worth having. Requests are batched and the cache is keyed by
+token ID, shared across pages.
+
+The contract validates art structurally — media type, base64, magic bytes — but
+cannot prove a payload decodes. A tile whose art will not render says so rather
+than showing a broken-image icon.
 
 ## The preview card is an approximation
 

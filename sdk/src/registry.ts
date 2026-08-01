@@ -1,13 +1,27 @@
 import type { AccountInterface, Call, ProviderInterface } from 'starknet';
 import { CallData, byteArray, shortString } from 'starknet';
+import { genesisSpecies, genesisSpeciesName } from './species.js';
 import {
   FIRST_COMMUNITY_ID,
   decodeTokenId,
   encodeTokenId,
   genesisBeast,
   isGenesis,
+  isGenesisSpecies,
 } from './tokenId.js';
 import { BeastType, type ArtSet, type Beast, type BeastDefinition } from './types.js';
+
+/** Name, traits and mint count for any species, genesis or community. */
+export interface SpeciesSummary {
+  beastId: bigint;
+  name: string;
+  tier: number;
+  beastType: BeastType;
+  /** Non-genesis mints. The Genesis Beast is not counted. */
+  minted: number;
+  /** False for the original 75, which have no registry entry. */
+  community: boolean;
+}
 
 /** A species the connected wallet controls, with its provenance token. */
 export interface OwnedSpecies {
@@ -56,6 +70,13 @@ export interface RegisterParams {
  * `execute` actually sends, and only if an account was supplied.
  */
 export class BeastsClient {
+  private legacyProviders?: {
+    pngRegular: string;
+    pngShiny: string;
+    gifRegular: string;
+    gifShiny: string;
+  };
+
   constructor(
     private readonly provider: ProviderInterface,
     private readonly addresses: BeastsAddresses = SEPOLIA_ADDRESSES,
@@ -161,22 +182,192 @@ export class BeastsClient {
 
   /** Art for a Beast, straight from its species' provider. */
   async getArt(beast: Beast): Promise<string> {
+    // Mirrors the contract's own routing in `resolve_art`: genesis species
+    // read from the four art data contracts wired at construction, community
+    // species from their registered provider.
+    if (isGenesisSpecies(beast.id)) {
+      const providers = await this.getLegacyArtProviders();
+      const address = beast.animated
+        ? beast.shiny
+          ? providers.gifShiny
+          : providers.gifRegular
+        : beast.shiny
+          ? providers.pngShiny
+          : providers.pngRegular;
+      // The legacy interface is keyed by the u8 species ID, not the beast.
+      return this.callForByteArray(address, 'get_data_uri', [beast.id.toString()]);
+    }
+
     const definition = await this.getDefinition(beast.id);
-    const raw = (await this.provider.callContract({
-      contractAddress: definition.artProvider,
-      entrypoint: 'get_data_uri',
-      calldata: CallData.compile([
-        beast.id.toString(),
-        beast.prefix,
-        beast.suffix,
-        beast.level,
-        beast.health,
-        beast.shiny,
-        beast.animated,
-        beast.tier,
-        beast.beastType,
-      ]),
+    return this.callForByteArray(definition.artProvider, 'get_data_uri', [
+      beast.id.toString(),
+      beast.prefix,
+      beast.suffix,
+      beast.level,
+      beast.health,
+      beast.shiny,
+      beast.animated,
+      beast.tier,
+      beast.beastType,
+    ]);
+  }
+
+  /**
+   * Addresses of the four genesis art data contracts, read once and cached.
+   * They are set at construction and immutable, so a single read is safe for
+   * the lifetime of the client.
+   */
+  async getLegacyArtProviders(): Promise<{
+    pngRegular: string;
+    pngShiny: string;
+    gifRegular: string;
+    gifShiny: string;
+  }> {
+    if (!this.legacyProviders) {
+      const [pngRegular, pngShiny, gifRegular, gifShiny] = await Promise.all([
+        this.callForAddress('get_regular_png_provider'),
+        this.callForAddress('get_shiny_png_provider'),
+        this.callForAddress('get_regular_gif_provider'),
+        this.callForAddress('get_shiny_gif_provider'),
+      ]);
+      this.legacyProviders = { pngRegular, pngShiny, gifRegular, gifShiny };
+    }
+    return this.legacyProviders;
+  }
+
+  /** Display name of any species: baked-in tables below 76, registry above. */
+  async getSpeciesName(beastId: bigint): Promise<string> {
+    if (isGenesisSpecies(beastId)) return genesisSpeciesName(beastId);
+    return (await this.getDefinition(beastId)).name;
+  }
+
+  /**
+   * Name, traits and mint count for any species, genesis or community.
+   *
+   * Genesis species resolve entirely offline except the count, which is the
+   * one thing only the chain knows.
+   */
+  async getSpeciesSummary(beastId: bigint): Promise<SpeciesSummary> {
+    const minted = await this.getSpeciesMintCount(beastId);
+
+    if (isGenesisSpecies(beastId)) {
+      const { name, tier, beastType } = genesisSpecies(beastId);
+      return { beastId, name, tier, beastType, minted, community: false };
+    }
+
+    const definition = await this.getDefinition(beastId);
+    return {
+      beastId,
+      name: definition.name,
+      tier: definition.tier,
+      beastType: definition.beastType,
+      minted,
+      community: true,
+    };
+  }
+
+  /** Non-genesis mints of a species. Excludes the rank-0 Genesis Beast. */
+  async getSpeciesMintCount(beastId: bigint): Promise<number> {
+    const [raw] = (await this.provider.callContract({
+      contractAddress: this.addresses.nft,
+      entrypoint: 'get_species_count',
+      calldata: CallData.compile([beastId.toString()]),
     })) as string[];
+    return Number(BigInt(raw));
+  }
+
+  /**
+   * Every token of a species, best rank first, with the Genesis Beast last.
+   *
+   * Uses the contract's own per-species rank list rather than scanning: the
+   * NFT already keeps `rank -> token_id` for each species to drive metadata
+   * refreshes.
+   */
+  async getSpeciesTokens(beastId: bigint, concurrency = 4): Promise<bigint[]> {
+    const count = await this.getSpeciesMintCount(beastId);
+    const tokens: bigint[] = [];
+
+    for (let start = 1; start <= count; start += concurrency) {
+      const batch = await Promise.all(
+        Array.from({ length: Math.min(concurrency, count - start + 1) }, (_, offset) =>
+          this.getTokenIdAtRank(beastId, start + offset),
+        ),
+      );
+      tokens.push(...batch.filter((id) => id !== 0n));
+    }
+
+    // The Genesis Beast holds rank 0 and lives outside that list.
+    const genesis = await this.getGenesisTokenIdIfMinted(beastId);
+    if (genesis !== null) tokens.push(genesis);
+
+    return tokens;
+  }
+
+  async getTokenIdAtRank(beastId: bigint, rank: number): Promise<bigint> {
+    const raw = (await withRateLimitRetry(
+      () =>
+        this.provider.callContract({
+          contractAddress: this.addresses.nft,
+          entrypoint: 'get_token_id_at_rank',
+          calldata: CallData.compile([beastId.toString(), rank]),
+        }) as Promise<string[]>,
+    ));
+    return u256FromParts(raw[0], raw[1]);
+  }
+
+  /** Every token an address holds, decoded. */
+  async getTokensOfOwner(owner: string, concurrency = 4): Promise<Beast[]> {
+    const balance = Number(await this.balanceOf(owner));
+    const beasts: Beast[] = [];
+
+    for (let start = 0; start < balance; start += concurrency) {
+      const batch = await Promise.all(
+        Array.from({ length: Math.min(concurrency, balance - start) }, (_, offset) =>
+          this.tokenOfOwnerByIndex(owner, BigInt(start + offset)),
+        ),
+      );
+      beasts.push(...batch.map((id) => decodeTokenId(id)));
+    }
+
+    return beasts;
+  }
+
+  private async getGenesisTokenIdIfMinted(beastId: bigint): Promise<bigint | null> {
+    const tokenId = isGenesisSpecies(beastId)
+      ? encodeTokenId(
+          genesisBeast(beastId, genesisSpecies(beastId).tier, genesisSpecies(beastId).beastType),
+        )
+      : await this.getGenesisTokenId(beastId);
+    try {
+      await this.ownerOf(tokenId);
+      return tokenId;
+    } catch {
+      return null;
+    }
+  }
+
+  private async callForAddress(entrypoint: string): Promise<string> {
+    const [raw] = (await this.provider.callContract({
+      contractAddress: this.addresses.nft,
+      entrypoint,
+      calldata: [],
+    })) as string[];
+    return toHex(raw);
+  }
+
+  private async callForByteArray(
+    contractAddress: string,
+    entrypoint: string,
+    calldata: unknown[],
+  ): Promise<string> {
+    const raw = (await withRateLimitRetry(
+      () =>
+        this.provider.callContract({
+          contractAddress,
+          entrypoint,
+          calldata: CallData.compile(calldata as never),
+        }) as Promise<string[]>,
+    ));
     return byteArray.stringFromByteArray(decodeByteArray(raw));
   }
 

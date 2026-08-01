@@ -40,6 +40,7 @@ export {
   type OwnedSpecies,
   type RegisterParams,
   type RegisterWithArtParams,
+  type SpeciesSummary,
 } from './registry.js';
 
 export { GENESIS_SPECIES_NAMES, PREFIX_NAMES, SUFFIX_NAMES } from './tables.js';
