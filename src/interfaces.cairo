@@ -1,6 +1,23 @@
 use starknet::ContractAddress;
 use super::pack::PackableBeast;
 
+/// Beasts-specific owner-only enumeration.
+///
+/// Deliberately not the standard `IERC721Enumerable` ID: this implements only
+/// the owner half of that interface, and claiming the full one would tell
+/// callers `token_by_index` exists when it does not.
+/// EFS: token_of_owner_by_index(ContractAddress,(u128,u128))->(u128,u128)
+pub const IBEASTS_OWNER_ENUMERABLE_ID: felt252 =
+    0x312c74a3a4f7aaf9aa3e80ddea171f958139ef0c3dbea524e0763682b7d57dd;
+
+#[starknet::interface]
+pub trait IBeastsOwnerEnumerable<TContractState> {
+    /// Token held by `owner` at `index`, where index runs 0..balance_of(owner).
+    /// Order is not stable across transfers: removal swaps the last entry into
+    /// the vacated slot.
+    fn token_of_owner_by_index(self: @TContractState, owner: ContractAddress, index: u256) -> u256;
+}
+
 /// Interface for the Beasts NFT contract
 #[starknet::interface]
 pub trait IBeasts<TContractState> {
