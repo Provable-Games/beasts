@@ -21,7 +21,8 @@ pub mod metadata_generator;
 mod mint_tests;
 pub mod minting_coordinator;
 pub mod pack;
-pub mod registry_integration_tests;
+#[cfg(test)]
+mod registry_integration_tests;
 pub mod stats_cache;
 pub mod stored_art_provider;
 #[cfg(test)]
