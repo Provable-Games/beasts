@@ -82,16 +82,21 @@ live('Sepolia deployment', () => {
 
   const DEPLOYER = '0x736faa0dca6a4569bf22471b574ddf42107f5af81d67e2cb9e1aa9bba7de76b';
 
-  it('finds the species an artist registered', async () => {
+  it('finds the species an artist controls', async () => {
+    // Walks the wallet's tokens through enumeration and keeps the Genesis
+    // Beasts. Non-empty is the assertion, not a detail: an enumeration
+    // entrypoint the contract lacks would look identical to "owns nothing".
     const owned = await client.getSpeciesByArtist(DEPLOYER);
-
-    // Non-empty is the point of the assertion, not a detail. A scan starting
-    // before `fromBlock` comes back EMPTY rather than erroring on some public
-    // nodes, so "artist owns nothing" is exactly what a broken range looks
-    // like — this is the guard against that failure being silent.
     expect(owned.length).toBeGreaterThan(0);
     expect(owned).toContain(76n);
   }, 60_000);
+
+  it('agrees with the registry on who the artist is', async () => {
+    const definition = await client.getDefinition(76n);
+    const genesis = await client.getGenesisTokenId(76n);
+    // The role is ownership of this token — the two must be the same address.
+    expect(BigInt(await client.ownerOf(genesis))).toBe(BigInt(definition.artist));
+  }, 30_000);
 
   it('returns nothing for an address that never registered', async () => {
     expect(await client.getSpeciesByArtist('0xdead')).toEqual([]);

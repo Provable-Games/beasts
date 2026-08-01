@@ -34,11 +34,15 @@ with its live art, and opens the per-species controls: replace art, rotate or
 pause the minter, lock either one permanently, opt into kill stats, transfer
 the artist role, or graduate to a custom art provider.
 
-The list keys off the **artist role, not the Genesis Beast**. They start
-together but diverge the moment either is transferred, and the role is what the
-registry's permissioned entrypoints check — listing by token would offer
-controls that revert. Everything is artist-only on-chain; the UI hides what the
-caller cannot do and the contract is the real gate.
+The list comes from the wallet's own tokens: the collection exposes
+`token_of_owner_by_index`, and a Genesis Beast is any token with no affixes, so
+the species a wallet controls fall straight out of a local decode. That works
+because the **artist role is ownership of the Genesis Beast** — there is no
+separate role to drift from the token. Everything is artist-only on-chain; the
+UI hides what the caller cannot do and the contract is the real gate.
+
+Transferring a species means sending its Genesis Beast, which the dashboard
+spells out before it asks for a signature.
 
 Art thumbnails come from each species' own provider, which for a custom
 provider is arbitrary contract code. One that reverts costs its own thumbnail,

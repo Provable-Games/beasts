@@ -3,10 +3,12 @@ import {
   type BeastDefinition,
   type BeastsClient,
 } from '@provable-games/beasts-sdk';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ART_SLOTS, loadArtFile, type ArtSlot, type LoadedArt } from '../lib/art';
 
 interface Props {
+  /** Connected wallet, needed as the `from` of a Genesis Beast transfer. */
+  address?: string;
   beastId: bigint;
   definition: BeastDefinition;
   client: BeastsClient;
@@ -20,7 +22,7 @@ const ZERO = '0x0';
  * Per-species controls. Every action here is artist-only on-chain; the UI
  * simply hides what the caller cannot do, and the contract is the real gate.
  */
-export function Dashboard({ beastId, definition, client, isArtist, onChanged }: Props) {
+export function Dashboard({ address, beastId, definition, client, isArtist, onChanged }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [minter, setMinter] = useState(definition.minter);
@@ -28,6 +30,20 @@ export function Dashboard({ beastId, definition, client, isArtist, onChanged }: 
   const [newArtist, setNewArtist] = useState('');
   const [customProvider, setCustomProvider] = useState('');
   const [art, setArt] = useState<Partial<Record<ArtSlot, LoadedArt>>>({});
+  const [genesisTokenId, setGenesisTokenId] = useState<bigint | null>(null);
+
+  // The creator token's ID is derivable, but read it from the registry so the
+  // address shown is the one the contract will actually check.
+  useEffect(() => {
+    let cancelled = false;
+    void client
+      .getGenesisTokenId(beastId)
+      .then((id) => !cancelled && setGenesisTokenId(id))
+      .catch(() => !cancelled && setGenesisTokenId(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [client, beastId]);
 
   async function run(label: string, build: () => Parameters<BeastsClient['execute']>[0]) {
     setBusy(label);
@@ -265,25 +281,37 @@ export function Dashboard({ beastId, definition, client, isArtist, onChanged }: 
       </section>
 
       <section className="panel">
-        <h3>Transfer artist role</h3>
+        <h3>Transfer this species</h3>
         <p className="muted">
-          Hands every control on this page to another address. This does not move
-          your Genesis Beast — that is an ordinary NFT you keep or sell
-          separately.
+          Control of {definition.name} <strong>is</strong> ownership of its
+          Genesis Beast — there is no separate role. Sending the token hands the
+          new holder everything on this page, and you lose it. Selling the
+          Genesis Beast on any marketplace does the same thing.
+        </p>
+        <p className="muted">
+          Genesis Beast <code>#{beastId.toString()}</code> · token{' '}
+          <code>{genesisTokenId === null ? '…' : shortHex(genesisTokenId)}</code>
         </p>
         <div className="row">
           <input
             value={newArtist}
             placeholder="0x..."
-            disabled={!isArtist || !!busy}
+            disabled={!isArtist || !!busy || genesisTokenId === null}
             onChange={(e) => setNewArtist(e.target.value)}
           />
           <button
             className="danger"
-            disabled={!isArtist || !!busy || !newArtist}
+            disabled={!isArtist || !!busy || !newArtist || genesisTokenId === null}
             onClick={() => {
-              if (confirm(`Hand control of ${definition.name} to ${newArtist}?`)) {
-                run('artist', () => client.transferArtistRoleCall(beastId, newArtist));
+              if (
+                confirm(
+                  `Send the Genesis Beast for ${definition.name} to ${newArtist}?\n\n` +
+                    'This transfers the token AND every control on this page. It cannot be undone from here — only the new holder can send it back.',
+                )
+              ) {
+                run('artist', () =>
+                  client.transferGenesisBeastCall(address!, newArtist, genesisTokenId!),
+                );
               }
             }}
           >
@@ -293,6 +321,11 @@ export function Dashboard({ beastId, definition, client, isArtist, onChanged }: 
       </section>
     </div>
   );
+}
+
+function shortHex(value: bigint): string {
+  const hex = value.toString(16);
+  return hex.length <= 12 ? `0x${hex}` : `0x${hex.slice(0, 6)}…${hex.slice(-4)}`;
 }
 
 function short(address: string): string {

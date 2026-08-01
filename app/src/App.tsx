@@ -137,6 +137,7 @@ export function App() {
                 ← Your Beasts
               </button>
               <Dashboard
+                address={address}
                 beastId={view.id}
                 definition={definition}
                 client={client}

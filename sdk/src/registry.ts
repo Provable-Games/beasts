@@ -1,6 +1,12 @@
 import type { AccountInterface, Call, ProviderInterface } from 'starknet';
-import { CallData, byteArray, hash, shortString } from 'starknet';
-import { decodeTokenId, encodeTokenId, genesisBeast } from './tokenId.js';
+import { CallData, byteArray, shortString } from 'starknet';
+import {
+  FIRST_COMMUNITY_ID,
+  decodeTokenId,
+  encodeTokenId,
+  genesisBeast,
+  isGenesis,
+} from './tokenId.js';
 import { BeastType, type ArtSet, type Beast, type BeastDefinition } from './types.js';
 
 /** A species the connected wallet controls, with its provenance token. */
@@ -15,30 +21,12 @@ export interface OwnedSpecies {
 export interface BeastsAddresses {
   nft: string;
   registry: string;
-  /**
-   * Block to start event scans from.
-   *
-   * Not just an optimisation. Public RPC nodes routinely cap how far back
-   * `starknet_getEvents` will look, and at least one returns an **empty
-   * result rather than an error** for a range it will not serve — so a scan
-   * from genesis reports "this wallet owns nothing" instead of failing.
-   * Anchoring to deployment keeps every query inside a range nodes will
-   * actually answer.
-   */
-  fromBlock: number;
 }
 
-/**
- * Deployed stacks, from `docs/sepolia-v3-deployment.md`.
- *
- * `fromBlock` is the block of `set_nft_address`. That is a provably safe
- * floor rather than an estimate: the registry rejects every registration
- * until the NFT is wired, so no `BeastRegistered` event can predate it.
- */
+/** Deployed stacks, from `docs/sepolia-v3-deployment.md`. */
 export const SEPOLIA_ADDRESSES: BeastsAddresses = {
   nft: '0x01dac77837c6751777d917051a6e405967c5c75f46df5ab7c635e52819634bfd',
   registry: '0x06d46c98087a1246182c6cd8ef144ee0a67da6e6cc9e44e39aef08cf92d30045',
-  fromBlock: 12_757_974,
 };
 
 export interface RegisterWithArtParams {
@@ -195,43 +183,40 @@ export class BeastsClient {
   // ------------------------------------------------- artist enumeration
 
   /**
-   * Species IDs an address is currently the artist for.
+   * Species IDs an address controls.
    *
-   * Derived from events rather than by scanning IDs: the registry has no
-   * artist index, and `species_count` grows without bound, so a scan would
-   * cost one call per species forever. Two event streams are enough —
-   * `BeastRegistered` establishes the original artist and
-   * `ArtistTransferred` moves it — and applying them in block order
-   * reproduces the current holder exactly.
+   * The artist role is not stored anywhere — it *is* ownership of the
+   * species' Genesis Beast. So this walks the wallet's tokens through
+   * `token_of_owner_by_index`, decodes each one locally, and keeps the ones
+   * with no affixes. A token ID carries its own species, so no registry read
+   * and no event scan is involved.
    */
   async getSpeciesByArtist(artist: string): Promise<bigint[]> {
-    const target = BigInt(artist);
-    const current = new Map<string, bigint>();
+    const balance = await this.balanceOf(artist);
+    const ids: bigint[] = [];
 
-    // Registration: keys [selector, beast_id], data [name, artist, ...].
-    for (const event of await this.collectEvents('BeastRegistered')) {
-      current.set(BigInt(event.keys[1]).toString(), BigInt(event.data[1]));
+    for (let index = 0n; index < balance; index++) {
+      const tokenId = await this.tokenOfOwnerByIndex(artist, index);
+      const beast = decodeTokenId(tokenId);
+      // The (id, 0, 0) slot is the species' Genesis Beast, and holding it is
+      // what the registry checks. Every other token is an ordinary Beast.
+      if (isGenesis(beast)) ids.push(beast.id);
     }
 
-    // Transfer: keys [selector, beast_id], data [previous, new]. Events
-    // arrive in block order, so later transfers overwrite earlier ones.
-    for (const event of await this.collectEvents('ArtistTransferred')) {
-      current.set(BigInt(event.keys[1]).toString(), BigInt(event.data[1]));
-    }
-
-    return [...current.entries()]
-      .filter(([, holder]) => holder === target)
-      .map(([beastId]) => BigInt(beastId))
-      .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+    return ids.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   }
 
   /**
-   * Full detail for everything an address controls, ready to render. Each
-   * definition is re-read from storage rather than taken from the
-   * registration event, so art swaps, minter changes and locks are current.
+   * Full detail for everything an address controls, ready to render.
+   *
+   * Genesis species (1-75) are skipped: their Genesis Beasts belong to the
+   * collection owner and have no registry entry, so `get_definition` would
+   * revert on them.
    */
   async getOwnedSpecies(artist: string): Promise<OwnedSpecies[]> {
-    const ids = await this.getSpeciesByArtist(artist);
+    const ids = (await this.getSpeciesByArtist(artist)).filter(
+      (id) => id >= FIRST_COMMUNITY_ID,
+    );
     return Promise.all(
       ids.map(async (beastId) => {
         const definition = await this.getDefinition(beastId);
@@ -246,28 +231,39 @@ export class BeastsClient {
     );
   }
 
-  /** Pages through every event of one kind emitted by the registry. */
-  private async collectEvents(
-    eventName: string,
-  ): Promise<Array<{ keys: string[]; data: string[] }>> {
-    const selector = hash.getSelectorFromName(eventName);
-    const events: Array<{ keys: string[]; data: string[] }> = [];
-    let continuationToken: string | undefined;
+  /**
+   * Token ID of the species' Genesis Beast, read from the registry.
+   *
+   * Derivable offline via `encodeTokenId(genesisBeast(...))`, but reading it
+   * back is what proves the client and the contract agree on which token
+   * carries the artist role.
+   */
+  async getGenesisTokenId(beastId: bigint): Promise<bigint> {
+    const raw = (await this.provider.callContract({
+      contractAddress: this.addresses.registry,
+      entrypoint: 'get_genesis_token_id',
+      calldata: CallData.compile([beastId.toString()]),
+    })) as string[];
+    return u256FromParts(raw[0], raw[1]);
+  }
 
-    do {
-      const page = await this.provider.getEvents({
-        address: this.addresses.registry,
-        from_block: { block_number: this.addresses.fromBlock },
-        to_block: 'latest',
-        keys: [[selector]],
-        chunk_size: 100,
-        continuation_token: continuationToken,
-      });
-      events.push(...page.events.map((e) => ({ keys: e.keys, data: e.data })));
-      continuationToken = page.continuation_token;
-    } while (continuationToken);
+  async balanceOf(owner: string): Promise<bigint> {
+    const raw = (await this.provider.callContract({
+      contractAddress: this.addresses.nft,
+      entrypoint: 'balance_of',
+      calldata: CallData.compile([owner]),
+    })) as string[];
+    return u256FromParts(raw[0], raw[1]);
+  }
 
-    return events;
+  /** Owner enumeration. Order is not stable across transfers. */
+  async tokenOfOwnerByIndex(owner: string, index: bigint): Promise<bigint> {
+    const raw = (await this.provider.callContract({
+      contractAddress: this.addresses.nft,
+      entrypoint: 'token_of_owner_by_index',
+      calldata: CallData.compile([owner, ...u256ToParts(index)]),
+    })) as string[];
+    return u256FromParts(raw[0], raw[1]);
   }
 
   // ------------------------------------------------------ call builders
@@ -357,8 +353,19 @@ export class BeastsClient {
     return this.registryCall('set_stats_source', [beastId.toString(), source]);
   }
 
-  transferArtistRoleCall(beastId: bigint, newArtist: string): Call {
-    return this.registryCall('transfer_artist_role', [beastId.toString(), newArtist]);
+  /**
+   * Transfers a species by transferring its Genesis Beast.
+   *
+   * There is no `transfer_artist_role`: the creator token *is* the role, so
+   * this is an ordinary ERC721 transfer and a marketplace sale does exactly
+   * the same thing.
+   */
+  transferGenesisBeastCall(from: string, to: string, genesisTokenId: bigint): Call {
+    return {
+      contractAddress: this.addresses.nft,
+      entrypoint: 'transfer_from',
+      calldata: CallData.compile([from, to, ...u256ToParts(genesisTokenId)]),
+    };
   }
 
   /** Permissionless: pulls a community token's stats into the render cache. */
