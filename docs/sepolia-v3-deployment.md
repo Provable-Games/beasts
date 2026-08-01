@@ -64,7 +64,7 @@ until the `burn_and_mint` migration completes, or a dungeon could claim an
 | Genesis token ownership | `owner_of(0x7006400010000000000000000001)` → deployer |
 | Genesis render (legacy art path) | `token_uri` → `"Warlock"`, new bestiary description |
 | Permissionless registration | `register_beast_with_art('Gloomfang', Hunter, 3, ...)` → species **76** |
-| Factory art provider auto-deploy | `0x4b11caad7b2b29949f957c0854d2fa3a37fc40519bfee2eb844d8f319ac19b9`, `factory_provider: true` |
+| Factory art provider auto-deploy | `0x0bdc56ee6a9fef516d311188bc563c43f3d49e2af640b9d4c5b11fb134ad95d`, `factory_provider: true` |
 | Provenance mint | `total_supply()` 75 → 76 |
 | Per-species mint auth | `mint(..., 76, 1, 1, 10, 100, 0, 1)` from the registered minter succeeded |
 | Community render | `"Agony Bane" Gloomfang`, Rank 1, 20,970-byte SVG |
