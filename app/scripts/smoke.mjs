@@ -1,4 +1,17 @@
 import { chromium } from 'playwright';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+// 32x32 PNG: magenta border on all four sides, green corner-to-corner
+// diagonal. Real Beast art is this size, and the border is the tell — if the
+// preview crops, an edge goes missing.
+const TEST_PNG =
+  'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAiklEQVR4nLXNSw6AIAyEYQ7B2vvfEk1sULFAHzOZf9FVv9JKoyar9WAk76+LZDwAyfgADGME4IYCYA0dABpTAGWsAIixAfLGHkgaJiBjWIGw4QBihg8IGG7Aa0QAlxEE7EYcMBopwGJkga0BANYGBlgYMGBmIAHVAAN/Aw8MBgV4GyygG0TgNmTUTqHjAu38soSbAAAAAElFTkSuQmCC';
+
+const fixtureDir = mkdtempSync(join(tmpdir(), 'beasts-smoke-'));
+const pngPath = join(fixtureDir, 'test.png');
+writeFileSync(pngPath, Buffer.from(TEST_PNG, 'base64'));
 
 const browser = await chromium.launch({
   executablePath:
@@ -33,6 +46,17 @@ await page.selectOption('select >> nth=1', '1');
 await page.waitForTimeout(200);
 const power = await page.locator('.stat', { hasText: 'Power' }).textContent();
 console.log('tier 1 power (level 10 x 5):', JSON.stringify(power));
+
+// Preview sizing. A percentage height against an `aspect-ratio` parent
+// resolves to `auto`, so a square Beast used to size itself from its own 1:1
+// ratio, overflow the wider frame, and get cropped by `overflow: hidden`.
+await page.locator('.art-slot__drop input[type=file]').first().setInputFiles(pngPath);
+await page.waitForTimeout(1200);
+const artBox = await page.locator('.card__art').boundingBox();
+const imgBox = await page.locator('.card__art img').boundingBox();
+console.log('preview art fits its frame:',
+  imgBox.height <= artBox.height + 1 && imgBox.width <= artBox.width + 1,
+  `(img ${Math.round(imgBox.width)}x${Math.round(imgBox.height)} in frame ${Math.round(artBox.width)}x${Math.round(artBox.height)})`);
 
 await page.screenshot({ path: 'smoke-register.png', fullPage: true });
 

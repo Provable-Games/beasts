@@ -387,6 +387,7 @@ select:focus {
 }
 
 .card__art {
+  position: relative;
   aspect-ratio: 220 / 144;
   background: #000;
   border-radius: 8px;
@@ -395,7 +396,13 @@ select:focus {
   overflow: hidden;
 }
 
+/* Absolute inset is what gives the image a definite box to fit inside.
+   A percentage height against an `aspect-ratio` parent resolves to `auto`,
+   so a square Beast would size itself from its own 1:1 ratio, overflow the
+   wider frame, and get cropped top and bottom by `overflow: hidden`. */
 .card__art img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
