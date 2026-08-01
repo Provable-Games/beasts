@@ -81,7 +81,9 @@ pub mod mock_stats_feed {
 mod tests {
     use beasts_nft::interfaces::{
         BeastType, IBeastRegistryDispatcher, IBeastRegistryDispatcherTrait, IBeastsDispatcher,
-        IBeastsDispatcherTrait, IBeastsProvenanceDispatcher, IBeastsProvenanceDispatcherTrait,
+        IBeastsDispatcherTrait, IBeastsOwnerEnumerableDispatcher,
+        IBeastsOwnerEnumerableDispatcherTrait, IBeastsProvenanceDispatcher,
+        IBeastsProvenanceDispatcherTrait,
     };
     use openzeppelin_interfaces::erc721::{
         IERC721Dispatcher, IERC721DispatcherTrait, IERC721MetadataDispatcher,
@@ -314,6 +316,81 @@ mod tests {
         start_cheat_caller_address(stack.nft.contract_address, test_address('intruder'));
         provenance.emit_species_metadata_update(76);
         stop_cheat_caller_address(stack.nft.contract_address);
+    }
+
+    // ---------------- the Genesis Beast is the artist role ----------------
+
+    #[test]
+    fn test_selling_the_genesis_beast_hands_over_the_species() {
+        // Against the real NFT, not a mock: the registry asks it who holds
+        // the creator token, so an ordinary ERC721 transfer — a marketplace
+        // sale — has to move control of the species with it.
+        let stack = setup();
+        let artist = test_address('artist');
+        let buyer = test_address('buyer');
+        let beast_id = register_with_factory_art(@stack, artist, test_address('dungeon'));
+
+        let genesis = stack.registry.get_genesis_token_id(beast_id);
+        assert(stack.registry.get_artist(beast_id) == artist, 'Registrant is the artist');
+
+        let erc721 = IERC721Dispatcher { contract_address: stack.nft.contract_address };
+        start_cheat_caller_address(erc721.contract_address, artist);
+        erc721.transfer_from(artist, buyer, genesis);
+        stop_cheat_caller_address(erc721.contract_address);
+
+        assert(stack.registry.get_artist(beast_id) == buyer, 'Buyer is now the artist');
+
+        start_cheat_caller_address(stack.registry.contract_address, buyer);
+        stack.registry.set_minter(beast_id, test_address('their_dungeon'));
+        stop_cheat_caller_address(stack.registry.contract_address);
+        assert(
+            stack.registry.get_minter(beast_id) == test_address('their_dungeon'),
+            'Buyer can administer',
+        );
+    }
+
+    #[test]
+    #[should_panic(expected: ('Registry: not artist', 'ENTRYPOINT_FAILED'))]
+    fn test_seller_loses_control_with_the_token() {
+        let stack = setup();
+        let artist = test_address('artist');
+        let beast_id = register_with_factory_art(@stack, artist, test_address('dungeon'));
+
+        let erc721 = IERC721Dispatcher { contract_address: stack.nft.contract_address };
+        start_cheat_caller_address(erc721.contract_address, artist);
+        erc721
+            .transfer_from(
+                artist, test_address('buyer'), stack.registry.get_genesis_token_id(beast_id),
+            );
+        stop_cheat_caller_address(erc721.contract_address);
+
+        start_cheat_caller_address(stack.registry.contract_address, artist);
+        stack.registry.set_minter(beast_id, test_address('their_dungeon'));
+    }
+
+    #[test]
+    fn test_enumeration_finds_the_species_a_wallet_controls() {
+        // The whole point of pairing enumeration with the derived role: a
+        // client can list a wallet's tokens, decode each one locally, and
+        // know which species it administers — no registry reads, no events.
+        let stack = setup();
+        let artist = test_address('artist');
+        let first = register_with_factory_art(@stack, artist, test_address('dungeon'));
+
+        let enumerable = IBeastsOwnerEnumerableDispatcher {
+            contract_address: stack.nft.contract_address,
+        };
+        let erc721 = IERC721Dispatcher { contract_address: stack.nft.contract_address };
+
+        assert(erc721.balance_of(artist) == 1, 'Artist holds one token');
+        let token = enumerable.token_of_owner_by_index(artist, 0);
+        assert(token == stack.registry.get_genesis_token_id(first), 'Enumerates the genesis');
+
+        // Decoding it locally recovers the species with no further reads.
+        let beast = stack.nft.get_beast(token);
+        assert(beast.id == first, 'Species recovered from token');
+        assert(beast.prefix == 0 && beast.suffix == 0, 'It is the Genesis Beast');
+        assert(stack.registry.get_artist(beast.id) == artist, 'And the wallet controls it');
     }
 
     // ---------------- per-species mint authorization ----------------
