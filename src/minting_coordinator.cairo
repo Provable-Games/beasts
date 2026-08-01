@@ -27,10 +27,12 @@ pub struct MintingCoordinator {}
 
 #[generate_trait]
 pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
-    /// Validates and prepares data for minting
-    fn prepare_mint(request: MintRequest) -> BeastResult<MintData> {
-        // Create and validate the beast
-        match BeastManagerTrait::create_beast(
+    /// Validates and prepares data for minting, given species traits the
+    /// contract has already resolved (genesis tables or registry).
+    fn prepare_mint_with_traits(
+        request: MintRequest, tier: u8, beast_type: u8,
+    ) -> BeastResult<MintData> {
+        match BeastManagerTrait::create_beast_with_traits(
             request.beast_id,
             request.prefix,
             request.suffix,
@@ -38,6 +40,8 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
             request.health,
             request.shiny,
             request.animated,
+            tier,
+            beast_type,
         ) {
             BeastResult::Ok(beast) => {
                 // Generate hash for uniqueness checking
@@ -54,10 +58,22 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
         }
     }
 
-    /// Prepares data for genesis mint
-    fn prepare_genesis_mint(beast_id: u64) -> BeastResult<MintData> {
-        // Create genesis beast
-        match BeastManagerTrait::create_genesis_beast(beast_id) {
+    /// Genesis-species convenience wrapper: resolves traits from the tables.
+    fn prepare_mint(request: MintRequest) -> BeastResult<MintData> {
+        if !BeastManagerTrait::is_genesis_species(request.beast_id) {
+            return BeastResult::Err('Invalid beast ID');
+        }
+
+        let (tier, beast_type) = BeastManagerTrait::resolve_species_traits(request.beast_id);
+        Self::prepare_mint_with_traits(request, tier, beast_type)
+    }
+
+    /// Prepares the Genesis Beast mint for a species, given resolved traits.
+    /// Used for the registry's provenance mint of community species.
+    fn prepare_genesis_mint_with_traits(
+        beast_id: u64, tier: u8, beast_type: u8,
+    ) -> BeastResult<MintData> {
+        match BeastManagerTrait::create_genesis_beast_with_traits(beast_id, tier, beast_type) {
             BeastResult::Ok(beast) => {
                 // Genesis beasts have no prefix/suffix, so hash is simpler
                 let hash = BeastManagerTrait::get_beast_hash(beast_id, 0, 0);
@@ -67,6 +83,16 @@ pub impl MintingCoordinatorImpl of MintingCoordinatorTrait {
             },
             BeastResult::Err(e) => BeastResult::Err(e),
         }
+    }
+
+    /// Genesis-species convenience wrapper for the constructor batch.
+    fn prepare_genesis_mint(beast_id: u64) -> BeastResult<MintData> {
+        if !BeastManagerTrait::is_genesis_species(beast_id) {
+            return BeastResult::Err('Invalid beast ID');
+        }
+
+        let (tier, beast_type) = BeastManagerTrait::resolve_species_traits(beast_id);
+        Self::prepare_genesis_mint_with_traits(beast_id, tier, beast_type)
     }
 
     /// Prepares batch genesis mint data

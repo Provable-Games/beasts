@@ -191,8 +191,12 @@ mod mint_tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Invalid beast ID',))]
-    fn test_mint_invalid_beast_id_too_high() {
+    #[should_panic(expected: ('Registry not set',))]
+    fn test_mint_community_species_without_registry() {
+        // IDs above 75 are community species: they resolve their minter and
+        // traits through the registry, so without one wired there is nothing
+        // to authorize against and the mint must fail closed. The dungeon
+        // address governs genesis species only and grants nothing here.
         let (beasts, _, _, _, owner) = deploy_contract();
         let minter = test_address('minter');
 
@@ -201,7 +205,7 @@ mod mint_tests {
         stop_cheat_caller_address(beasts.contract_address);
 
         start_cheat_caller_address(beasts.contract_address, minter);
-        beasts.mint(minter, 76, 0, 0, 1, 100, 0, 0);
+        beasts.mint(minter, 76, 1, 1, 1, 100, 0, 0);
         stop_cheat_caller_address(beasts.contract_address);
     }
 

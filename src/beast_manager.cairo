@@ -1,6 +1,10 @@
 use super::beast_definitions;
 use super::pack::{PackableBeast, get_hash};
 
+/// Highest species ID backed by the baked-in `beast_definitions` tables.
+/// Community species registered through `beast_registry` start at 76.
+pub const GENESIS_SPECIES_MAX: u64 = 75;
+
 /// Result type for beast operations
 #[derive(Drop, Copy, Serde, PartialEq)]
 pub enum BeastResult<T> {
@@ -14,15 +18,36 @@ pub struct BeastManager {}
 
 #[generate_trait]
 pub impl BeastManagerImpl of BeastManagerTrait {
-    /// Validates a beast ID is within valid range.
-    /// Genesis species tables cover 1-75; registered community species
-    /// extend this range once the registry lands.
+    /// Validates a beast ID is structurally usable. Species *existence* is
+    /// resolved by the contract, not here: `beast_definitions` answers for
+    /// genesis species 1-75, the registry for community species 76+. Zero is
+    /// never a species, and `decode_token_id` rejects it too.
     fn validate_beast_id(beast_id: u64) -> BeastResult<()> {
-        if beast_id >= 1 && beast_id <= 75 {
+        if beast_id >= 1 {
             BeastResult::Ok(())
         } else {
             BeastResult::Err('Invalid beast ID')
         }
+    }
+
+    /// True for the 75 species baked into `beast_definitions`. Community
+    /// species live above this line and resolve through the registry.
+    fn is_genesis_species(beast_id: u64) -> bool {
+        beast_id >= 1 && beast_id <= GENESIS_SPECIES_MAX
+    }
+
+    /// Validates contract-resolved species traits. These are never
+    /// caller-supplied, but a registry read is still external input to the
+    /// NFT, and `encode_token_id` would silently truncate out-of-range
+    /// values into a different beast.
+    fn validate_species_traits(tier: u8, beast_type: u8) -> BeastResult<()> {
+        if tier == 0 || tier > 5 {
+            return BeastResult::Err('Invalid tier');
+        }
+        if beast_type > 2 {
+            return BeastResult::Err('Invalid beast type');
+        }
+        BeastResult::Ok(())
     }
 
     /// Validates beast attributes are within valid ranges.
@@ -54,42 +79,74 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         BeastResult::Ok(())
     }
 
-    /// Creates a new beast with validation.
-    /// Tier and type are resolved by the contract, never caller-supplied,
-    /// so the values encoded into the token ID are trustworthy.
-    fn create_beast(
-        beast_id: u64, prefix: u8, suffix: u8, level: u16, health: u16, shiny: u8, animated: u8,
+    /// Creates a new beast from caller-supplied attributes plus species
+    /// traits the contract has already resolved (tables for genesis species,
+    /// registry for community species). Tier and type are never
+    /// caller-supplied, so the values encoded into the token ID are
+    /// trustworthy.
+    fn create_beast_with_traits(
+        beast_id: u64,
+        prefix: u8,
+        suffix: u8,
+        level: u16,
+        health: u16,
+        shiny: u8,
+        animated: u8,
+        tier: u8,
+        beast_type: u8,
     ) -> BeastResult<PackableBeast> {
-        // Validate beast ID
         match Self::validate_beast_id(beast_id) {
             BeastResult::Ok(_) => {},
             BeastResult::Err(e) => { return BeastResult::Err(e); },
         }
 
-        // Validate attributes
         match Self::validate_beast_attributes(prefix, suffix, shiny, animated) {
             BeastResult::Ok(_) => {},
             BeastResult::Err(e) => { return BeastResult::Err(e); },
         }
 
-        let (tier, beast_type) = Self::resolve_species_traits(beast_id);
+        match Self::validate_species_traits(tier, beast_type) {
+            BeastResult::Ok(_) => {},
+            BeastResult::Err(e) => { return BeastResult::Err(e); },
+        }
 
-        // Create the beast
         let beast = PackableBeast {
             id: beast_id, prefix, suffix, level, health, shiny, animated, tier, beast_type,
         };
         BeastResult::Ok(beast)
     }
 
-    /// Creates a genesis beast with default attributes
-    fn create_genesis_beast(beast_id: u64) -> BeastResult<PackableBeast> {
-        // Validate beast ID
+    /// Genesis-species convenience wrapper: resolves tier/type from
+    /// `beast_definitions`. Rejects community species, which have no table
+    /// entry.
+    fn create_beast(
+        beast_id: u64, prefix: u8, suffix: u8, level: u16, health: u16, shiny: u8, animated: u8,
+    ) -> BeastResult<PackableBeast> {
+        if !Self::is_genesis_species(beast_id) {
+            return BeastResult::Err('Invalid beast ID');
+        }
+
+        let (tier, beast_type) = Self::resolve_species_traits(beast_id);
+        Self::create_beast_with_traits(
+            beast_id, prefix, suffix, level, health, shiny, animated, tier, beast_type,
+        )
+    }
+
+    /// Creates a Genesis Beast — the (id, 0, 0) affix slot reserved as the
+    /// artist/creator token — from contract-resolved species traits.
+    fn create_genesis_beast_with_traits(
+        beast_id: u64, tier: u8, beast_type: u8,
+    ) -> BeastResult<PackableBeast> {
         match Self::validate_beast_id(beast_id) {
             BeastResult::Ok(_) => {},
             BeastResult::Err(e) => { return BeastResult::Err(e); },
         }
 
-        let (tier, beast_type) = Self::resolve_species_traits(beast_id);
+        match Self::validate_species_traits(tier, beast_type) {
+            BeastResult::Ok(_) => {},
+            BeastResult::Err(e) => { return BeastResult::Err(e); },
+        }
+
         BeastResult::Ok(Self::genesis_beast(beast_id, tier, beast_type))
     }
 
@@ -114,12 +171,29 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         }
     }
 
-    /// Resolves the static tier/type for a species.
-    /// Only genesis species (1-75) exist until the registry lands; callers
-    /// must have validated the ID first.
+    /// Genesis-species convenience wrapper for the constructor batch.
+    fn create_genesis_beast(beast_id: u64) -> BeastResult<PackableBeast> {
+        if !Self::is_genesis_species(beast_id) {
+            return BeastResult::Err('Invalid beast ID');
+        }
+
+        let (tier, beast_type) = Self::resolve_species_traits(beast_id);
+        Self::create_genesis_beast_with_traits(beast_id, tier, beast_type)
+    }
+
+    /// Resolves the static tier/type for a genesis species from the baked-in
+    /// tables. Community species (76+) resolve through the registry instead;
+    /// callers must have checked `is_genesis_species` first.
     fn resolve_species_traits(beast_id: u64) -> (u8, u8) {
         let species: u8 = beast_id.try_into().expect('not a genesis species');
         (beast_definitions::get_tier(species), beast_definitions::get_type_code(species))
+    }
+
+    /// Species display name for a genesis species. Community species names
+    /// live in the registry.
+    fn resolve_species_name(beast_id: u64) -> felt252 {
+        let species: u8 = beast_id.try_into().expect('not a genesis species');
+        beast_definitions::get_beast_name(species)
     }
 
     /// Generates a unique hash for a beast combination
@@ -127,10 +201,10 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         get_hash(beast_id, prefix, suffix)
     }
 
-    /// Gets the beast name including prefix and suffix
-    fn get_full_beast_name(beast: PackableBeast) -> (felt252, felt252, felt252) {
-        let species: u8 = beast.id.try_into().expect('not a genesis species');
-        let base_name = beast_definitions::get_beast_name(species);
+    /// Affix names for a beast. Prefix and suffix tables are shared by every
+    /// species, genesis and community alike, so this stays a pure lookup.
+    /// Zero means "no affix", which only the Genesis Beast has.
+    fn get_affix_names(beast: PackableBeast) -> (felt252, felt252) {
         let prefix_name = if beast.prefix > 0 {
             beast_definitions::get_prefix(beast.prefix)
         } else {
@@ -141,6 +215,16 @@ pub impl BeastManagerImpl of BeastManagerTrait {
         } else {
             0
         };
+
+        (prefix_name, suffix_name)
+    }
+
+    /// Full name of a genesis-species beast. Community species need the
+    /// registry for the base name, so the renderer resolves it separately and
+    /// pairs it with `get_affix_names`.
+    fn get_full_beast_name(beast: PackableBeast) -> (felt252, felt252, felt252) {
+        let base_name = Self::resolve_species_name(beast.id);
+        let (prefix_name, suffix_name) = Self::get_affix_names(beast);
 
         (prefix_name, base_name, suffix_name)
     }
@@ -208,14 +292,98 @@ mod tests {
             BeastManagerTrait::validate_beast_id(0) == BeastResult::Err('Invalid beast ID'),
             'ID 0 should be invalid',
         );
+    }
+
+    #[test]
+    fn test_validate_beast_id_accepts_community_range() {
+        // Existence of a community species is the registry's call, not this
+        // function's — it only rejects structurally impossible IDs.
+        assert(BeastManagerTrait::validate_beast_id(76) == BeastResult::Ok(()), 'ID 76 accepted');
         assert(
-            BeastManagerTrait::validate_beast_id(76) == BeastResult::Err('Invalid beast ID'),
-            'ID 76 should be invalid',
+            BeastManagerTrait::validate_beast_id(1_000_000) == BeastResult::Ok(()),
+            'Large ID accepted',
+        );
+    }
+
+    #[test]
+    fn test_is_genesis_species() {
+        assert(BeastManagerTrait::is_genesis_species(1), 'ID 1 is genesis');
+        assert(BeastManagerTrait::is_genesis_species(75), 'ID 75 is genesis');
+        assert(!BeastManagerTrait::is_genesis_species(76), 'ID 76 is community');
+        assert(!BeastManagerTrait::is_genesis_species(0), 'ID 0 is not a species');
+    }
+
+    #[test]
+    fn test_validate_species_traits() {
+        assert(
+            BeastManagerTrait::validate_species_traits(1, 0) == BeastResult::Ok(()),
+            'T1 Magic valid',
         );
         assert(
-            BeastManagerTrait::validate_beast_id(255) == BeastResult::Err('Invalid beast ID'),
-            'ID 255 should be invalid',
+            BeastManagerTrait::validate_species_traits(5, 2) == BeastResult::Ok(()),
+            'T5 Brute valid',
         );
+        assert(
+            BeastManagerTrait::validate_species_traits(0, 0) == BeastResult::Err('Invalid tier'),
+            'Tier 0 invalid',
+        );
+        assert(
+            BeastManagerTrait::validate_species_traits(6, 0) == BeastResult::Err('Invalid tier'),
+            'Tier 6 invalid',
+        );
+        assert(
+            BeastManagerTrait::validate_species_traits(
+                1, 3,
+            ) == BeastResult::Err('Invalid beast type'),
+            'Type 3 invalid',
+        );
+    }
+
+    #[test]
+    fn test_create_beast_with_traits_community_species() {
+        // Community species carry registry-supplied traits and never touch
+        // the genesis tables.
+        match BeastManagerTrait::create_beast_with_traits(9_000, 4, 7, 30, 500, 1, 1, 2, 1) {
+            BeastResult::Ok(beast) => {
+                assert(beast.id == 9_000, 'Beast ID mismatch');
+                assert(beast.tier == 2, 'Tier mismatch');
+                assert(beast.beast_type == 1, 'Type mismatch');
+            },
+            BeastResult::Err(_) => { assert(false, 'Should not fail'); },
+        }
+    }
+
+    #[test]
+    fn test_create_beast_with_traits_rejects_bad_tier() {
+        match BeastManagerTrait::create_beast_with_traits(9_000, 4, 7, 30, 500, 0, 0, 9, 1) {
+            BeastResult::Ok(_) => { assert(false, 'Should fail'); },
+            BeastResult::Err(e) => { assert(e == 'Invalid tier', 'Wrong error'); },
+        }
+    }
+
+    #[test]
+    fn test_create_beast_rejects_community_species() {
+        // The genesis wrapper has no table entry for 76+.
+        match BeastManagerTrait::create_beast(76, 1, 1, 10, 100, 0, 0) {
+            BeastResult::Ok(_) => { assert(false, 'Should fail'); },
+            BeastResult::Err(e) => { assert(e == 'Invalid beast ID', 'Wrong error'); },
+        }
+    }
+
+    #[test]
+    fn test_create_genesis_beast_with_traits() {
+        match BeastManagerTrait::create_genesis_beast_with_traits(500, 3, 2) {
+            BeastResult::Ok(beast) => {
+                assert(beast.id == 500, 'Beast ID mismatch');
+                assert(beast.prefix == 0, 'Prefix should be 0');
+                assert(beast.suffix == 0, 'Suffix should be 0');
+                assert(beast.shiny == 1, 'Shiny should be 1');
+                assert(beast.animated == 1, 'Animated should be 1');
+                assert(beast.tier == 3, 'Tier mismatch');
+                assert(beast.beast_type == 2, 'Type mismatch');
+            },
+            BeastResult::Err(_) => { assert(false, 'Should not fail'); },
+        }
     }
 
     #[test]

@@ -26,6 +26,8 @@ pub trait IBeasts<TContractState> {
     fn get_dungeon_address(self: @TContractState) -> ContractAddress;
     fn set_death_mountain_address(ref self: TContractState, death_mountain: ContractAddress);
     fn get_death_mountain_address(self: @TContractState) -> ContractAddress;
+    fn set_registry_address(ref self: TContractState, registry: ContractAddress);
+    fn get_registry_address(self: @TContractState) -> ContractAddress;
 
     // Minting functions
     fn mint(
@@ -43,6 +45,11 @@ pub trait IBeasts<TContractState> {
     // Metadata functions
     fn refresh_metadata(ref self: TContractState, beast_id: u64);
     fn refresh_dungeon_stats(ref self: TContractState, token_id: u256);
+    /// Permissionless pull of a community species token's live stats into the
+    /// on-chain cache that `token_uri` reads. Genesis species keep their live
+    /// Death Mountain reads and are rejected here.
+    fn refresh_stats(ref self: TContractState, token_id: u256);
+    fn get_cached_stats(self: @TContractState, token_id: u256) -> BeastLiveStats;
 
     // Beast queries
     fn get_beast(self: @TContractState, token_id: u256) -> PackableBeast;

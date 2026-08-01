@@ -32,7 +32,8 @@ fully on-chain and are mintable through Loot Survivor dungeons.
 | 15 | Art size caps | none on-chain — if the artist pays and the network accepts, it's valid |
 | 16 | Death Mountain | not backwards compatible; DM gets a new interface version with `u64` entity IDs |
 | 17 | Downstream consumers | games (Summit, tournaments, …) MUST allowlist species; self-declared tier makes unfiltered acceptance exploitable |
-| 18 | Migration | current collection airdropped **1:1** into the new collection (holders keep their Beasts, re-encoded under the new token IDs); species 1–75 backfilled into the registry as read-only entries |
+| 18 | Migration | holders move 1:1 into the new collection. Mainnet target is a player-initiated **`burn_and_mint`**: burn the V2 Beast, mint the V3 equivalent. Deferred — not built yet, and nothing in the design may foreclose it (see Migration) |
+| 19 | Registry backfill of 1–75 | **deferred**, not required. Species 1–75 resolve from the baked-in `beast_definitions` tables; the registry is community-only (`FIRST_COMMUNITY_ID = 76`). Backfill stays possible later because no read path asserts a lower bound on registry keys |
 
 ## Architecture
 
@@ -548,14 +549,46 @@ costs 0 slots** — everything static rides in the token ID. `refresh_stats`
 - Lost artist key = species config frozen as-is; minting continues through
   the current minter unaffected.
 
-## Migration: 1:1 airdrop from the current collection
+## Migration: holders move 1:1 into the new collection
 
-Every holder of the live collection receives the same Beasts in the new
+Every holder of the live collection ends up with the same Beasts in the new
 collection — same `(id, prefix, suffix, level, health, shiny, animated)`,
-re-encoded under the 116-bit deterministic token IDs. Key property: **this
-requires zero migration-specific code in `beasts_nft`.**
+re-encoded under the 116-bit deterministic token IDs.
 
-### Mechanism
+### Mainnet target: player-initiated `burn_and_mint` (deferred)
+
+The intended mainnet path is **not** an owner-run airdrop but a `burn_and_mint`
+entrypoint players call themselves: present a V2 Beast, burn it, receive the
+V3 equivalent. That keeps the migration permissionless, makes the V2 supply
+verifiably retired, and removes the owner from the critical path.
+
+**This is deferred and deliberately unbuilt.** The constraint carried through
+every PR is that nothing may foreclose it. Concretely, what keeps the door
+open:
+
+- Mint validation lives in reusable helpers (`assert_can_mint`,
+  `MintingCoordinatorTrait::prepare_mint_with_traits`) rather than inlined in
+  the `mint` entrypoint, so a second entrypoint can reuse the whole chain
+  without relaxing any invariant.
+- The `minted` uniqueness map starts empty except for the 75 genesis affix
+  slots, so every `(id, prefix, suffix)` a V2 holder could present is still
+  free to claim.
+- Species 1–75 resolve tier/type/name from the baked-in tables with no
+  registry involvement, so burn-and-mint of an original Beast needs no
+  registry entry to exist.
+- Token IDs are a pure function of beast attributes, so the V3 ID for any V2
+  Beast is computable off-chain before the contract exists.
+
+One live hazard to respect at cutover: because V2 Beasts and V3 dungeon mints
+draw from the same `(id, prefix, suffix)` space, a dungeon could mint a slot a
+V2 holder still needs. Mainnet deploy must therefore leave `dungeon_address`
+at zero (and community species paused, or registration closed) until
+migration completes.
+
+### Fallback mechanism: owner-run airdrop
+
+Retained as the fallback if `burn_and_mint` slips. Requires zero
+migration-specific code in `beasts_nft`.
 
 - **Snapshot**: index the old collection (owners + `get_beast` per token) at a
   stable block. If the old collection's `terminal_timestamp` has passed it is
@@ -595,14 +628,19 @@ writes for large species. Cost per beast ≈ the normal ~8 slot writes.
 - **Rarity/uniqueness**: `(id, prefix, suffix)` entries repopulate through
   the normal `minted` map.
 
-### Registry backfill of species 1–75
+### Registry backfill of species 1–75 — deferred, not required
 
-Species 1–75 get read-only registry entries at deploy (name/tier/type from
-the genesis tables, artist = contract owner, minter mirroring
-`dungeon_address`, art provider = a thin adapter over the legacy data
-contracts or zero with the NFT's legacy branch as the renderer). Clients get
-one lookup surface for all species; the NFT's auth and rendering branches for
-`id <= 75` remain the on-chain source of truth.
+Backfill was considered and **dropped from scope**. Species 1–75 resolve
+name, tier, and type from `beast_definitions`, authorize against
+`dungeon_address`, and render through the four legacy art contracts — all
+without the registry. A backfill would only add a second, redundant lookup
+surface for clients.
+
+It stays available later: `FIRST_COMMUNITY_ID = 76` gates *registration*
+only, and no registry read path asserts a lower bound on a stored key, so a
+future admin entrypoint could write entries for 1–75 without touching the
+existing logic. `is_registered` and `assert_registered` would need their
+range check widened at that point; nothing else would.
 
 ### Cutover sequence
 
@@ -617,13 +655,22 @@ one lookup surface for all species; the NFT's auth and rendering branches for
 
 ## Deployment sequence (fresh deploy, per repo policy)
 
-1. Declare `StoredArtProvider` class.
-2. Deploy `BeastRegistry(owner, stored_art_class_hash)`.
-3. Deploy `beasts_nft(..., registry_address)` — constructor mints the 75
-   genesis beasts (entered into `minted`) and backfills species 1–75 into
-   the registry. No `terminal_timestamp` param.
-4. `registry.set_nft_address(nft)` — one-time; registry reverts all
+1. Declare and deploy the four genesis art data contracts.
+2. Declare `StoredArtProvider` class (never deployed directly — the registry
+   deploys instances per species).
+3. Deploy `BeastRegistry(owner, stored_art_class_hash)`.
+4. Deploy `beasts_nft(name, symbol, owner, royalty_receiver,
+   royalty_fraction, 4 art providers, death_mountain)` — constructor mints
+   the 75 genesis beasts (entered into `minted`). No `terminal_timestamp`
+   param, and no registry param: the two contracts are wired after the fact
+   because each needs the other's address.
+5. `registry.set_nft_address(nft)` — one-time; registry reverts all
    registration until this is called.
+6. `nft.set_registry_address(registry)` — one-time; community-species mints
+   and renders revert until this is called.
+
+Steps 5 and 6 are both write-once and both required; a stack missing either
+accepts no community species at all, which is the intended fail-closed state.
 
 ## Web app flow
 
@@ -683,15 +730,18 @@ Curation is UI/indexer-level only; the contract layer stays permissionless.
    branch first, which includes it).
 3. **PR 3 — registry + provider**: `BeastRegistry`, `StoredArtProvider`,
    factory, `IBeastArtProvider`, name charset guard, registry tests.
-4. **PR 4 — NFT integration**: mint auth, provenance mint, `token_uri`
-   routing, fan-out fixes (genesis token + bookmark min), cached
-   `refresh_stats`, integration tests.
+4. **PR 4 — NFT integration**: per-species mint auth, provenance mint,
+   `token_uri` art/name/stats routing, render-time output validation for
+   untrusted providers, fan-out fix (genesis token), cached `refresh_stats`,
+   end-to-end integration tests. Stacked on PR 3 rather than on `main` —
+   the registry is not merged to `main` until the whole stack has been
+   exercised on Sepolia.
 5. **PR 5 — SDK + web app**: TS SDK encode/decode + renderer; self-service
    app (likely separate repo). Death Mountain `u64` interface update tracked
    in the DM repo.
-6. **PR 6 — migration tooling**: snapshot script, per-species
-   descending-power sort, `Migrator` contract + batch runner, cutover
-   runbook. Needed before mainnet deploy, independent of PRs 3–5.
+6. **PR 6 — migration**: `burn_and_mint` entrypoint (see Migration), plus
+   snapshot/verification tooling and the cutover runbook. Needed before
+   mainnet, independent of PRs 3–5.
 
 ## Remaining open items
 

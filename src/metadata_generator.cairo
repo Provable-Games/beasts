@@ -1,7 +1,6 @@
-use super::beast_manager::BeastManagerTrait;
+use super::beast_manager::{BeastManagerTrait, GENESIS_SPECIES_MAX};
 use super::beast_svg::BeastSvgTrait;
 use super::encoding::bytes_base64_encode;
-use super::interfaces::IBeastImageDataProviderDispatcher;
 use super::pack::PackableBeast;
 use super::utils::felt252_to_byte_array;
 
@@ -27,12 +26,17 @@ pub struct Attribute {
 
 #[generate_trait]
 pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
-    /// Generates complete metadata JSON for a beast
+    /// Generates complete metadata JSON for a beast.
+    ///
+    /// `beast_name` and `beast_image` are resolved by the contract, which is
+    /// the only place that knows whether a species comes from the baked-in
+    /// genesis tables or from the registry.
     fn generate_metadata(
         token_id: u256,
         beast: PackableBeast,
         rank: u16,
-        image_data_provider: IBeastImageDataProviderDispatcher,
+        beast_name: felt252,
+        beast_image: ByteArray,
         adventurers_killed: u64,
         last_killed_by_adventurer: u64,
         last_killed_timestamp: u64,
@@ -41,7 +45,8 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
             token_id,
             beast,
             rank,
-            image_data_provider,
+            beast_name,
+            beast_image,
             adventurers_killed,
             last_killed_by_adventurer,
             last_killed_timestamp,
@@ -56,7 +61,8 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
         token_id: u256,
         beast: PackableBeast,
         rank: u16,
-        image_data_provider: IBeastImageDataProviderDispatcher,
+        beast_name: felt252,
+        beast_image: ByteArray,
         adventurers_killed: u64,
         last_killed_by_adventurer: u64,
         last_killed_timestamp: u64,
@@ -81,14 +87,15 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
             .append(
                 @"\\n\\nFor collectors, an ever-growing bestiary with verifiable scarcity, issuance, and provenance. For players, endless and timeless opportunities for onchain fun.",
             );
-        if beast.id <= 75 {
+        if beast.id <= GENESIS_SPECIES_MAX {
             description
                 .append(
                     @"\\n\\nArtwork for the original 75 species courtesy of the legends at 1337 Skulls (:5ku11u73:)",
                 );
         }
-        // Get beast names
-        let (prefix_name, beast_name, suffix_name) = BeastManagerTrait::get_full_beast_name(beast);
+        // Affix names are shared tables; the species name was resolved by the
+        // contract (genesis tables or registry) and passed in.
+        let (prefix_name, suffix_name) = BeastManagerTrait::get_affix_names(beast);
 
         // Build name
         let mut name: ByteArray = "";
@@ -113,7 +120,7 @@ pub impl MetadataGeneratorImpl of MetadataGeneratorTrait {
 
         // Image
         let svg = BeastSvgTrait::generate_svg(
-            beast.id, prefix_name, suffix_name, beast_name, rank, beast_attrs, image_data_provider,
+            prefix_name, suffix_name, beast_name, rank, beast_attrs, beast_image,
         );
         let image = format!("data:image/svg+xml;base64,{}", bytes_base64_encode(svg));
 
@@ -440,20 +447,15 @@ mod tests {
         let last_killed_by_adventurer = 1002;
         let last_killed_timestamp = 1715558400;
 
-        let mock_data_provider_address = 'data_provider'.try_into().unwrap();
-        let mock_return_data: ByteArray =
+        let beast_image: ByteArray =
             "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAASFJREFUSIm1VW2uxCAIVE/dI+yt3/vBBu0wfLVZstlQhAFGxTF+IH+frc+HYVc1aj1Al0+wgKeuVjugcGkfXhGJX1r+KT2K0oqkp6KzW1cjst5BXdrlQ6TV35ZDsYJ9BiEUaXAKUTlL01rn9dVVGfcjD7hwGyBkqVX9VKekx23ZkHVmO3PQYDqOaEO6OsHppMV+gsiq/ivUaVlevaM8MhURsoosMckvQN8tM7vNsR28isAyzOmie+CluWE9uKUSRW9P6T0ABnawuRy26sa4tuxXHtG8A0rxqcRSpYiia9ZXCbwNuKH4OUp78Gb6NyhyIUKK8g7s+QH0OH2VIjoqFD0aiCk0iXGqpo327kEXfaQUwQa4I/Nyh1iDIvumDsYhtPIPgYPBCOPyCoAAAAAASUVORK5CYII=";
 
-        start_mock_call(mock_data_provider_address, selector!("get_data_uri"), mock_return_data);
-
-        let beast_image_data_provider_dispatcher = IBeastImageDataProviderDispatcher {
-            contract_address: mock_data_provider_address,
-        };
         let components = MetadataGeneratorTrait::build_metadata_components(
             123,
             beast,
             1,
-            beast_image_data_provider_dispatcher,
+            'Typhon',
+            beast_image,
             adventurers_killed,
             last_killed_by_adventurer,
             last_killed_timestamp,
@@ -594,12 +596,11 @@ mod tests {
                 get_regular_png_provider()
             }
         };
-        let image_data_provider = IBeastImageDataProviderDispatcher {
-            contract_address: provider_addr,
-        };
+        let beast_image = IBeastImageDataProviderDispatcher { contract_address: provider_addr }
+            .get_data_uri(beast_id);
 
         BeastSvgTrait::generate_svg(
-            beast.id, prefix_name, suffix_name, beast_name, rank, beast_attrs, image_data_provider,
+            prefix_name, suffix_name, beast_name, rank, beast_attrs, beast_image,
         )
     }
 

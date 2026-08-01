@@ -1,19 +1,24 @@
 use core::byte_array::ByteArrayTrait;
 use super::beast_manager::BeastAttributes;
-use super::interfaces::{IBeastImageDataProviderDispatcher, IBeastImageDataProviderDispatcherTrait};
 use super::utils::felt252_to_byte_array;
 
 #[generate_trait]
 pub impl BeastSvgImpl of BeastSvgTrait {
-    /// Generates a complete data URI for the SVG
+    /// Generates a complete data URI for the SVG.
+    ///
+    /// `beast_image` is a pre-fetched image data URI. The contract resolves
+    /// and validates it before calling: genesis species read from the four
+    /// deployed art data contracts, community species from their registered
+    /// `IBeastArtProvider`. Keeping the fetch out of the renderer is what
+    /// lets a single code path serve both, and keeps the untrusted-provider
+    /// validation at the boundary where it belongs.
     fn generate_svg(
-        beast_id: u64,
         prefix_name: felt252,
         suffix_name: felt252,
         beast_name: felt252,
         rank: u16,
         beast_attrs: BeastAttributes,
-        image_data_provider: IBeastImageDataProviderDispatcher,
+        beast_image: ByteArray,
     ) -> ByteArray {
         let is_shiny = beast_attrs.shiny > 0;
 
@@ -225,10 +230,6 @@ pub impl BeastSvgImpl of BeastSvgTrait {
             .append(
                 @"<foreignObject x='1' y='1' width='128' height='128'><xhtml:img xmlns:xhtml='http://www.w3.org/1999/xhtml' src='",
             );
-        // Legacy image data providers are keyed by u8 genesis species IDs;
-        // community species (76+) get art through their own providers.
-        let legacy_species: u8 = beast_id.try_into().expect('not a genesis species');
-        let beast_image = image_data_provider.get_data_uri(legacy_species);
         svg.append(@beast_image);
         svg
             .append(

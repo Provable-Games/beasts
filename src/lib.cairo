@@ -1,3 +1,4 @@
+pub mod art_validation;
 pub mod beast_definitions;
 pub mod beast_gif_regular_data;
 pub mod beast_gif_shiny_data;
@@ -20,6 +21,8 @@ pub mod metadata_generator;
 mod mint_tests;
 pub mod minting_coordinator;
 pub mod pack;
+pub mod registry_integration_tests;
+pub mod stats_cache;
 pub mod stored_art_provider;
 #[cfg(test)]
 mod tests;
@@ -44,16 +47,26 @@ pub mod beasts_nft {
     use starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
-    use super::beast_manager::{BeastManagerTrait, BeastResult};
+    use super::art_validation::assert_valid_render_uri;
+    use super::beast_manager::{BeastManagerTrait, BeastResult, GENESIS_SPECIES_MAX};
     use super::beast_ranking::BeastRankingManagerTrait;
     use super::enumerable::EnumerableComponent;
     use super::interfaces::{
-        IBeastImageDataProviderDispatcher, IBeastSystemsDispatcher, IBeastSystemsDispatcherTrait,
-        IBeasts, IBeastsAnimation,
+        BeastLiveStats, IBeastArtProviderDispatcher, IBeastArtProviderDispatcherTrait,
+        IBeastImageDataProviderDispatcher, IBeastImageDataProviderDispatcherTrait,
+        IBeastRegistryDispatcher, IBeastRegistryDispatcherTrait, IBeastStatsDispatcher,
+        IBeastStatsDispatcherTrait, IBeastSystemsDispatcher, IBeastSystemsDispatcherTrait, IBeasts,
+        IBeastsAnimation, IBeastsProvenance,
     };
     use super::metadata_generator::MetadataGeneratorTrait;
     use super::minting_coordinator::{MintRequest, MintingCoordinatorTrait};
     use super::pack::{PackableBeast, decode_token_id};
+    use super::stats_cache::CachedStats;
+
+    /// Per-transaction cap on ERC-4906 fan-out. A species tops out at 1,243
+    /// tokens, so a full refresh can exceed one block's budget; the overflow
+    /// is bookmarked and drained by `refresh_metadata`.
+    const FAN_OUT_LIMIT: u16 = 650;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -133,6 +146,13 @@ pub mod beasts_nft {
         pub minted: Map<felt252, bool>,
         pub dungeon_address: ContractAddress,
         pub supply_count: u256,
+        /// Permissionless species registry. Community species (76+) resolve
+        /// their minter, traits, name, art provider, and stats source here.
+        pub registry: IBeastRegistryDispatcher,
+        /// Community-species stats, pulled by `refresh_stats` rather than read
+        /// live, so an artist-nominated stats source can never brick
+        /// `token_uri`. See `stats_cache`.
+        pub cached_stats: Map<u256, CachedStats>,
         // External data providers
         pub regular_png_provider: IBeastImageDataProviderDispatcher,
         pub shiny_png_provider: IBeastImageDataProviderDispatcher,
@@ -237,6 +257,22 @@ pub mod beasts_nft {
             self.death_mountain_dispatcher.read().contract_address
         }
 
+        /// Wires the permissionless species registry. Write-once: the
+        /// registry is the sole authority over who may mint every community
+        /// species, and it holds a matching one-way pointer back here, so a
+        /// later swap would orphan every registered species and let a new
+        /// registry mint into their reserved affix slots.
+        fn set_registry_address(ref self: ContractState, registry: ContractAddress) {
+            self.ownable.assert_only_owner();
+            assert(self.registry.read().contract_address.is_zero(), 'Registry already set');
+            assert(registry.is_non_zero(), 'Zero registry');
+            self.registry.write(IBeastRegistryDispatcher { contract_address: registry });
+        }
+
+        fn get_registry_address(self: @ContractState) -> ContractAddress {
+            self.registry.read().contract_address
+        }
+
         fn mint(
             ref self: ContractState,
             to: ContractAddress,
@@ -248,15 +284,17 @@ pub mod beasts_nft {
             shiny: u8,
             animated: u8,
         ) -> (u256, u16, bool) {
-            // Ensure caller is Dungeon
-            let caller = starknet::get_caller_address();
-            assert(caller == self.dungeon_address.read(), 'Not authorized to mint');
+            // Authorize the caller and resolve the species' static traits.
+            // Genesis species answer to the single dungeon address; every
+            // community species has its own minter in the registry.
+            let (tier, beast_type) = InternalTrait::assert_can_mint(@self, beast_id);
 
             // Prepare mint request
             let request = MintRequest { beast_id, prefix, suffix, level, health, shiny, animated };
 
             // Validate and prepare mint data
-            let (token_id, insertion_rank) = match MintingCoordinatorTrait::prepare_mint(request) {
+            let (token_id, insertion_rank) =
+                match MintingCoordinatorTrait::prepare_mint_with_traits(request, tier, beast_type) {
                 BeastResult::Ok(mint_data) => {
                     // Check for duplicates
                     assert(!self.minted.entry(mint_data.hash).read(), 'Beast already minted');
@@ -354,6 +392,50 @@ pub mod beasts_nft {
                 .last_manual_metadata_refresh
                 .entry(token_id)
                 .write(starknet::get_block_timestamp());
+        }
+
+        /// Pulls a community species token's live stats into the cache that
+        /// `token_uri` reads. Permissionless — anyone may keep a token fresh
+        /// — but it is the *only* place the artist-nominated stats source is
+        /// called. If that source reverts, this transaction fails and
+        /// rendering carries on with the last cached values.
+        fn refresh_stats(ref self: ContractState, token_id: u256) {
+            self.erc721._require_owned(token_id);
+            let beast = decode_token_id(token_id);
+            assert(beast.id > GENESIS_SPECIES_MAX, 'Genesis stats are live');
+
+            let registry = self.registry.read();
+            assert(registry.contract_address.is_non_zero(), 'Registry not set');
+            let source = registry.get_stats_source(beast.id);
+            assert(source.is_non_zero(), 'No stats source');
+
+            let beast_hash = BeastManagerTrait::get_beast_hash(
+                beast.id, beast.prefix, beast.suffix,
+            );
+            let live = IBeastStatsDispatcher { contract_address: source }
+                .get_beast_stats(beast_hash);
+            let fresh = CachedStats {
+                adventurers_killed: live.adventurers_killed,
+                last_killed_by: live.last_killed_by,
+                last_killed_timestamp: live.last_killed_timestamp,
+            };
+
+            // Only announce a change that actually happened; without this the
+            // call is a free ERC-4906 spam faucet against every indexer.
+            let cached = self.cached_stats.entry(token_id).read();
+            assert(fresh != cached, 'Stats up to date');
+
+            self.cached_stats.entry(token_id).write(fresh);
+            self.emit(MetadataUpdate { token_id });
+        }
+
+        fn get_cached_stats(self: @ContractState, token_id: u256) -> BeastLiveStats {
+            let cached = self.cached_stats.entry(token_id).read();
+            BeastLiveStats {
+                adventurers_killed: cached.adventurers_killed,
+                last_killed_by: cached.last_killed_by,
+                last_killed_timestamp: cached.last_killed_timestamp,
+            }
         }
 
         fn get_beast(self: @ContractState, token_id: u256) -> PackableBeast {
@@ -499,9 +581,185 @@ pub mod beasts_nft {
         }
     }
 
+    // Registry-only entrypoints. The registry is the permissionless surface;
+    // these are the two things it needs the NFT to do on a registrant's
+    // behalf.
+    #[abi(embed_v0)]
+    impl BeastsProvenanceImpl of IBeastsProvenance<ContractState> {
+        /// Mints the species' Genesis Beast — the (id, 0, 0) affix slot,
+        /// permanently reserved as the artist/creator token — as the final
+        /// step of registration.
+        ///
+        /// Uses `erc721.mint`, not `safe_mint`: `safe_mint` calls back into
+        /// the recipient, which would hand a contract artist a reentry point
+        /// into the registry mid-registration, while its definition is
+        /// written but before `next_id` has settled.
+        fn mint_provenance(ref self: ContractState, artist: ContractAddress, beast_id: u64) {
+            let registry = self.registry.read();
+            assert(registry.contract_address.is_non_zero(), 'Registry not set');
+            assert(starknet::get_caller_address() == registry.contract_address, 'Only registry');
+            // Genesis species were minted in the constructor; the registry
+            // must never be able to re-issue one.
+            assert(beast_id > GENESIS_SPECIES_MAX, 'Not a community species');
+
+            let (tier, beast_type) = registry.get_species_traits(beast_id);
+
+            match MintingCoordinatorTrait::prepare_genesis_mint_with_traits(
+                beast_id, tier, beast_type,
+            ) {
+                BeastResult::Ok(mint_data) => {
+                    assert(!self.minted.entry(mint_data.hash).read(), 'Beast already minted');
+                    self.minted.entry(mint_data.hash).write(true);
+
+                    self.erc721.mint(artist, mint_data.token_id);
+                    self.supply_count.write(self.supply_count.read() + 1);
+                },
+                BeastResult::Err(e) => { core::panic_with_felt252(e); },
+            }
+        }
+
+        /// Fans out ERC-4906 events for a species after its art changed.
+        fn emit_species_metadata_update(ref self: ContractState, beast_id: u64) {
+            let registry = self.registry.read();
+            assert(registry.contract_address.is_non_zero(), 'Registry not set');
+            assert(starknet::get_caller_address() == registry.contract_address, 'Only registry');
+
+            InternalTrait::emit_species_fan_out(ref self, beast_id);
+        }
+    }
+
     // Internal implementations
     #[generate_trait]
     impl InternalImpl of InternalTrait {
+        /// Authorizes the caller to mint `beast_id` and returns the species'
+        /// static (tier, type).
+        ///
+        /// Genesis species answer to the single owner-set dungeon address.
+        /// Community species each name their own minter in the registry — a
+        /// zero minter means the species is paused, and is rejected rather
+        /// than matched against a zero caller.
+        fn assert_can_mint(self: @ContractState, beast_id: u64) -> (u8, u8) {
+            // Structural check first: zero is never a species, and without
+            // this it would fall through to the registry branch and report a
+            // misleading wiring error.
+            match BeastManagerTrait::validate_beast_id(beast_id) {
+                BeastResult::Ok(_) => {},
+                BeastResult::Err(e) => { core::panic_with_felt252(e); },
+            }
+
+            let caller = starknet::get_caller_address();
+
+            if BeastManagerTrait::is_genesis_species(beast_id) {
+                assert(caller == self.dungeon_address.read(), 'Not authorized to mint');
+                return BeastManagerTrait::resolve_species_traits(beast_id);
+            }
+
+            let registry = self.registry.read();
+            assert(registry.contract_address.is_non_zero(), 'Registry not set');
+            // Reverts for an unregistered species, so an unknown ID can never
+            // be minted with attacker-chosen traits.
+            let (tier, beast_type) = registry.get_species_traits(beast_id);
+
+            let minter = registry.get_minter(beast_id);
+            assert(minter.is_non_zero(), 'Species minting paused');
+            assert(caller == minter, 'Not authorized to mint');
+
+            (tier, beast_type)
+        }
+
+        /// Species display name: baked-in tables for genesis species, the
+        /// registry for community species.
+        fn resolve_species_name(self: @ContractState, beast_id: u64) -> felt252 {
+            if BeastManagerTrait::is_genesis_species(beast_id) {
+                return BeastManagerTrait::resolve_species_name(beast_id);
+            }
+
+            let registry = self.registry.read();
+            assert(registry.contract_address.is_non_zero(), 'Registry not set');
+            registry.get_species_name(beast_id)
+        }
+
+        /// Resolves a beast's image data URI.
+        ///
+        /// Genesis species read from the four art data contracts wired at
+        /// construction. Community species call their registered
+        /// `IBeastArtProvider` with the full decoded beast, so a provider can
+        /// vary art by affix, tier, or level — and whatever it returns is
+        /// validated before it reaches the SVG, because that provider is an
+        /// arbitrary artist-controlled contract.
+        fn resolve_art(self: @ContractState, beast: PackableBeast) -> ByteArray {
+            if BeastManagerTrait::is_genesis_species(beast.id) {
+                let provider = if beast.animated == 0 {
+                    if beast.shiny == 1 {
+                        self.shiny_png_provider.read()
+                    } else {
+                        self.regular_png_provider.read()
+                    }
+                } else {
+                    if beast.shiny == 1 {
+                        self.shiny_gif_provider.read()
+                    } else {
+                        self.regular_gif_provider.read()
+                    }
+                };
+                let legacy_species: u8 = beast.id.try_into().expect('not a genesis species');
+                return provider.get_data_uri(legacy_species);
+            }
+
+            let registry = self.registry.read();
+            assert(registry.contract_address.is_non_zero(), 'Registry not set');
+            let art_provider = registry.get_art_provider(beast.id);
+            assert(art_provider.is_non_zero(), 'No art provider');
+
+            let uri = IBeastArtProviderDispatcher { contract_address: art_provider }
+                .get_data_uri(beast);
+            assert_valid_render_uri(@uri);
+            uri
+        }
+
+        /// Emits `MetadataUpdate` for every token of a species, bookmarking
+        /// the overflow past `FAN_OUT_LIMIT` for `refresh_metadata` to drain.
+        fn emit_species_fan_out(ref self: ContractState, beast_id: u64) {
+            // The Genesis Beast holds rank 0 and is deliberately absent from
+            // `beast_species_lists`, so a list walk alone would leave the
+            // artist's own token stale after every art change.
+            let genesis_hash = BeastManagerTrait::get_beast_hash(beast_id, 0, 0);
+            if self.minted.entry(genesis_hash).read() {
+                // Tier and type are part of the token ID, so they must be the
+                // species' real ones — resolve rather than assume.
+                let (tier, beast_type) = Self::resolve_traits_for_fan_out(@self, beast_id);
+                match MintingCoordinatorTrait::prepare_genesis_mint_with_traits(
+                    beast_id, tier, beast_type,
+                ) {
+                    BeastResult::Ok(mint_data) => {
+                        self.emit(MetadataUpdate { token_id: mint_data.token_id });
+                    },
+                    BeastResult::Err(e) => { core::panic_with_felt252(e); },
+                }
+            }
+
+            let total_beasts = self.beast_counts.entry(beast_id).read();
+            let last = if total_beasts > FAN_OUT_LIMIT {
+                self.beast_metadata_refresh_bookmark.entry(beast_id).write(FAN_OUT_LIMIT + 1);
+                FAN_OUT_LIMIT
+            } else {
+                total_beasts
+            };
+
+            let mut rank: u16 = 1;
+            while rank <= last {
+                let token_id = self.beast_species_lists.entry(beast_id).entry(rank).read();
+                self.emit(MetadataUpdate { token_id });
+                rank += 1;
+            }
+        }
+
+        fn resolve_traits_for_fan_out(self: @ContractState, beast_id: u64) -> (u8, u8) {
+            if BeastManagerTrait::is_genesis_species(beast_id) {
+                return BeastManagerTrait::resolve_species_traits(beast_id);
+            }
+            self.registry.read().get_species_traits(beast_id)
+        }
         /// Internal function to mint genesis beasts during contract construction
         fn mint_genesis_beasts(ref self: ContractState, to: ContractAddress) {
             // Prepare genesis batch
@@ -547,55 +805,59 @@ pub mod beasts_nft {
             let beast = decode_token_id(token_id);
             let rank = BeastRankingManagerTrait::get_beast_rank(self, token_id);
 
-            // Get additional data from death mountain
+            // Combat stats. Genesis species read Death Mountain live — that
+            // dispatcher is owner-set and trusted. Community species read the
+            // cache instead: their stats source is artist-nominated, and a
+            // failed external call cannot be caught on Starknet, so a live
+            // read here would let any artist permanently brick rendering for
+            // their whole species.
             let mut last_killed_timestamp = 0;
             let mut last_killed_by_adventurer = 0;
             let mut adventurers_killed = 0;
-            let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
-            if death_mountain_dispatcher.contract_address != Zero::zero() {
-                let death_mountain_address = self.dungeon_address.read();
-                if death_mountain_address != Zero::zero() {
-                    let beast_hash = BeastManagerTrait::get_beast_hash(
-                        beast.id, beast.prefix, beast.suffix,
-                    );
-                    let num_deaths = death_mountain_dispatcher
-                        .get_collectable_count(
-                            death_mountain_dispatcher.contract_address, beast_hash,
+            if BeastManagerTrait::is_genesis_species(beast.id) {
+                let death_mountain_dispatcher = self.death_mountain_dispatcher.read();
+                if death_mountain_dispatcher.contract_address != Zero::zero() {
+                    let death_mountain_address = self.dungeon_address.read();
+                    if death_mountain_address != Zero::zero() {
+                        let beast_hash = BeastManagerTrait::get_beast_hash(
+                            beast.id, beast.prefix, beast.suffix,
                         );
-                    if num_deaths > 0 {
-                        let collectable_entity = death_mountain_dispatcher
-                            .get_collectable(death_mountain_address, beast_hash, num_deaths - 1);
-                        last_killed_timestamp = collectable_entity.timestamp;
-                        last_killed_by_adventurer = collectable_entity.killed_by;
+                        let num_deaths = death_mountain_dispatcher
+                            .get_collectable_count(
+                                death_mountain_dispatcher.contract_address, beast_hash,
+                            );
+                        if num_deaths > 0 {
+                            let collectable_entity = death_mountain_dispatcher
+                                .get_collectable(
+                                    death_mountain_address, beast_hash, num_deaths - 1,
+                                );
+                            last_killed_timestamp = collectable_entity.timestamp;
+                            last_killed_by_adventurer = collectable_entity.killed_by;
+                        }
+
+                        let entity_stats = death_mountain_dispatcher
+                            .get_entity_stats(death_mountain_address, beast_hash);
+
+                        adventurers_killed = entity_stats.adventurers_killed;
                     }
-
-                    let entity_stats = death_mountain_dispatcher
-                        .get_entity_stats(death_mountain_address, beast_hash);
-
-                    adventurers_killed = entity_stats.adventurers_killed;
-                }
-            }
-
-            // Choose image provider based on beast flags
-            let mut image_data_provider = self.regular_gif_provider.read();
-            if beast.animated == 0 {
-                if beast.shiny == 1 {
-                    image_data_provider = self.shiny_png_provider.read();
-                } else {
-                    image_data_provider = self.regular_png_provider.read();
                 }
             } else {
-                if beast.shiny == 1 {
-                    image_data_provider = self.shiny_gif_provider.read();
-                }
+                let cached = self.cached_stats.entry(token_id).read();
+                adventurers_killed = cached.adventurers_killed;
+                last_killed_by_adventurer = cached.last_killed_by;
+                last_killed_timestamp = cached.last_killed_timestamp;
             }
+
+            let beast_name = Self::resolve_species_name(self, beast.id);
+            let beast_image = Self::resolve_art(self, beast);
 
             // Generate metadata
             MetadataGeneratorTrait::generate_metadata(
                 token_id,
                 beast,
                 rank,
-                image_data_provider,
+                beast_name,
+                beast_image,
                 adventurers_killed,
                 last_killed_by_adventurer,
                 last_killed_timestamp,
@@ -607,13 +869,13 @@ pub mod beasts_nft {
         ) -> bool {
             let total_beasts = self.beast_counts.entry(beast_id).read();
             let mut bookmark_set = false;
-            if total_beasts > 650 {
+            if total_beasts > FAN_OUT_LIMIT {
                 let distance_to_last = total_beasts - insertion_rank;
-                if distance_to_last >= 650 {
+                if distance_to_last >= FAN_OUT_LIMIT {
                     self
                         .beast_metadata_refresh_bookmark
                         .entry(beast_id)
-                        .write(insertion_rank + 650);
+                        .write(insertion_rank + FAN_OUT_LIMIT);
                     bookmark_set = true;
                 }
             }
@@ -622,7 +884,7 @@ pub mod beasts_nft {
             // 650
             let mut count = insertion_rank + 1;
             while count < total_beasts {
-                if count >= insertion_rank + 650 {
+                if count >= insertion_rank + FAN_OUT_LIMIT {
                     break;
                 }
                 let token_id = self.beast_species_lists.entry(beast_id).entry(count).read();
